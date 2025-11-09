@@ -892,130 +892,126 @@ const Lists = () => {
                     )}
                   </div>
 
-                  {/* Step 2: Name appears after category */}
+                  {/* Step 2: Name and details appear after category */}
                   {selectedCategory && (
-                    <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
-                      <Label htmlFor="name" className="text-base font-semibold flex items-center gap-2">
-                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/20 text-primary text-xs font-bold">2</span>
-                        Especifica el regalo *
-                      </Label>
-                      <Input
-                        id="name"
-                        placeholder={`Ej: ${
-                          selectedCategory === "Smartphone" ? "iPhone 15 Pro 256GB" :
-                          selectedCategory === "Camisa" ? "Camisa de vestir slim fit" :
-                          selectedCategory === "Laptop" ? "MacBook Air M2 13 pulgadas" :
-                          selectedCategory === "Zapatos" ? "Nike Air Max 90" :
-                          "Modelo o descripción específica"
-                        }`}
-                        value={newItem.name}
-                        onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
-                        className="h-11"
-                        required
-                      />
-                    </div>
-                  )}
-
-                  {/* Step 3: Smart fields appear based on category */}
-                  {selectedCategory && newItem.name && (
                     <div className="space-y-5 animate-in fade-in slide-in-from-top-2 duration-300">
-                      <Label className="text-base font-semibold flex items-center gap-2">
-                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/20 text-primary text-xs font-bold">3</span>
-                        Detalles específicos (opcional)
-                      </Label>
-                      
-                      <div className="grid grid-cols-2 gap-4 pl-8">
-                        {smartOptions.needsColor && (
-                          <div className="space-y-2">
-                            <Label htmlFor="color" className="text-sm font-medium">Color</Label>
-                            <Select value={newItem.color} onValueChange={(value) => setNewItem({ ...newItem, color: value })}>
-                              <SelectTrigger id="color">
-                                <SelectValue placeholder="Elige color" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {COMMON_COLORS.map((color) => (
-                                  <SelectItem key={color} value={color}>
-                                    {color}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        )}
-
-                        {smartOptions.needsSize && (
-                          <div className="space-y-2">
-                            <Label htmlFor="size" className="text-sm font-medium">Talla/Medida</Label>
-                            <Select value={newItem.size} onValueChange={(value) => setNewItem({ ...newItem, size: value })}>
-                              <SelectTrigger id="size">
-                                <SelectValue placeholder="Elige talla" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {(smartOptions.sizeType === "shoe" ? SHOE_SIZES : CLOTHING_SIZES).map((size) => (
-                                  <SelectItem key={size} value={size}>
-                                    {size}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        )}
+                      <div className="space-y-3">
+                        <Label htmlFor="name" className="text-base font-semibold flex items-center gap-2">
+                          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/20 text-primary text-xs font-bold">2</span>
+                          Especifica el regalo *
+                        </Label>
+                        <Input
+                          id="name"
+                          placeholder={`Ej: ${
+                            selectedCategory === "Smartphone" ? "iPhone 15 Pro 256GB" :
+                            selectedCategory === "Camisa" ? "Camisa de vestir slim fit" :
+                            selectedCategory === "Laptop" ? "MacBook Air M2 13 pulgadas" :
+                            selectedCategory === "Zapatos" ? "Nike Air Max 90" :
+                            "Modelo o descripción específica"
+                          }`}
+                          value={newItem.name}
+                          onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
+                          className="h-11"
+                        />
                       </div>
 
-                      {smartOptions.suggestedBrands.length > 0 && (
-                        <div className="space-y-2 pl-8">
-                          <Label htmlFor="brand" className="text-sm font-medium">Marca preferida</Label>
-                          <Select value={newItem.brand} onValueChange={(value) => setNewItem({ ...newItem, brand: value })}>
-                            <SelectTrigger id="brand">
-                              <SelectValue placeholder="Selecciona una marca" />
+                      {/* Smart fields - Color, Size, Brand */}
+                      <div className="space-y-4">
+                        <Label className="text-sm font-semibold text-muted-foreground">Detalles adicionales (opcional)</Label>
+                      
+                        <div className="grid grid-cols-2 gap-4">
+                          {smartOptions.needsColor && (
+                            <div className="space-y-2">
+                              <Label htmlFor="color" className="text-sm font-medium">Color</Label>
+                              <Select value={newItem.color} onValueChange={(value) => setNewItem({ ...newItem, color: value })}>
+                                <SelectTrigger id="color">
+                                  <SelectValue placeholder="Elige color" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {COMMON_COLORS.map((color) => (
+                                    <SelectItem key={color} value={color}>
+                                      {color}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          )}
+
+                          {smartOptions.needsSize && (
+                            <div className="space-y-2">
+                              <Label htmlFor="size" className="text-sm font-medium">Talla/Medida</Label>
+                              <Select value={newItem.size} onValueChange={(value) => setNewItem({ ...newItem, size: value })}>
+                                <SelectTrigger id="size">
+                                  <SelectValue placeholder="Elige talla" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {(smartOptions.sizeType === "shoe" ? SHOE_SIZES : CLOTHING_SIZES).map((size) => (
+                                    <SelectItem key={size} value={size}>
+                                      {size}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          )}
+                        </div>
+
+                        {smartOptions.suggestedBrands.length > 0 && (
+                          <div className="space-y-2">
+                            <Label htmlFor="brand" className="text-sm font-medium">Marca preferida</Label>
+                            <Select value={newItem.brand} onValueChange={(value) => setNewItem({ ...newItem, brand: value })}>
+                              <SelectTrigger id="brand">
+                                <SelectValue placeholder="Selecciona una marca" />
+                              </SelectTrigger>
+                              <SelectContent className="max-h-[200px]">
+                                {smartOptions.suggestedBrands.map((brand) => (
+                                  <SelectItem key={brand} value={brand}>
+                                    {brand}
+                                  </SelectItem>
+                                ))}
+                                <SelectItem value="Otra">Otra marca</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
+
+                        <div className="space-y-2">
+                          <Label htmlFor="priority" className="text-sm font-medium">Prioridad</Label>
+                          <Select value={newItem.priority} onValueChange={(value: any) => setNewItem({ ...newItem, priority: value })}>
+                            <SelectTrigger id="priority">
+                              <SelectValue />
                             </SelectTrigger>
-                            <SelectContent className="max-h-[200px]">
-                              {smartOptions.suggestedBrands.map((brand) => (
-                                <SelectItem key={brand} value={brand}>
-                                  {brand}
-                                </SelectItem>
-                              ))}
-                              <SelectItem value="Otra">Otra marca</SelectItem>
+                            <SelectContent>
+                              <SelectItem value="high">🔥 Alta prioridad</SelectItem>
+                              <SelectItem value="medium">⭐ Prioridad media</SelectItem>
+                              <SelectItem value="low">💭 Baja prioridad</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
-                      )}
 
-                      <div className="space-y-2 pl-8">
-                        <Label htmlFor="priority" className="text-sm font-medium">¿Qué tan importante es?</Label>
-                        <Select value={newItem.priority} onValueChange={(value: any) => setNewItem({ ...newItem, priority: value })}>
-                          <SelectTrigger id="priority">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="high">🔥 Alta prioridad</SelectItem>
-                            <SelectItem value="medium">⭐ Prioridad media</SelectItem>
-                            <SelectItem value="low">💭 Baja prioridad</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="url" className="text-sm font-medium">Enlace de referencia</Label>
+                          <Input
+                            id="url"
+                            type="url"
+                            placeholder="https://amazon.com/producto"
+                            value={newItem.reference_link}
+                            onChange={(e) => setNewItem({ ...newItem, reference_link: e.target.value })}
+                          />
+                          <p className="text-xs text-muted-foreground">Link al producto para que otros sepan exactamente cuál es</p>
+                        </div>
 
-                      <div className="space-y-2 pl-8">
-                        <Label htmlFor="url" className="text-sm font-medium">Enlace de referencia</Label>
-                        <Input
-                          id="url"
-                          type="url"
-                          placeholder="https://amazon.com/producto"
-                          value={newItem.reference_link}
-                          onChange={(e) => setNewItem({ ...newItem, reference_link: e.target.value })}
-                        />
-                        <p className="text-xs text-muted-foreground">Link al producto para que otros sepan exactamente cuál es</p>
-                      </div>
-
-                      <div className="space-y-2 pl-8">
-                        <Label htmlFor="notes" className="text-sm font-medium">Notas adicionales</Label>
-                        <Textarea
-                          id="notes"
-                          placeholder="Ej: Prefiero el modelo más reciente, necesito que sea compatible con iPhone..."
-                          value={newItem.notes}
-                          onChange={(e) => setNewItem({ ...newItem, notes: e.target.value })}
-                          className="min-h-[80px] resize-none"
-                        />
+                        <div className="space-y-2">
+                          <Label htmlFor="notes" className="text-sm font-medium">Notas adicionales</Label>
+                          <Textarea
+                            id="notes"
+                            placeholder="Ej: Prefiero el modelo más reciente, necesito que sea compatible con iPhone..."
+                            value={newItem.notes}
+                            onChange={(e) => setNewItem({ ...newItem, notes: e.target.value })}
+                            className="min-h-[80px] resize-none"
+                          />
+                        </div>
                       </div>
                     </div>
                   )}
@@ -1024,7 +1020,7 @@ const Lists = () => {
                     type="submit" 
                     className="w-full h-11 shadow-lg" 
                     size="lg"
-                    disabled={!selectedCategory || !newItem.name}
+                    disabled={!selectedCategory || !newItem.name.trim()}
                   >
                     <Plus className="mr-2 h-5 w-5" />
                     Agregar a Mi Lista
