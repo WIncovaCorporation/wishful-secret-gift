@@ -41,15 +41,32 @@ const Auth = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validación básica
+    if (!displayName.trim()) {
+      toast.error(t("auth.nameRequired"));
+      return;
+    }
+
+    if (!email.trim() || !email.includes('@')) {
+      toast.error(t("auth.signUpFailed"));
+      return;
+    }
+
+    if (password.length < 6) {
+      toast.error(t("auth.passwordMinLength"));
+      return;
+    }
+
     setLoading(true);
 
     try {
       const { data, error } = await supabase.auth.signUp({
-        email,
+        email: email.trim(),
         password,
         options: {
           data: {
-            display_name: displayName,
+            display_name: displayName.trim(),
           },
           emailRedirectTo: `${window.location.origin}/dashboard`,
         },
@@ -57,22 +74,22 @@ const Auth = () => {
 
       if (error) throw error;
 
-      // Check if user already exists
+      // Verificar si el usuario ya existe
       if (data.user && data.user.identities && data.user.identities.length === 0) {
-        toast.error("Este correo ya está registrado. Por favor, inicia sesión.");
+        toast.error(t("auth.emailAlreadyExists"));
         return;
       }
 
-      toast.success("Cuenta creada exitosamente. ¡Bienvenido!");
-      // Clear form
+      toast.success(t("auth.accountCreated"));
+      // Limpiar formulario
       setEmail("");
       setPassword("");
       setDisplayName("");
     } catch (error: any) {
-      if (error.message.includes("already registered")) {
-        toast.error("Este correo ya está registrado. Por favor, inicia sesión.");
+      if (error.message.includes("already registered") || error.message.includes("User already registered")) {
+        toast.error(t("auth.emailAlreadyExists"));
       } else {
-        toast.error(error.message || "Error al crear la cuenta");
+        toast.error(error.message || t("auth.signUpFailed"));
       }
     } finally {
       setLoading(false);
@@ -81,25 +98,37 @@ const Auth = () => {
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validación básica
+    if (!email.trim() || !email.includes('@')) {
+      toast.error(t("auth.signInFailed"));
+      return;
+    }
+
+    if (!password) {
+      toast.error(t("auth.signInFailed"));
+      return;
+    }
+
     setLoading(true);
 
     try {
       const { error } = await supabase.auth.signInWithPassword({
-        email,
+        email: email.trim(),
         password,
       });
 
       if (error) throw error;
 
-      toast.success("¡Bienvenido de vuelta!");
-      // Clear form
+      toast.success(t("auth.welcomeBack"));
+      // Limpiar formulario
       setEmail("");
       setPassword("");
     } catch (error: any) {
-      if (error.message.includes("Invalid login credentials")) {
-        toast.error("Correo o contraseña incorrectos. Verifica tus datos.");
+      if (error.message.includes("Invalid login credentials") || error.message.includes("Invalid") || error.message.includes("credentials")) {
+        toast.error(t("auth.invalidCredentials"));
       } else {
-        toast.error(error.message || "Error al iniciar sesión");
+        toast.error(error.message || t("auth.signInFailed"));
       }
     } finally {
       setLoading(false);
@@ -108,20 +137,27 @@ const Auth = () => {
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validación básica
+    if (!resetEmail.trim() || !resetEmail.includes('@')) {
+      toast.error(t("auth.resetEmailFailed"));
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail.trim(), {
         redirectTo: `${window.location.origin}/auth`,
       });
 
       if (error) throw error;
 
-      toast.success("Te hemos enviado un correo para restablecer tu contraseña");
+      toast.success(t("auth.resetEmailSent"));
       setShowResetPassword(false);
       setResetEmail("");
     } catch (error: any) {
-      toast.error(error.message || "Error al enviar el correo de recuperación");
+      toast.error(error.message || t("auth.resetEmailFailed"));
     } finally {
       setLoading(false);
     }
@@ -152,18 +188,18 @@ const Auth = () => {
             {showResetPassword ? (
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <h3 className="text-lg font-semibold">Recuperar Contraseña</h3>
+                  <h3 className="text-lg font-semibold">{t("auth.resetPassword")}</h3>
                   <p className="text-sm text-muted-foreground">
-                    Ingresa tu correo y te enviaremos un enlace para restablecer tu contraseña
+                    {t("auth.resetPasswordDesc")}
                   </p>
                 </div>
                 <form onSubmit={handleResetPassword} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="reset-email">Correo Electrónico</Label>
+                    <Label htmlFor="reset-email">{t("auth.email")}</Label>
                     <Input
                       id="reset-email"
                       type="email"
-                      placeholder="you@example.com"
+                      placeholder={t("auth.emailPlaceholder")}
                       value={resetEmail}
                       onChange={(e) => setResetEmail(e.target.value)}
                       required
@@ -171,7 +207,7 @@ const Auth = () => {
                   </div>
                   <div className="flex gap-2">
                     <Button type="submit" className="flex-1" disabled={loading}>
-                      {loading ? "Enviando..." : "Enviar Enlace"}
+                      {loading ? t("auth.sending") : t("auth.sendResetLink")}
                     </Button>
                     <Button 
                       type="button" 
@@ -182,7 +218,7 @@ const Auth = () => {
                       }}
                       disabled={loading}
                     >
-                      Cancelar
+                      {t("auth.cancel")}
                     </Button>
                   </div>
                 </form>
@@ -210,7 +246,7 @@ const Auth = () => {
                       <Input
                         id="signin-email"
                         type="email"
-                        placeholder="you@example.com"
+                        placeholder={t("auth.emailPlaceholder")}
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
@@ -221,7 +257,7 @@ const Auth = () => {
                       <Input
                         id="signin-password"
                         type="password"
-                        placeholder="••••••••"
+                        placeholder={t("auth.passwordPlaceholder")}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
@@ -234,7 +270,7 @@ const Auth = () => {
                       className="px-0 text-sm"
                       onClick={() => setShowResetPassword(true)}
                     >
-                      ¿Olvidaste tu contraseña?
+                      {t("auth.forgotPassword")}
                     </Button>
                     <Button type="submit" className="w-full" disabled={loading}>
                       {loading ? t("auth.signingIn") : t("auth.signIn")}
@@ -245,44 +281,44 @@ const Auth = () => {
                 <TabsContent value="signup">
                   <form onSubmit={handleSignUp} className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="signup-name">Nombre</Label>
+                      <Label htmlFor="signup-name">{t("auth.name")}</Label>
                       <Input
                         id="signup-name"
                         type="text"
-                        placeholder="Tu nombre"
+                        placeholder={t("auth.namePlaceholder")}
                         value={displayName}
                         onChange={(e) => setDisplayName(e.target.value)}
                         required
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="signup-email">Correo Electrónico</Label>
+                      <Label htmlFor="signup-email">{t("auth.email")}</Label>
                       <Input
                         id="signup-email"
                         type="email"
-                        placeholder="you@example.com"
+                        placeholder={t("auth.emailPlaceholder")}
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="signup-password">Contraseña</Label>
+                      <Label htmlFor="signup-password">{t("auth.password")}</Label>
                       <Input
                         id="signup-password"
                         type="password"
-                        placeholder="••••••••"
+                        placeholder={t("auth.passwordPlaceholder")}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required
                         minLength={6}
                       />
                       <p className="text-xs text-muted-foreground">
-                        Mínimo 6 caracteres
+                        {t("auth.passwordMinLength")}
                       </p>
                     </div>
                     <Button type="submit" className="w-full" disabled={loading}>
-                      {loading ? "Creando cuenta..." : "Crear Cuenta"}
+                      {loading ? t("auth.creatingAccount") : t("auth.createAccount")}
                     </Button>
                   </form>
                 </TabsContent>
