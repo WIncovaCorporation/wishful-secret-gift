@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from "@/components/ui/select";
-import { Gift, Plus, Trash2, ExternalLink, Sparkles, Loader2, Search, X } from "lucide-react";
+import { Gift, Plus, Trash2, ExternalLink, Sparkles, Loader2, Search, X, ShoppingBag, Store } from "lucide-react";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import LanguageSelector from "@/components/LanguageSelector";
@@ -65,6 +65,9 @@ const Lists = () => {
   const [smartOptions, setSmartOptions] = useState(getSmartOptions(""));
   const [mainCategory, setMainCategory] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
+  const [productSearchLoading, setProductSearchLoading] = useState(false);
+  const [foundProducts, setFoundProducts] = useState<any[]>([]);
+  const [showProducts, setShowProducts] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -307,6 +310,48 @@ const Lists = () => {
     );
   };
 
+  const handleSearchProducts = async () => {
+    if (!selectedCategory) {
+      toast.error("Primero selecciona una categoría");
+      return;
+    }
+
+    setProductSearchLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('search-products', {
+        body: { 
+          category: selectedCategory,
+          color: newItem.color || undefined,
+          size: newItem.size || undefined,
+          brand: newItem.brand || undefined,
+          budget: budget ? parseFloat(budget) : undefined
+        }
+      });
+
+      if (error) throw error;
+
+      setFoundProducts(data.products || []);
+      setShowProducts(true);
+      toast.success(`¡Encontré ${data.products.length} opciones reales!`);
+    } catch (error: any) {
+      toast.error(error.message || "Error al buscar productos");
+      console.error(error);
+    } finally {
+      setProductSearchLoading(false);
+    }
+  };
+
+  const handleSelectProduct = (product: any) => {
+    setNewItem({
+      ...newItem,
+      name: product.name,
+      reference_link: product.url,
+      notes: `${product.description} - Aprox. $${product.price} en ${product.store}`,
+    });
+    setShowProducts(false);
+    toast.success("Producto seleccionado. Ajusta los detalles si lo deseas.");
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 flex items-center justify-center">
@@ -485,6 +530,8 @@ const Lists = () => {
             setAiSuggestions([]);
             setMainCategory("");
             setSearchQuery("");
+            setFoundProducts([]);
+            setShowProducts(false);
           }
         }}>
           <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -616,8 +663,66 @@ const Lists = () => {
                 </div>
               )}
 
+              {/* Product Search Results */}
+              {showProducts && foundProducts.length > 0 && (
+                <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <ShoppingBag className="h-5 w-5 text-primary" />
+                      <h4 className="font-semibold text-lg">Productos reales encontrados</h4>
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={() => setShowProducts(false)}>
+                      Volver al formulario
+                    </Button>
+                  </div>
+                  <p className="text-sm text-muted-foreground">Toca un producto para agregarlo a tu lista</p>
+                  <div className="space-y-3 max-h-[420px] overflow-y-auto pr-2">
+                    {foundProducts.map((product, index) => (
+                      <button
+                        key={index}
+                        type="button"
+                        onClick={() => handleSelectProduct(product)}
+                        className="w-full text-left p-4 rounded-xl border-2 border-border hover:border-primary hover:bg-accent/50 transition-all duration-200 group"
+                      >
+                        <div className="space-y-3">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex-1">
+                              <p className="font-semibold text-base group-hover:text-primary transition-colors line-clamp-2">
+                                {product.name}
+                              </p>
+                              <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                                {product.description}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-lg font-bold text-primary">${product.price}</p>
+                              <p className="text-xs text-muted-foreground">USD</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Store className="h-4 w-4 text-muted-foreground" />
+                              <span className="text-sm font-medium text-muted-foreground">{product.store}</span>
+                            </div>
+                            <div className="flex items-center gap-1 text-xs text-primary group-hover:underline">
+                              <ExternalLink className="h-3 w-3" />
+                              Ver en tienda
+                            </div>
+                          </div>
+                          {product.image_description && (
+                            <p className="text-xs text-muted-foreground italic">
+                              {product.image_description}
+                            </p>
+                          )}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Manual Form - Progressive Disclosure */}
-              {!showSuggestions && (
+              {!showSuggestions && !showProducts && (
                 <form onSubmit={handleAddItem} className="space-y-6">
                   <div className="flex items-center gap-2 pb-2">
                     <div className="h-px flex-1 bg-border" />
@@ -744,6 +849,45 @@ const Lists = () => {
                         >
                           Cambiar
                         </Button>
+                      </div>
+                    )}
+
+                    {/* AI Product Search Button */}
+                    {selectedCategory && (
+                      <div className="p-4 bg-gradient-to-r from-primary/10 to-accent/10 rounded-xl border-2 border-primary/20 animate-in fade-in slide-in-from-top-2 duration-300">
+                        <div className="space-y-3">
+                          <div className="flex items-start gap-3">
+                            <div className="p-2 bg-primary/20 rounded-lg">
+                              <ShoppingBag className="h-5 w-5 text-primary" />
+                            </div>
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-sm">¿Quieres ver opciones reales en tiendas?</h4>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                La IA buscará productos reales con enlaces directos
+                              </p>
+                            </div>
+                          </div>
+                          <Button
+                            type="button"
+                            onClick={handleSearchProducts}
+                            disabled={productSearchLoading}
+                            variant="default"
+                            className="w-full shadow-lg"
+                            size="default"
+                          >
+                            {productSearchLoading ? (
+                              <>
+                                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                                Buscando en tiendas online...
+                              </>
+                            ) : (
+                              <>
+                                <ShoppingBag className="mr-2 h-5 w-5" />
+                                Buscar Productos Reales con IA
+                              </>
+                            )}
+                          </Button>
+                        </div>
                       </div>
                     )}
                   </div>

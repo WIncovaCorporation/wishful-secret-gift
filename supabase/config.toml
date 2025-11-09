@@ -2,3 +2,6 @@ project_id = "ghbksqyioendvispcseu"
 
 [functions.suggest-gift]
 verify_jwt = false
+
+[functions.search-products]
+verify_jwt = false
