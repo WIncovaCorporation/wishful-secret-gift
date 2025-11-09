@@ -1,20 +1,95 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Gift, Users, Sparkles, Shield } from "lucide-react";
+import { Gift, Users, Sparkles, Shield, LogOut, User } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import LanguageSelector from "@/components/LanguageSelector";
 import heroImage from "@/assets/hero-gifts.jpg";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import type { User as SupabaseUser } from "@supabase/supabase-js";
+import { toast } from "sonner";
 
 const Index = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const [user, setUser] = useState<SupabaseUser | null>(null);
+
+  useEffect(() => {
+    // Check current session
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      setUser(session?.user || null);
+    };
+    
+    checkSession();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      setUser(session?.user || null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut();
+      toast.success(t("dashboard.signedOut"));
+      setUser(null);
+    } catch (error) {
+      toast.error(t("dashboard.signOutFailed"));
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20">
-      {/* Language Selector - Fixed Top Right */}
-      <div className="fixed top-4 right-4 z-50">
-        <LanguageSelector />
-      </div>
+      {/* Header with User Info */}
+      <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-50">
+        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-warm rounded-xl flex items-center justify-center shadow-soft">
+              <Gift className="w-6 h-6 text-primary-foreground" />
+            </div>
+            <div>
+              <h1 className="text-lg font-bold">GiftApp</h1>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <LanguageSelector />
+            {user ? (
+              <div className="flex items-center gap-3">
+                <div className="hidden sm:flex items-center gap-2 px-3 py-2 bg-muted/50 rounded-lg">
+                  <User className="w-4 h-4 text-primary" />
+                  <span className="text-sm font-medium">
+                    {user.user_metadata?.display_name || user.email?.split('@')[0] || 'Usuario'}
+                  </span>
+                </div>
+                <Button 
+                  onClick={() => navigate("/dashboard")}
+                  size="sm"
+                  variant="outline"
+                >
+                  Dashboard
+                </Button>
+                <Button 
+                  onClick={handleSignOut}
+                  size="sm"
+                  variant="ghost"
+                >
+                  <LogOut className="w-4 h-4" />
+                </Button>
+              </div>
+            ) : (
+              <Button 
+                onClick={() => navigate("/auth")}
+                size="sm"
+              >
+                {t("auth.signIn")}
+              </Button>
+            )}
+          </div>
+        </div>
+      </header>
 
       {/* Hero Section */}
       <section className="relative overflow-hidden">
@@ -84,21 +159,25 @@ const Index = () => {
               icon={<Gift className="w-8 h-8" />}
               title={t("features.lists.title")}
               description={t("features.lists.description")}
+              onClick={() => navigate("/lists")}
             />
             <FeatureCard
               icon={<Users className="w-8 h-8" />}
               title={t("features.groups.title")}
               description={t("features.groups.description")}
+              onClick={() => navigate("/groups")}
             />
             <FeatureCard
               icon={<Sparkles className="w-8 h-8" />}
               title={t("features.events.title")}
               description={t("features.events.description")}
+              onClick={() => navigate("/events")}
             />
             <FeatureCard
               icon={<Shield className="w-8 h-8" />}
               title={t("features.privacy.title")}
               description={t("features.privacy.description")}
+              onClick={() => navigate("/dashboard")}
             />
           </div>
         </div>
@@ -129,17 +208,24 @@ const Index = () => {
   );
 };
 
-const FeatureCard = ({ icon, title, description }: { 
+const FeatureCard = ({ icon, title, description, onClick }: { 
   icon: React.ReactNode; 
   title: string; 
   description: string;
+  onClick?: () => void;
 }) => (
-  <div className="p-6 rounded-2xl border bg-card hover:shadow-medium transition-all">
+  <div 
+    onClick={onClick}
+    className="p-6 rounded-2xl border bg-card hover:shadow-medium transition-all cursor-pointer hover:scale-105 hover:border-primary/50"
+  >
     <div className="w-16 h-16 bg-gradient-warm rounded-2xl flex items-center justify-center text-primary-foreground mb-4 shadow-soft">
       {icon}
     </div>
     <h3 className="text-xl font-semibold mb-2">{title}</h3>
-    <p className="text-muted-foreground">{description}</p>
+    <p className="text-muted-foreground mb-3">{description}</p>
+    <div className="text-sm font-medium text-primary flex items-center gap-1">
+      Ir a {title} →
+    </div>
   </div>
 );
 
