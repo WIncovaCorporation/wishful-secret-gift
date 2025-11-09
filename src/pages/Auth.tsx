@@ -18,6 +18,8 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const [resetEmail, setResetEmail] = useState("");
+  const [showResetPassword, setShowResetPassword] = useState(false);
 
   useEffect(() => {
     // Check if user is already logged in
@@ -42,7 +44,7 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -55,9 +57,23 @@ const Auth = () => {
 
       if (error) throw error;
 
-      toast.success(t("auth.accountCreated"));
+      // Check if user already exists
+      if (data.user && data.user.identities && data.user.identities.length === 0) {
+        toast.error("Este correo ya está registrado. Por favor, inicia sesión.");
+        return;
+      }
+
+      toast.success("Cuenta creada exitosamente. ¡Bienvenido!");
+      // Clear form
+      setEmail("");
+      setPassword("");
+      setDisplayName("");
     } catch (error: any) {
-      toast.error(error.message || t("auth.signUpFailed"));
+      if (error.message.includes("already registered")) {
+        toast.error("Este correo ya está registrado. Por favor, inicia sesión.");
+      } else {
+        toast.error(error.message || "Error al crear la cuenta");
+      }
     } finally {
       setLoading(false);
     }
@@ -75,9 +91,37 @@ const Auth = () => {
 
       if (error) throw error;
 
-      toast.success(t("auth.welcomeBack"));
+      toast.success("¡Bienvenido de vuelta!");
+      // Clear form
+      setEmail("");
+      setPassword("");
     } catch (error: any) {
-      toast.error(error.message || t("auth.signInFailed"));
+      if (error.message.includes("Invalid login credentials")) {
+        toast.error("Correo o contraseña incorrectos. Verifica tus datos.");
+      } else {
+        toast.error(error.message || "Error al iniciar sesión");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: `${window.location.origin}/auth`,
+      });
+
+      if (error) throw error;
+
+      toast.success("Te hemos enviado un correo para restablecer tu contraseña");
+      setShowResetPassword(false);
+      setResetEmail("");
+    } catch (error: any) {
+      toast.error(error.message || "Error al enviar el correo de recuperación");
     } finally {
       setLoading(false);
     }
@@ -105,84 +149,145 @@ const Auth = () => {
             <CardDescription>{t("auth.description")}</CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="signin" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-4">
-                <TabsTrigger value="signin">{t("auth.signIn")}</TabsTrigger>
-                <TabsTrigger value="signup">{t("auth.signUp")}</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="signin">
-                <form onSubmit={handleSignIn} className="space-y-4">
+            {showResetPassword ? (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <h3 className="text-lg font-semibold">Recuperar Contraseña</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Ingresa tu correo y te enviaremos un enlace para restablecer tu contraseña
+                  </p>
+                </div>
+                <form onSubmit={handleResetPassword} className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="signin-email">{t("auth.email")}</Label>
+                    <Label htmlFor="reset-email">Correo Electrónico</Label>
                     <Input
-                      id="signin-email"
+                      id="reset-email"
                       type="email"
                       placeholder="you@example.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      value={resetEmail}
+                      onChange={(e) => setResetEmail(e.target.value)}
                       required
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signin-password">{t("auth.password")}</Label>
-                    <Input
-                      id="signin-password"
-                      type="password"
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                    />
+                  <div className="flex gap-2">
+                    <Button type="submit" className="flex-1" disabled={loading}>
+                      {loading ? "Enviando..." : "Enviar Enlace"}
+                    </Button>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      onClick={() => {
+                        setShowResetPassword(false);
+                        setResetEmail("");
+                      }}
+                      disabled={loading}
+                    >
+                      Cancelar
+                    </Button>
                   </div>
-                  <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? t("auth.signingIn") : t("auth.signIn")}
-                  </Button>
                 </form>
-              </TabsContent>
+              </div>
+            ) : (
+              <Tabs 
+                defaultValue="signin" 
+                className="w-full"
+                onValueChange={() => {
+                  // Clear form when switching tabs
+                  setEmail("");
+                  setPassword("");
+                  setDisplayName("");
+                }}
+              >
+                <TabsList className="grid w-full grid-cols-2 mb-4">
+                  <TabsTrigger value="signin">{t("auth.signIn")}</TabsTrigger>
+                  <TabsTrigger value="signup">{t("auth.signUp")}</TabsTrigger>
+                </TabsList>
 
-              <TabsContent value="signup">
-                <form onSubmit={handleSignUp} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-name">{t("auth.displayName")}</Label>
-                    <Input
-                      id="signup-name"
-                      type="text"
-                      placeholder={t("auth.displayName")}
-                      value={displayName}
-                      onChange={(e) => setDisplayName(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-email">{t("auth.email")}</Label>
-                    <Input
-                      id="signup-email"
-                      type="email"
-                      placeholder="you@example.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-password">{t("auth.password")}</Label>
-                    <Input
-                      id="signup-password"
-                      type="password"
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                      minLength={6}
-                    />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? t("auth.creatingAccount") : t("auth.createAccount")}
-                  </Button>
-                </form>
-              </TabsContent>
-            </Tabs>
+                <TabsContent value="signin">
+                  <form onSubmit={handleSignIn} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="signin-email">{t("auth.email")}</Label>
+                      <Input
+                        id="signin-email"
+                        type="email"
+                        placeholder="you@example.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="signin-password">{t("auth.password")}</Label>
+                      <Input
+                        id="signin-password"
+                        type="password"
+                        placeholder="••••••••"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                        minLength={6}
+                      />
+                    </div>
+                    <Button 
+                      type="button"
+                      variant="link"
+                      className="px-0 text-sm"
+                      onClick={() => setShowResetPassword(true)}
+                    >
+                      ¿Olvidaste tu contraseña?
+                    </Button>
+                    <Button type="submit" className="w-full" disabled={loading}>
+                      {loading ? t("auth.signingIn") : t("auth.signIn")}
+                    </Button>
+                  </form>
+                </TabsContent>
+
+                <TabsContent value="signup">
+                  <form onSubmit={handleSignUp} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-name">Nombre</Label>
+                      <Input
+                        id="signup-name"
+                        type="text"
+                        placeholder="Tu nombre"
+                        value={displayName}
+                        onChange={(e) => setDisplayName(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-email">Correo Electrónico</Label>
+                      <Input
+                        id="signup-email"
+                        type="email"
+                        placeholder="you@example.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="signup-password">Contraseña</Label>
+                      <Input
+                        id="signup-password"
+                        type="password"
+                        placeholder="••••••••"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                        minLength={6}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Mínimo 6 caracteres
+                      </p>
+                    </div>
+                    <Button type="submit" className="w-full" disabled={loading}>
+                      {loading ? "Creando cuenta..." : "Crear Cuenta"}
+                    </Button>
+                  </form>
+                </TabsContent>
+              </Tabs>
+            )}
           </CardContent>
         </Card>
       </div>
