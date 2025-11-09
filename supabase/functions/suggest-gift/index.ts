@@ -11,7 +11,7 @@ serve(async (req) => {
   }
 
   try {
-    const { context, existingItems } = await req.json();
+    const { context, existingItems, budget } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     
     if (!LOVABLE_API_KEY) {
@@ -21,16 +21,18 @@ serve(async (req) => {
     const systemPrompt = `Eres un asistente experto en sugerencias de regalos. Tu tarea es generar 5 sugerencias creativas, prácticas y variadas de regalos basándote en el contexto proporcionado.
 
 IMPORTANTE:
-- Proporciona opciones de diferentes rangos de precio
+- ${budget ? `RESPETA EL PRESUPUESTO: Las sugerencias deben estar dentro de $${budget} USD aproximadamente` : 'Proporciona opciones de diferentes rangos de precio'}
 - Varía entre categorías (electrónica, ropa, hogar, experiencias, etc.)
 - Sé específico con marcas y modelos cuando sea relevante
 - Considera la ocasión y el presupuesto si se menciona
-- Evita duplicados con los regalos ya en la lista`;
+- Evita duplicados con los regalos ya en la lista
+- Si el presupuesto es limitado, sugiere opciones creativas y económicas pero de calidad`;
 
     const userPrompt = `Contexto: ${context}
+${budget ? `\nPresupuesto máximo: $${budget} USD` : ''}
 ${existingItems && existingItems.length > 0 ? `\nRegalos ya en la lista: ${existingItems.map((item: any) => item.name).join(", ")}` : ""}
 
-Genera 5 sugerencias de regalos variadas y creativas.`;
+Genera 5 sugerencias de regalos variadas y creativas ${budget ? `que se ajusten al presupuesto de $${budget} USD` : ''}.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",

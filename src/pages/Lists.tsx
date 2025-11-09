@@ -60,6 +60,7 @@ const Lists = () => {
   const [aiSuggestions, setAiSuggestions] = useState<any[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [aiContext, setAiContext] = useState("");
+  const [budget, setBudget] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [smartOptions, setSmartOptions] = useState(getSmartOptions(""));
 
@@ -224,10 +225,13 @@ const Lists = () => {
     setAiLoading(true);
     try {
       const currentList = lists.find(l => l.id === selectedList);
+      const budgetValue = budget ? parseFloat(budget) : undefined;
+      
       const { data, error } = await supabase.functions.invoke('suggest-gift', {
         body: { 
           context: aiContext,
-          existingItems: currentList?.items || []
+          existingItems: currentList?.items || [],
+          budget: budgetValue
         }
       });
 
@@ -442,6 +446,7 @@ const Lists = () => {
           if (!open) {
             setShowSuggestions(false);
             setAiContext("");
+            setBudget("");
             setAiSuggestions([]);
           }
         }}>
@@ -456,17 +461,40 @@ const Lists = () => {
               <div className="space-y-3 p-4 bg-gradient-to-r from-primary/5 to-accent/5 rounded-lg border">
                 <div className="flex items-start gap-2">
                   <Sparkles className="w-5 h-5 text-primary mt-1" />
-                  <div className="flex-1">
-                    <Label htmlFor="ai-context" className="text-base font-semibold">¿Necesitas ideas?</Label>
-                    <p className="text-sm text-muted-foreground mb-2">Describe para quién es el regalo, la ocasión, presupuesto, gustos...</p>
-                    <Textarea
-                      id="ai-context"
-                      value={aiContext}
-                      onChange={(e) => setAiContext(e.target.value)}
-                      placeholder="Ej: Para mi hermana de 25 años, le encanta la tecnología y el fitness, presupuesto hasta $200"
-                      rows={2}
-                      className="mb-2"
-                    />
+                  <div className="flex-1 space-y-3">
+                    <div>
+                      <Label htmlFor="ai-context" className="text-base font-semibold">¿Necesitas ideas?</Label>
+                      <p className="text-sm text-muted-foreground mb-2">Describe para quién es el regalo, la ocasión, gustos...</p>
+                      <Textarea
+                        id="ai-context"
+                        value={aiContext}
+                        onChange={(e) => setAiContext(e.target.value)}
+                        placeholder="Ej: Para mi hermana de 25 años, le encanta la tecnología y el fitness"
+                        rows={2}
+                      />
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="budget" className="text-sm font-medium">Presupuesto (opcional)</Label>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-lg font-semibold text-muted-foreground">$</span>
+                        <Input
+                          id="budget"
+                          type="number"
+                          min="0"
+                          step="1"
+                          value={budget}
+                          onChange={(e) => setBudget(e.target.value)}
+                          placeholder="Ej: 50, 100, 200..."
+                          className="flex-1"
+                        />
+                        <span className="text-sm text-muted-foreground">USD</span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {budget ? `La IA buscará opciones de hasta $${budget}` : 'Sin límite de precio'}
+                      </p>
+                    </div>
+
                     <Button
                       type="button"
                       onClick={handleAISuggestions}
