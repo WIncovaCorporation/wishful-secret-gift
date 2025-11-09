@@ -1,1 +1,4 @@
 project_id = "ghbksqyioendvispcseu"
+
+[functions.suggest-gift]
+verify_jwt = false
