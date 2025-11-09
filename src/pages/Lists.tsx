@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from "@/components/ui/select";
 import { Gift, Plus, Trash2, ExternalLink, Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -452,234 +452,314 @@ const Lists = () => {
         }}>
           <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Agregar Regalo</DialogTitle>
-              <DialogDescription>Usa la IA o completa manualmente los detalles</DialogDescription>
+              <DialogTitle>Agregar Regalo a Mi Lista</DialogTitle>
+              <DialogDescription>Busca con IA, selecciona por categoría o completa manualmente</DialogDescription>
             </DialogHeader>
 
-            {/* AI Suggestions Section */}
-            {!showSuggestions && (
-              <div className="space-y-3 p-4 bg-gradient-to-r from-primary/5 to-accent/5 rounded-lg border">
-                <div className="flex items-start gap-2">
-                  <Sparkles className="w-5 h-5 text-primary mt-1" />
-                  <div className="flex-1 space-y-3">
-                    <div>
-                      <Label htmlFor="ai-context" className="text-base font-semibold">¿Necesitas ideas?</Label>
-                      <p className="text-sm text-muted-foreground mb-2">Describe para quién es el regalo, la ocasión, gustos...</p>
-                      <Textarea
-                        id="ai-context"
-                        value={aiContext}
-                        onChange={(e) => setAiContext(e.target.value)}
-                        placeholder="Ej: Para mi hermana de 25 años, le encanta la tecnología y el fitness"
-                        rows={2}
-                      />
+            <div className="space-y-6 py-4">
+              {/* AI-Powered Smart Search Section */}
+              {!showSuggestions && (
+                <div className="space-y-4 p-4 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent rounded-xl border-2 border-primary/20">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-primary/20 rounded-lg">
+                      <Sparkles className="h-5 w-5 text-primary" />
                     </div>
-                    
                     <div>
-                      <Label htmlFor="budget" className="text-sm font-medium">Presupuesto (opcional)</Label>
-                      <div className="flex items-center gap-2 mt-1">
-                        <span className="text-lg font-semibold text-muted-foreground">$</span>
-                        <Input
-                          id="budget"
-                          type="number"
-                          min="0"
-                          step="1"
-                          value={budget}
-                          onChange={(e) => setBudget(e.target.value)}
-                          placeholder="Ej: 50, 100, 200..."
-                          className="flex-1"
-                        />
-                        <span className="text-sm text-muted-foreground">USD</span>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {budget ? `La IA buscará opciones de hasta $${budget}` : 'Sin límite de precio'}
-                      </p>
+                      <h3 className="font-semibold text-base">¿Qué te gustaría recibir?</h3>
+                      <p className="text-xs text-muted-foreground">Describe el regalo y la IA te dará opciones personalizadas</p>
                     </div>
-
-                    <Button
-                      type="button"
-                      onClick={handleAISuggestions}
-                      disabled={aiLoading || !aiContext.trim()}
-                      className="w-full"
-                      variant="default"
-                    >
-                      {aiLoading ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Generando sugerencias...
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles className="w-4 h-4 mr-2" />
-                          Generar Sugerencias con IA
-                        </>
-                      )}
-                    </Button>
                   </div>
-                </div>
-              </div>
-            )}
+                  
+                  <Textarea
+                    placeholder="Ej: unos auriculares inalámbricos para el gym, una camisa casual azul, un libro de cocina italiana..."
+                    value={aiContext}
+                    onChange={(e) => setAiContext(e.target.value)}
+                    className="min-h-[80px] resize-none"
+                  />
+                  
+                  <div className="space-y-2">
+                    <Label className="text-sm">Presupuesto (opcional)</Label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">$</span>
+                      <Input
+                        type="number"
+                        placeholder="50"
+                        value={budget}
+                        onChange={(e) => setBudget(e.target.value)}
+                        className="pl-8 pr-16"
+                        min="0"
+                        step="1"
+                      />
+                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-medium">USD</span>
+                    </div>
+                    {budget && (
+                      <p className="text-xs text-primary/80 flex items-center gap-1">
+                        <Sparkles className="h-3 w-3" />
+                        La IA buscará opciones de hasta ${budget}
+                      </p>
+                    )}
+                  </div>
 
-            {/* Show AI Suggestions */}
-            {showSuggestions && aiSuggestions.length > 0 && (
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <h4 className="font-semibold text-lg">Sugerencias de IA</h4>
-                  <Button variant="ghost" size="sm" onClick={() => setShowSuggestions(false)}>
-                    Volver
+                  <Button
+                    type="button"
+                    onClick={handleAISuggestions}
+                    disabled={aiLoading || !aiContext.trim()}
+                    className="w-full shadow-lg"
+                    size="lg"
+                  >
+                    {aiLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                        Buscando opciones perfectas...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="mr-2 h-5 w-5" />
+                        Generar Ideas con IA
+                      </>
+                    )}
                   </Button>
                 </div>
-                <div className="grid gap-3 max-h-[400px] overflow-y-auto">
-                  {aiSuggestions.map((suggestion, idx) => (
-                    <Card key={idx} className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => handleSelectSuggestion(suggestion)}>
-                      <CardContent className="p-4">
-                        <div className="flex justify-between items-start">
-                          <div className="flex-1">
-                            <h5 className="font-semibold">{suggestion.name}</h5>
-                            <p className="text-sm text-muted-foreground mt-1">{suggestion.notes}</p>
-                            <div className="flex gap-2 mt-2 flex-wrap">
-                              <span className="text-xs px-2 py-1 bg-primary/10 rounded">{suggestion.category}</span>
-                              {suggestion.brand && <span className="text-xs px-2 py-1 bg-accent/10 rounded">{suggestion.brand}</span>}
-                              <span className={`text-xs px-2 py-1 rounded ${
-                                suggestion.priority === "high" ? "bg-destructive/20 text-destructive" :
-                                suggestion.priority === "medium" ? "bg-accent/20" : "bg-muted"
+              )}
+
+              {/* AI Suggestions Display */}
+              {showSuggestions && aiSuggestions.length > 0 && (
+                <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="h-5 w-5 text-primary" />
+                      <h4 className="font-semibold text-lg">Ideas personalizadas para ti</h4>
+                    </div>
+                    <Button variant="ghost" size="sm" onClick={() => setShowSuggestions(false)}>
+                      Buscar de nuevo
+                    </Button>
+                  </div>
+                  <p className="text-sm text-muted-foreground">Toca una opción para auto-completar el formulario</p>
+                  <div className="space-y-3 max-h-[420px] overflow-y-auto pr-2">
+                    {aiSuggestions.map((suggestion, index) => (
+                      <button
+                        key={index}
+                        type="button"
+                        onClick={() => handleSelectSuggestion(suggestion)}
+                        className="w-full text-left p-4 rounded-xl border-2 border-border hover:border-primary hover:bg-accent/50 transition-all duration-200 group"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1 space-y-2">
+                            <div className="flex items-start justify-between gap-2">
+                              <p className="font-semibold text-base group-hover:text-primary transition-colors">{suggestion.name}</p>
+                              <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${
+                                suggestion.priority === "high" ? "bg-destructive/15 text-destructive" :
+                                suggestion.priority === "medium" ? "bg-primary/15 text-primary" :
+                                "bg-muted text-muted-foreground"
                               }`}>
-                                Prioridad: {suggestion.priority === "high" ? "Alta" : suggestion.priority === "medium" ? "Media" : "Baja"}
+                                {suggestion.priority === "high" ? "Alta" : suggestion.priority === "medium" ? "Media" : "Baja"}
                               </span>
+                            </div>
+                            <p className="text-sm text-muted-foreground leading-relaxed">{suggestion.notes}</p>
+                            <div className="flex flex-wrap gap-2">
+                              <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-secondary/80 text-xs font-medium">
+                                {suggestion.category}
+                              </span>
+                              {suggestion.brand && (
+                                <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-primary/10 text-primary text-xs font-medium">
+                                  {suggestion.brand}
+                                </span>
+                              )}
+                              {suggestion.color && (
+                                <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-accent/30 text-xs font-medium">
+                                  {suggestion.color}
+                                </span>
+                              )}
                             </div>
                           </div>
                         </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Manual Form */}
-            {!showSuggestions && (
-              <form onSubmit={handleAddItem} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="col-span-2">
-                    <Label htmlFor="item-name">Nombre del Regalo *</Label>
-                    <Input
-                      id="item-name"
-                      value={newItem.name}
-                      onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
-                      placeholder="Ej: iPhone 15 Pro"
-                      required
-                    />
+                      </button>
+                    ))}
                   </div>
-                  
-                  <div className="col-span-2">
-                    <Label htmlFor="item-category">Categoría *</Label>
-                    <Select value={selectedCategory} onValueChange={handleCategoryChange} required>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecciona una categoría" />
+                </div>
+              )}
+
+              {/* Manual Form - Progressive Disclosure */}
+              {!showSuggestions && (
+                <form onSubmit={handleAddItem} className="space-y-6">
+                  <div className="flex items-center gap-2 pb-2">
+                    <div className="h-px flex-1 bg-border" />
+                    <span className="text-sm text-muted-foreground font-medium">o completa manualmente</span>
+                    <div className="h-px flex-1 bg-border" />
+                  </div>
+
+                  {/* Step 1: Category First */}
+                  <div className="space-y-3">
+                    <Label htmlFor="category" className="text-base font-semibold flex items-center gap-2">
+                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/20 text-primary text-xs font-bold">1</span>
+                      ¿Qué tipo de regalo buscas? *
+                    </Label>
+                    <Select 
+                      value={selectedCategory} 
+                      onValueChange={handleCategoryChange}
+                    >
+                      <SelectTrigger id="category" className="h-11">
+                        <SelectValue placeholder="Elige una categoría" />
                       </SelectTrigger>
-                      <SelectContent className="max-h-[300px]">
+                      <SelectContent className="max-h-[320px]">
                         {Object.entries(GIFT_CATEGORIES).map(([mainCat, subCats]) => (
-                          <div key={mainCat}>
-                            <div className="px-2 py-1.5 text-sm font-semibold text-muted-foreground">{mainCat}</div>
-                            {subCats.map((subCat) => (
-                              <SelectItem key={subCat} value={subCat}>{subCat}</SelectItem>
-                            ))}
-                          </div>
+                          <SelectGroup key={mainCat}>
+                            <SelectLabel className="text-primary font-semibold">{mainCat}</SelectLabel>
+                            {subCats.length > 0 ? (
+                              subCats.map((subCat) => (
+                                <SelectItem key={subCat} value={subCat} className="pl-6">
+                                  {subCat}
+                                </SelectItem>
+                              ))
+                            ) : (
+                              <SelectItem value={mainCat}>{mainCat}</SelectItem>
+                            )}
+                          </SelectGroup>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
 
-                  {smartOptions.needsColor && (
-                    <div>
-                      <Label htmlFor="item-color">Color</Label>
-                      <Select value={newItem.color} onValueChange={(value) => setNewItem({ ...newItem, color: value })}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecciona un color" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {COMMON_COLORS.map((color) => (
-                            <SelectItem key={color} value={color}>{color}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                  {/* Step 2: Name appears after category */}
+                  {selectedCategory && (
+                    <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                      <Label htmlFor="name" className="text-base font-semibold flex items-center gap-2">
+                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/20 text-primary text-xs font-bold">2</span>
+                        Especifica el regalo *
+                      </Label>
+                      <Input
+                        id="name"
+                        placeholder={`Ej: ${
+                          selectedCategory === "Smartphone" ? "iPhone 15 Pro 256GB" :
+                          selectedCategory === "Camisa" ? "Camisa de vestir slim fit" :
+                          selectedCategory === "Laptop" ? "MacBook Air M2 13 pulgadas" :
+                          selectedCategory === "Zapatos" ? "Nike Air Max 90" :
+                          "Modelo o descripción específica"
+                        }`}
+                        value={newItem.name}
+                        onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
+                        className="h-11"
+                        required
+                      />
                     </div>
                   )}
 
-                  {smartOptions.needsSize && (
-                    <div>
-                      <Label htmlFor="item-size">Talla/Medida</Label>
-                      <Select value={newItem.size} onValueChange={(value) => setNewItem({ ...newItem, size: value })}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecciona talla" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {(smartOptions.sizeType === "shoe" ? SHOE_SIZES : CLOTHING_SIZES).map((size) => (
-                            <SelectItem key={size} value={size}>{size}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                  {/* Step 3: Smart fields appear based on category */}
+                  {selectedCategory && newItem.name && (
+                    <div className="space-y-5 animate-in fade-in slide-in-from-top-2 duration-300">
+                      <Label className="text-base font-semibold flex items-center gap-2">
+                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/20 text-primary text-xs font-bold">3</span>
+                        Detalles específicos (opcional)
+                      </Label>
+                      
+                      <div className="grid grid-cols-2 gap-4 pl-8">
+                        {smartOptions.needsColor && (
+                          <div className="space-y-2">
+                            <Label htmlFor="color" className="text-sm font-medium">Color</Label>
+                            <Select value={newItem.color} onValueChange={(value) => setNewItem({ ...newItem, color: value })}>
+                              <SelectTrigger id="color">
+                                <SelectValue placeholder="Elige color" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {COMMON_COLORS.map((color) => (
+                                  <SelectItem key={color} value={color}>
+                                    {color}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
+
+                        {smartOptions.needsSize && (
+                          <div className="space-y-2">
+                            <Label htmlFor="size" className="text-sm font-medium">Talla/Medida</Label>
+                            <Select value={newItem.size} onValueChange={(value) => setNewItem({ ...newItem, size: value })}>
+                              <SelectTrigger id="size">
+                                <SelectValue placeholder="Elige talla" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {(smartOptions.sizeType === "shoe" ? SHOE_SIZES : CLOTHING_SIZES).map((size) => (
+                                  <SelectItem key={size} value={size}>
+                                    {size}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
+                      </div>
+
+                      {smartOptions.suggestedBrands.length > 0 && (
+                        <div className="space-y-2 pl-8">
+                          <Label htmlFor="brand" className="text-sm font-medium">Marca preferida</Label>
+                          <Select value={newItem.brand} onValueChange={(value) => setNewItem({ ...newItem, brand: value })}>
+                            <SelectTrigger id="brand">
+                              <SelectValue placeholder="Selecciona una marca" />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-[200px]">
+                              {smartOptions.suggestedBrands.map((brand) => (
+                                <SelectItem key={brand} value={brand}>
+                                  {brand}
+                                </SelectItem>
+                              ))}
+                              <SelectItem value="Otra">Otra marca</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+
+                      <div className="space-y-2 pl-8">
+                        <Label htmlFor="priority" className="text-sm font-medium">¿Qué tan importante es?</Label>
+                        <Select value={newItem.priority} onValueChange={(value: any) => setNewItem({ ...newItem, priority: value })}>
+                          <SelectTrigger id="priority">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="high">🔥 Alta prioridad</SelectItem>
+                            <SelectItem value="medium">⭐ Prioridad media</SelectItem>
+                            <SelectItem value="low">💭 Baja prioridad</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2 pl-8">
+                        <Label htmlFor="url" className="text-sm font-medium">Enlace de referencia</Label>
+                        <Input
+                          id="url"
+                          type="url"
+                          placeholder="https://amazon.com/producto"
+                          value={newItem.reference_link}
+                          onChange={(e) => setNewItem({ ...newItem, reference_link: e.target.value })}
+                        />
+                        <p className="text-xs text-muted-foreground">Link al producto para que otros sepan exactamente cuál es</p>
+                      </div>
+
+                      <div className="space-y-2 pl-8">
+                        <Label htmlFor="notes" className="text-sm font-medium">Notas adicionales</Label>
+                        <Textarea
+                          id="notes"
+                          placeholder="Ej: Prefiero el modelo más reciente, necesito que sea compatible con iPhone..."
+                          value={newItem.notes}
+                          onChange={(e) => setNewItem({ ...newItem, notes: e.target.value })}
+                          className="min-h-[80px] resize-none"
+                        />
+                      </div>
                     </div>
                   )}
 
-                  {smartOptions.suggestedBrands.length > 0 && (
-                    <div className="col-span-2">
-                      <Label htmlFor="item-brand">Marca</Label>
-                      <Select value={newItem.brand} onValueChange={(value) => setNewItem({ ...newItem, brand: value })}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecciona una marca" />
-                        </SelectTrigger>
-                        <SelectContent className="max-h-[200px]">
-                          {smartOptions.suggestedBrands.map((brand) => (
-                            <SelectItem key={brand} value={brand}>{brand}</SelectItem>
-                          ))}
-                          <SelectItem value="Otra">Otra marca...</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-
-                  <div className="col-span-2">
-                    <Label htmlFor="item-priority">Prioridad</Label>
-                    <Select
-                      value={newItem.priority}
-                      onValueChange={(value) => setNewItem({ ...newItem, priority: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="low">Baja</SelectItem>
-                        <SelectItem value="medium">Media</SelectItem>
-                        <SelectItem value="high">Alta</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  
-                  <div className="col-span-2">
-                    <Label htmlFor="item-link">Enlace de Referencia</Label>
-                    <Input
-                      id="item-link"
-                      type="url"
-                      value={newItem.reference_link}
-                      onChange={(e) => setNewItem({ ...newItem, reference_link: e.target.value })}
-                      placeholder="https://amazon.com/producto"
-                    />
-                  </div>
-                  
-                  <div className="col-span-2">
-                    <Label htmlFor="item-notes">Notas Adicionales</Label>
-                    <Textarea
-                      id="item-notes"
-                      value={newItem.notes}
-                      onChange={(e) => setNewItem({ ...newItem, notes: e.target.value })}
-                      placeholder="Cualquier detalle adicional que ayude..."
-                      rows={3}
-                    />
-                  </div>
-                </div>
-                <Button type="submit" className="w-full">Agregar Regalo</Button>
-              </form>
-            )}
+                  <Button 
+                    type="submit" 
+                    className="w-full h-11 shadow-lg" 
+                    size="lg"
+                    disabled={!selectedCategory || !newItem.name}
+                  >
+                    <Plus className="mr-2 h-5 w-5" />
+                    Agregar a Mi Lista
+                  </Button>
+                </form>
+              )}
+            </div>
           </DialogContent>
         </Dialog>
       </main>
