@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -68,6 +68,8 @@ const Lists = () => {
   const [productSearchLoading, setProductSearchLoading] = useState(false);
   const [foundProducts, setFoundProducts] = useState<any[]>([]);
   const [showProducts, setShowProducts] = useState(false);
+  const formScrollRef = useRef<HTMLDivElement>(null);
+  const categoryRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     checkAuth();
@@ -275,12 +277,22 @@ const Lists = () => {
     setNewItem({ ...newItem, category });
     setSelectedCategory(category);
     setSmartOptions(getSmartOptions(category));
+    
+    // Auto-scroll to show the new fields
+    setTimeout(() => {
+      categoryRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 100);
   };
 
   const handleMainCategoryChange = (category: string) => {
     setMainCategory(category);
     setSelectedCategory("");
     setSearchQuery("");
+    
+    // Auto-scroll to show subcategories
+    setTimeout(() => {
+      formScrollRef.current?.scrollTo({ top: formScrollRef.current.scrollHeight, behavior: 'smooth' });
+    }, 100);
   };
 
   const getFilteredSubcategories = () => {
@@ -534,13 +546,13 @@ const Lists = () => {
             setShowProducts(false);
           }
         }}>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
             <DialogHeader>
               <DialogTitle>Agregar Regalo a Mi Lista</DialogTitle>
               <DialogDescription>Busca con IA, selecciona por categoría o completa manualmente</DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-6 py-4">
+            <div ref={formScrollRef} className="space-y-6 py-4 overflow-y-auto flex-1">
               {/* AI-Powered Smart Search Section */}
               {!showSuggestions && (
                 <div className="space-y-4 p-4 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent rounded-xl border-2 border-primary/20">
@@ -743,7 +755,15 @@ const Lists = () => {
                       <Input
                         placeholder="Busca directamente: camisa, laptop, juego..."
                         value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onChange={(e) => {
+                          setSearchQuery(e.target.value);
+                          // Auto-scroll when user types to show results
+                          if (e.target.value.trim()) {
+                            setTimeout(() => {
+                              formScrollRef.current?.scrollTo({ top: formScrollRef.current.scrollHeight, behavior: 'smooth' });
+                            }, 100);
+                          }
+                        }}
                         className="pl-10 pr-10 h-11"
                       />
                       {searchQuery && (
@@ -759,9 +779,12 @@ const Lists = () => {
 
                     {/* Search Results */}
                     {searchQuery.trim() && getSearchResults().length > 0 && (
-                      <div className="space-y-2 max-h-[240px] overflow-y-auto p-3 bg-accent/30 rounded-lg border">
-                        <p className="text-xs text-muted-foreground font-medium mb-2">Resultados de búsqueda:</p>
-                        {getSearchResults().slice(0, 8).map((result, idx) => (
+                      <div className="space-y-2 max-h-[280px] overflow-y-auto p-4 bg-gradient-to-br from-primary/10 to-accent/10 rounded-xl border-2 border-primary/30 shadow-lg">
+                        <div className="flex items-center gap-2 mb-3">
+                          <Search className="h-4 w-4 text-primary" />
+                          <p className="text-sm font-semibold text-primary">Resultados para "{searchQuery}":</p>
+                        </div>
+                        {getSearchResults().slice(0, 10).map((result, idx) => (
                           <button
                             key={idx}
                             type="button"
@@ -770,12 +793,24 @@ const Lists = () => {
                               setMainCategory(result.main);
                               setSearchQuery("");
                             }}
-                            className="w-full text-left px-3 py-2 rounded-md hover:bg-primary/10 transition-colors border border-transparent hover:border-primary/20"
+                            className="w-full text-left px-4 py-3 rounded-lg hover:bg-primary/15 transition-all border-2 border-transparent hover:border-primary/40 bg-card"
                           >
-                            <p className="font-medium text-sm">{result.sub}</p>
-                            <p className="text-xs text-muted-foreground">{result.main}</p>
+                            <p className="font-semibold text-base">{result.sub}</p>
+                            <p className="text-xs text-muted-foreground mt-1">Categoría: {result.main}</p>
                           </button>
                         ))}
+                      </div>
+                    )}
+
+                    {/* No results message */}
+                    {searchQuery.trim() && getSearchResults().length === 0 && (
+                      <div className="p-4 bg-muted/50 rounded-lg border text-center">
+                        <p className="text-sm text-muted-foreground">
+                          No se encontraron resultados para "{searchQuery}"
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Intenta con otro término o elige una categoría abajo
+                        </p>
                       </div>
                     )}
 
@@ -894,7 +929,7 @@ const Lists = () => {
 
                   {/* Step 2: Name and details appear after category */}
                   {selectedCategory && (
-                    <div className="space-y-5 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <div ref={categoryRef} className="space-y-5 animate-in fade-in slide-in-from-top-2 duration-300">
                       <div className="space-y-3">
                         <Label htmlFor="name" className="text-base font-semibold flex items-center gap-2">
                           <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/20 text-primary text-xs font-bold">2</span>
