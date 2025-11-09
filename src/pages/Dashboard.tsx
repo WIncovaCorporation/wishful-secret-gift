@@ -5,10 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Gift, Users, Calendar, LogOut, Plus } from "lucide-react";
 import { toast } from "sonner";
+import { useLanguage } from "@/contexts/LanguageContext";
+import LanguageSelector from "@/components/LanguageSelector";
 import type { User } from "@supabase/supabase-js";
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
@@ -59,10 +62,10 @@ const Dashboard = () => {
   const handleSignOut = async () => {
     try {
       await supabase.auth.signOut();
-      toast.success("Signed out successfully");
+      toast.success(t("dashboard.signedOut"));
       navigate("/");
     } catch (error) {
-      toast.error("Failed to sign out");
+      toast.error(t("dashboard.signOutFailed"));
     }
   };
 
@@ -71,7 +74,7 @@ const Dashboard = () => {
       <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading...</p>
+          <p className="text-muted-foreground">{t("dashboard.loading")}</p>
         </div>
       </div>
     );
@@ -88,13 +91,16 @@ const Dashboard = () => {
             </div>
             <div>
               <h1 className="text-xl font-bold">GiftApp</h1>
-              <p className="text-sm text-muted-foreground">Welcome back!</p>
+              <p className="text-sm text-muted-foreground">{t("dashboard.welcomeBack")}</p>
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={handleSignOut}>
-            <LogOut className="w-4 h-4 mr-2" />
-            Sign Out
-          </Button>
+          <div className="flex items-center gap-2">
+            <LanguageSelector />
+            <Button variant="outline" size="sm" onClick={handleSignOut}>
+              <LogOut className="w-4 h-4 mr-2" />
+              {t("dashboard.signOut")}
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -102,14 +108,14 @@ const Dashboard = () => {
       <main className="container mx-auto px-4 py-8">
         {/* Quick Actions */}
         <div className="mb-8">
-          <h2 className="text-2xl font-bold mb-4">Quick Actions</h2>
+          <h2 className="text-2xl font-bold mb-4">{t("dashboard.quickActions")}</h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <Button
               onClick={() => navigate("/lists")}
               className="h-auto py-6 flex-col gap-2 shadow-medium hover:shadow-large transition-all"
             >
               <Plus className="w-6 h-6" />
-              <span>Create New List</span>
+              <span>{t("dashboard.createList")}</span>
             </Button>
             <Button
               onClick={() => navigate("/groups")}
@@ -117,7 +123,7 @@ const Dashboard = () => {
               className="h-auto py-6 flex-col gap-2 shadow-medium hover:shadow-large transition-all"
             >
               <Users className="w-6 h-6" />
-              <span>Join or Create Group</span>
+              <span>{t("dashboard.joinGroup")}</span>
             </Button>
             <Button
               onClick={() => navigate("/events")}
@@ -125,34 +131,34 @@ const Dashboard = () => {
               className="h-auto py-6 flex-col gap-2 shadow-soft hover:shadow-medium transition-all"
             >
               <Calendar className="w-6 h-6" />
-              <span>Manage Events</span>
+              <span>{t("dashboard.manageEvents")}</span>
             </Button>
           </div>
         </div>
 
         {/* Stats Overview */}
         <div className="mb-8">
-          <h2 className="text-2xl font-bold mb-4">Your Overview</h2>
+          <h2 className="text-2xl font-bold mb-4">{t("dashboard.overview")}</h2>
           <div className="grid sm:grid-cols-3 gap-6">
             <StatsCard
               icon={<Gift className="w-8 h-8" />}
-              title="My Lists"
+              title={t("dashboard.myLists")}
               value={stats.myLists}
-              description="Gift lists created"
+              description={t("dashboard.listsCreated")}
               gradient="warm"
             />
             <StatsCard
               icon={<Users className="w-8 h-8" />}
-              title="My Groups"
+              title={t("dashboard.myGroups")}
               value={stats.myGroups}
-              description="Groups joined"
+              description={t("dashboard.groupsJoined")}
               gradient="mint"
             />
             <StatsCard
               icon={<Calendar className="w-8 h-8" />}
-              title="Events"
+              title={t("dashboard.events")}
               value={stats.upcomingEvents}
-              description="Upcoming occasions"
+              description={t("dashboard.upcomingOccasions")}
               gradient="hero"
             />
           </div>
@@ -161,14 +167,14 @@ const Dashboard = () => {
         {/* Recent Activity */}
         <Card className="shadow-medium">
           <CardHeader>
-            <CardTitle>Getting Started</CardTitle>
-            <CardDescription>Complete these steps to make the most of GiftApp</CardDescription>
+            <CardTitle>{t("dashboard.gettingStarted")}</CardTitle>
+            <CardDescription>{t("dashboard.gettingStartedDesc")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <ChecklistItem completed={stats.myLists > 0} text="Create your first gift list" />
-            <ChecklistItem completed={stats.myGroups > 0} text="Join or create a group" />
-            <ChecklistItem completed={false} text="Invite friends to your group" />
-            <ChecklistItem completed={false} text="Set up a secret santa exchange" />
+            <ChecklistItem completed={stats.myLists > 0} text={t("dashboard.step1")} />
+            <ChecklistItem completed={stats.myGroups > 0} text={t("dashboard.step2")} />
+            <ChecklistItem completed={false} text={t("dashboard.step3")} />
+            <ChecklistItem completed={false} text={t("dashboard.step4")} />
           </CardContent>
         </Card>
       </main>

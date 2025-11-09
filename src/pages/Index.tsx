@@ -1,13 +1,21 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { Gift, Users, Sparkles, Shield } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
+import LanguageSelector from "@/components/LanguageSelector";
 import heroImage from "@/assets/hero-gifts.jpg";
 
 const Index = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20">
+      {/* Language Selector - Fixed Top Right */}
+      <div className="fixed top-4 right-4 z-50">
+        <LanguageSelector />
+      </div>
+
       {/* Hero Section */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-hero opacity-5" />
@@ -17,37 +25,36 @@ const Index = () => {
             <div className="space-y-8">
               <div className="inline-block">
                 <span className="px-4 py-2 bg-gradient-warm text-primary-foreground rounded-full text-sm font-medium shadow-medium">
-                  ✨ The Modern Gift Exchange Platform
+                  {t("hero.badge")}
                 </span>
               </div>
               
               <h1 className="text-5xl lg:text-7xl font-bold leading-tight">
-                Make Gift Giving
+                {t("hero.title")}
                 <span className="block bg-gradient-warm bg-clip-text text-transparent">
-                  Magical Again
+                  {t("hero.titleHighlight")}
                 </span>
               </h1>
               
               <p className="text-xl text-muted-foreground leading-relaxed">
-                Create wish lists, organize secret santa exchanges, and never forget what your loved ones want. 
-                Perfect for families, friends, and teams.
+                {t("hero.description")}
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4">
                 <Button 
                   size="lg" 
                   className="text-lg px-8 shadow-large hover:shadow-glow transition-all"
-                  onClick={() => navigate('/auth')}
+                  onClick={() => navigate("/auth")}
                 >
-                  Get Started Free
+                  {t("hero.cta")}
                 </Button>
                 <Button 
                   size="lg" 
                   variant="outline" 
                   className="text-lg px-8"
-                  onClick={() => navigate('/dashboard')}
+                  onClick={() => navigate("/dashboard")}
                 >
-                  View Demo
+                  {t("hero.demo")}
                 </Button>
               </div>
             </div>
@@ -68,30 +75,30 @@ const Index = () => {
       <section className="py-24 bg-card">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4">Everything You Need</h2>
-            <p className="text-xl text-muted-foreground">Powerful features to make gift giving effortless</p>
+            <h2 className="text-4xl font-bold mb-4">{t("features.title")}</h2>
+            <p className="text-xl text-muted-foreground">{t("features.subtitle")}</p>
           </div>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             <FeatureCard
               icon={<Gift className="w-8 h-8" />}
-              title="Smart Wish Lists"
-              description="Create detailed lists with categories, colors, sizes, and links"
+              title={t("features.lists.title")}
+              description={t("features.lists.description")}
             />
             <FeatureCard
               icon={<Users className="w-8 h-8" />}
-              title="Group Exchange"
-              description="Organize secret santa with automatic matching and privacy"
+              title={t("features.groups.title")}
+              description={t("features.groups.description")}
             />
             <FeatureCard
               icon={<Sparkles className="w-8 h-8" />}
-              title="Multi-Event Support"
-              description="Manage lists for birthdays, holidays, and custom occasions"
+              title={t("features.events.title")}
+              description={t("features.events.description")}
             />
             <FeatureCard
               icon={<Shield className="w-8 h-8" />}
-              title="Privacy First"
-              description="Your assignments stay secret. Share only what you want"
+              title={t("features.privacy.title")}
+              description={t("features.privacy.description")}
             />
           </div>
         </div>
@@ -102,18 +109,18 @@ const Index = () => {
         <div className="container mx-auto px-4">
           <div className="bg-gradient-warm rounded-3xl p-12 text-center shadow-large">
             <h2 className="text-4xl font-bold text-primary-foreground mb-4">
-              Ready to Transform Gift Giving?
+              {t("cta.title")}
             </h2>
             <p className="text-xl text-primary-foreground/90 mb-8">
-              Join thousands who make gift exchanges fun and stress-free
+              {t("cta.subtitle")}
             </p>
             <Button 
               size="lg" 
               variant="secondary"
               className="text-lg px-8"
-              onClick={() => navigate('/auth')}
+              onClick={() => navigate("/auth")}
             >
-              Create Your Free Account
+              {t("cta.button")}
             </Button>
           </div>
         </div>
