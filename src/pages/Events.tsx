@@ -60,7 +60,7 @@ const Events = () => {
 
   const loadEvents = async (userId: string) => {
     try {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("events")
         .select("*")
         .eq("created_by", userId)
@@ -79,7 +79,7 @@ const Events = () => {
     if (!user) return;
 
     try {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from("events")
         .insert([{
           name: newEvent.name,
@@ -107,7 +107,7 @@ const Events = () => {
     if (!user) return;
 
     try {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from("events")
         .delete()
         .eq("id", eventId);

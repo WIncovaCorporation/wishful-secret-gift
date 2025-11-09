@@ -72,7 +72,7 @@ const Groups = () => {
   const loadGroups = async (userId: string) => {
     try {
       // Get groups where user is a member
-      const { data: memberData, error: memberError } = await (supabase as any)
+      const { data: memberData, error: memberError } = await supabase
         .from("group_members")
         .select("group_id")
         .eq("user_id", userId);
@@ -86,7 +86,7 @@ const Groups = () => {
         return;
       }
 
-      const { data: groupsData, error: groupsError } = await (supabase as any)
+      const { data: groupsData, error: groupsError } = await supabase
         .from("groups")
         .select("*")
         .in("id", groupIds)
@@ -97,7 +97,7 @@ const Groups = () => {
       if (groupsData) {
         const groupsWithMembers = await Promise.all(
           groupsData.map(async (group: any) => {
-            const { data: members } = await (supabase as any)
+            const { data: members } = await supabase
               .from("group_members")
               .select("id, user_id, profiles(display_name)")
               .eq("group_id", group.id);
@@ -118,7 +118,10 @@ const Groups = () => {
     if (!user) return;
 
     try {
-      const { data: groupData, error: groupError } = await (supabase as any)
+      // Generate a unique share code
+      const shareCode = Math.random().toString(36).substring(2, 10);
+      
+      const { data: groupData, error: groupError } = await supabase
         .from("groups")
         .insert([{
           name: newGroup.name,
@@ -127,6 +130,7 @@ const Groups = () => {
           max_budget: newGroup.max_budget ? parseFloat(newGroup.max_budget) : null,
           exchange_date: newGroup.exchange_date || null,
           created_by: user.id,
+          share_code: shareCode,
         }])
         .select()
         .single();
@@ -134,7 +138,7 @@ const Groups = () => {
       if (groupError) throw groupError;
 
       // Add creator as member
-      const { error: memberError } = await (supabase as any)
+      const { error: memberError } = await supabase
         .from("group_members")
         .insert([{ group_id: groupData?.id, user_id: user.id }]);
 
@@ -160,7 +164,7 @@ const Groups = () => {
     if (!user) return;
 
     try {
-      const { data: groupData, error: groupError } = await (supabase as any)
+      const { data: groupData, error: groupError } = await supabase
         .from("groups")
         .select("id")
         .eq("share_code", joinCode)
@@ -169,7 +173,7 @@ const Groups = () => {
       if (groupError) throw new Error("Código de grupo inválido");
 
       // Check if already a member
-      const { data: existingMember } = await (supabase as any)
+      const { data: existingMember } = await supabase
         .from("group_members")
         .select("id")
         .eq("group_id", groupData?.id)
@@ -181,7 +185,7 @@ const Groups = () => {
         return;
       }
 
-      const { error: memberError } = await (supabase as any)
+      const { error: memberError } = await supabase
         .from("group_members")
         .insert([{ group_id: groupData?.id, user_id: user.id }]);
 
@@ -208,7 +212,7 @@ const Groups = () => {
 
     try {
       // Get all group members
-      const { data: members, error: membersError } = await (supabase as any)
+      const { data: members, error: membersError } = await supabase
         .from("group_members")
         .select("user_id")
         .eq("group_id", groupId);
@@ -234,13 +238,13 @@ const Groups = () => {
         receiver_id: shuffled[(index + 1) % shuffled.length].user_id,
       }));
 
-      const { error: exchangeError } = await (supabase as any)
+      const { error: exchangeError } = await supabase
         .from("gift_exchanges")
         .insert(exchanges);
 
       if (exchangeError) throw exchangeError;
 
-      const { error: updateError } = await (supabase as any)
+      const { error: updateError } = await supabase
         .from("groups")
         .update({ is_drawn: true })
         .eq("id", groupId);
@@ -258,7 +262,7 @@ const Groups = () => {
     if (!user) return;
 
     try {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from("groups")
         .delete()
         .eq("id", groupId)

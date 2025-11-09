@@ -50,13 +50,38 @@ const Dashboard = () => {
   }, [navigate]);
 
   const loadStats = async (userId: string) => {
-    // Stats will be loaded once types are generated
-    // For now, show placeholder data
-    setStats({
-      myLists: 0,
-      myGroups: 0,
-      upcomingEvents: 0,
-    });
+    try {
+      // Load lists count
+      const { data: lists, error: listsError } = await supabase
+        .from("gift_lists")
+        .select("id", { count: "exact" })
+        .eq("user_id", userId);
+
+      // Load groups count
+      const { data: groupMembers, error: groupsError } = await supabase
+        .from("group_members")
+        .select("group_id", { count: "exact" })
+        .eq("user_id", userId);
+
+      // Load upcoming events count
+      const { data: events, error: eventsError } = await supabase
+        .from("events")
+        .select("id", { count: "exact" })
+        .eq("created_by", userId)
+        .gte("date", new Date().toISOString().split('T')[0]);
+
+      if (listsError || groupsError || eventsError) {
+        console.error("Error loading stats:", listsError || groupsError || eventsError);
+      }
+
+      setStats({
+        myLists: lists?.length || 0,
+        myGroups: groupMembers?.length || 0,
+        upcomingEvents: events?.length || 0,
+      });
+    } catch (error) {
+      console.error("Error loading dashboard stats:", error);
+    }
   };
 
   const handleSignOut = async () => {

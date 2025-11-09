@@ -75,7 +75,7 @@ const Lists = () => {
 
   const loadLists = async (userId: string) => {
     try {
-      const { data: listsData, error: listsError } = await (supabase as any)
+      const { data: listsData, error: listsError } = await supabase
         .from("gift_lists")
         .select("*")
         .eq("user_id", userId)
@@ -86,7 +86,7 @@ const Lists = () => {
       if (listsData) {
         const listsWithItems = await Promise.all(
           listsData.map(async (list: any) => {
-            const { data: items } = await (supabase as any)
+            const { data: items } = await supabase
               .from("gift_items")
               .select("*")
               .eq("list_id", list.id)
@@ -108,7 +108,7 @@ const Lists = () => {
     if (!user) return;
 
     try {
-      const { data, error } = await (supabase as any)
+      const { data, error } = await supabase
         .from("gift_lists")
         .insert([{ name: newList.name, user_id: user.id }])
         .select()
@@ -129,7 +129,7 @@ const Lists = () => {
     if (!user) return;
 
     try {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from("gift_lists")
         .delete()
         .eq("id", listId);
@@ -148,7 +148,7 @@ const Lists = () => {
     if (!selectedList) return;
 
     try {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from("gift_items")
         .insert([{ ...newItem, list_id: selectedList }]);
 
@@ -176,7 +176,7 @@ const Lists = () => {
     if (!user) return;
 
     try {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from("gift_items")
         .delete()
         .eq("id", itemId);
@@ -194,7 +194,7 @@ const Lists = () => {
     if (!user) return;
 
     try {
-      const { error } = await (supabase as any)
+      const { error } = await supabase
         .from("gift_items")
         .update({ is_purchased: !currentStatus })
         .eq("id", itemId);
