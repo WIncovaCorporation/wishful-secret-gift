@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from "@/components/ui/select";
-import { Gift, Plus, Trash2, ExternalLink, Sparkles, Loader2 } from "lucide-react";
+import { Gift, Plus, Trash2, ExternalLink, Sparkles, Loader2, Search, X } from "lucide-react";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import LanguageSelector from "@/components/LanguageSelector";
@@ -63,6 +63,8 @@ const Lists = () => {
   const [budget, setBudget] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [smartOptions, setSmartOptions] = useState(getSmartOptions(""));
+  const [mainCategory, setMainCategory] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     checkAuth();
@@ -272,6 +274,39 @@ const Lists = () => {
     setSmartOptions(getSmartOptions(category));
   };
 
+  const handleMainCategoryChange = (category: string) => {
+    setMainCategory(category);
+    setSelectedCategory("");
+    setSearchQuery("");
+  };
+
+  const getFilteredSubcategories = () => {
+    if (!mainCategory) return [];
+    const subCats = GIFT_CATEGORIES[mainCategory as keyof typeof GIFT_CATEGORIES] || [];
+    if (!searchQuery.trim()) return subCats;
+    return subCats.filter(sub => 
+      sub.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  };
+
+  const getAllCategories = () => {
+    const allCats: { main: string; sub: string }[] = [];
+    Object.entries(GIFT_CATEGORIES).forEach(([main, subs]) => {
+      subs.forEach(sub => allCats.push({ main, sub }));
+      if (subs.length === 0) allCats.push({ main, sub: main });
+    });
+    return allCats;
+  };
+
+  const getSearchResults = () => {
+    if (!searchQuery.trim()) return [];
+    const allCats = getAllCategories();
+    return allCats.filter(cat => 
+      cat.sub.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      cat.main.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 flex items-center justify-center">
@@ -448,6 +483,8 @@ const Lists = () => {
             setAiContext("");
             setBudget("");
             setAiSuggestions([]);
+            setMainCategory("");
+            setSearchQuery("");
           }
         }}>
           <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -588,36 +625,127 @@ const Lists = () => {
                     <div className="h-px flex-1 bg-border" />
                   </div>
 
-                  {/* Step 1: Category First */}
-                  <div className="space-y-3">
-                    <Label htmlFor="category" className="text-base font-semibold flex items-center gap-2">
+                  {/* Step 1: Smart Category Selection */}
+                  <div className="space-y-4">
+                    <Label className="text-base font-semibold flex items-center gap-2">
                       <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/20 text-primary text-xs font-bold">1</span>
                       ¿Qué tipo de regalo buscas? *
                     </Label>
-                    <Select 
-                      value={selectedCategory} 
-                      onValueChange={handleCategoryChange}
-                    >
-                      <SelectTrigger id="category" className="h-11">
-                        <SelectValue placeholder="Elige una categoría" />
-                      </SelectTrigger>
-                      <SelectContent className="max-h-[320px]">
-                        {Object.entries(GIFT_CATEGORIES).map(([mainCat, subCats]) => (
-                          <SelectGroup key={mainCat}>
-                            <SelectLabel className="text-primary font-semibold">{mainCat}</SelectLabel>
-                            {subCats.length > 0 ? (
-                              subCats.map((subCat) => (
-                                <SelectItem key={subCat} value={subCat} className="pl-6">
-                                  {subCat}
-                                </SelectItem>
-                              ))
-                            ) : (
-                              <SelectItem value={mainCat}>{mainCat}</SelectItem>
-                            )}
-                          </SelectGroup>
+
+                    {/* Search Input */}
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                      <Input
+                        placeholder="Busca directamente: camisa, laptop, juego..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-10 pr-10 h-11"
+                      />
+                      {searchQuery && (
+                        <button
+                          type="button"
+                          onClick={() => setSearchQuery("")}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Search Results */}
+                    {searchQuery.trim() && getSearchResults().length > 0 && (
+                      <div className="space-y-2 max-h-[240px] overflow-y-auto p-3 bg-accent/30 rounded-lg border">
+                        <p className="text-xs text-muted-foreground font-medium mb-2">Resultados de búsqueda:</p>
+                        {getSearchResults().slice(0, 8).map((result, idx) => (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => {
+                              handleCategoryChange(result.sub);
+                              setMainCategory(result.main);
+                              setSearchQuery("");
+                            }}
+                            className="w-full text-left px-3 py-2 rounded-md hover:bg-primary/10 transition-colors border border-transparent hover:border-primary/20"
+                          >
+                            <p className="font-medium text-sm">{result.sub}</p>
+                            <p className="text-xs text-muted-foreground">{result.main}</p>
+                          </button>
                         ))}
-                      </SelectContent>
-                    </Select>
+                      </div>
+                    )}
+
+                    {/* Main Categories (only show if no search) */}
+                    {!searchQuery.trim() && !mainCategory && (
+                      <div className="space-y-2">
+                        <p className="text-sm text-muted-foreground">O elige una categoría principal:</p>
+                        <div className="grid grid-cols-2 gap-2">
+                          {Object.keys(GIFT_CATEGORIES).map((cat) => (
+                            <button
+                              key={cat}
+                              type="button"
+                              onClick={() => handleMainCategoryChange(cat)}
+                              className="p-3 rounded-lg border-2 border-border hover:border-primary hover:bg-primary/5 transition-all text-left font-medium"
+                            >
+                              {cat}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Subcategories (when main category is selected) */}
+                    {mainCategory && !searchQuery.trim() && (
+                      <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm font-medium">Elige en {mainCategory}:</p>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setMainCategory("")}
+                          >
+                            ← Cambiar categoría
+                          </Button>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2 max-h-[240px] overflow-y-auto">
+                          {getFilteredSubcategories().map((subCat) => (
+                            <button
+                              key={subCat}
+                              type="button"
+                              onClick={() => handleCategoryChange(subCat)}
+                              className={`p-3 rounded-lg border-2 transition-all text-left ${
+                                selectedCategory === subCat
+                                  ? "border-primary bg-primary/10 font-semibold"
+                                  : "border-border hover:border-primary/50 hover:bg-accent/50"
+                              }`}
+                            >
+                              {subCat}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Selected Category Display */}
+                    {selectedCategory && (
+                      <div className="p-3 bg-primary/10 border border-primary/30 rounded-lg flex items-center justify-between">
+                        <div>
+                          <p className="text-xs text-muted-foreground">Categoría seleccionada:</p>
+                          <p className="font-semibold text-primary">{selectedCategory}</p>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setSelectedCategory("");
+                            setMainCategory("");
+                          }}
+                        >
+                          Cambiar
+                        </Button>
+                      </div>
+                    )}
                   </div>
 
                   {/* Step 2: Name appears after category */}
