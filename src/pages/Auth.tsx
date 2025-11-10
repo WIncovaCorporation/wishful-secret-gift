@@ -100,14 +100,16 @@ const Auth = () => {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    const normalizedEmail = email.trim().toLowerCase();
+
     // Validación básica
-    if (!email.trim() || !email.includes('@')) {
-      toast.error(t("auth.signInFailed"));
+    if (!normalizedEmail || !normalizedEmail.includes('@')) {
+      toast.error("Por favor ingresa un correo válido");
       return;
     }
 
     if (!password) {
-      toast.error(t("auth.signInFailed"));
+      toast.error("Por favor ingresa tu contraseña");
       return;
     }
 
@@ -115,21 +117,32 @@ const Auth = () => {
 
     try {
       const { error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
+        email: normalizedEmail,
         password,
       });
 
       if (error) throw error;
 
-      toast.success(t("auth.welcomeBack"));
+      toast.success("¡Bienvenido de nuevo! 🎉");
       // Limpiar formulario
       setEmail("");
       setPassword("");
     } catch (error: any) {
+      console.error("Error de inicio de sesión:", error);
+      
       if (error.message.includes("Invalid login credentials") || error.message.includes("Invalid") || error.message.includes("credentials")) {
-        toast.error(t("auth.invalidCredentials"));
+        toast.error("❌ Correo o contraseña incorrectos. Verifica tus datos.", {
+          duration: 6000,
+        });
+        toast.info("💡 Si olvidaste tu contraseña, usa 'Olvidé mi contraseña'", {
+          duration: 6000,
+        });
+      } else if (error.message.includes("Email not confirmed")) {
+        toast.error("⚠️ Debes confirmar tu correo antes de iniciar sesión", {
+          duration: 6000,
+        });
       } else {
-        toast.error(error.message || t("auth.signInFailed"));
+        toast.error(error.message || "Error al iniciar sesión. Intenta nuevamente.");
       }
     } finally {
       setLoading(false);
@@ -139,32 +152,54 @@ const Auth = () => {
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    const normalizedEmail = resetEmail.trim().toLowerCase();
+
     // Validación básica
-    if (!resetEmail.trim() || !resetEmail.includes('@')) {
-      toast.error(t("auth.resetEmailFailed"));
+    if (!normalizedEmail || !normalizedEmail.includes('@')) {
+      toast.error("Por favor ingresa un correo válido");
       return;
     }
 
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail.trim(), {
+      const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
         redirectTo: `${window.location.origin}/auth`,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error Supabase:", error);
+        throw error;
+      }
 
-      toast.success("Correo de recuperación enviado. Revisa tu bandeja de entrada y spam.", {
-        duration: 6000,
+      toast.success("✅ Correo de recuperación enviado exitosamente", {
+        duration: 8000,
       });
-      toast.info("Si no recibes el correo en 5 minutos, contacta a soporte.", {
-        duration: 6000,
+      toast.info("📧 Revisa tu bandeja de entrada y SPAM. El correo puede tardar hasta 5 minutos.", {
+        duration: 8000,
       });
+      toast.warning("⚠️ Si no recibes el correo, intenta crear una nueva cuenta con otro email o contacta soporte.", {
+        duration: 10000,
+      });
+      
       setShowResetPassword(false);
       setResetEmail("");
     } catch (error: any) {
-      console.error("Error al enviar correo de recuperación:", error);
-      toast.error("Error al enviar correo. Verifica que el email esté registrado.");
+      console.error("Error completo al enviar correo de recuperación:", error);
+      
+      if (error.message?.includes('Email not found') || error.message?.includes('User not found')) {
+        toast.error("❌ Este correo no está registrado. Verifica el correo o regístrate primero.", {
+          duration: 6000,
+        });
+      } else if (error.message?.includes('rate limit')) {
+        toast.error("⏳ Demasiados intentos. Espera 5 minutos e intenta nuevamente.", {
+          duration: 6000,
+        });
+      } else {
+        toast.error("❌ Error al enviar correo. Intenta nuevamente o crea una cuenta nueva.", {
+          duration: 6000,
+        });
+      }
     } finally {
       setLoading(false);
     }
@@ -206,19 +241,19 @@ const Auth = () => {
                     <Input
                       id="reset-email"
                       type="email"
-                      placeholder={t("auth.emailPlaceholder")}
+                      placeholder="tu-email@ejemplo.com"
                       value={resetEmail}
                       onChange={(e) => setResetEmail(e.target.value)}
                       required
                       autoComplete="email"
                     />
                     <p className="text-xs text-muted-foreground">
-                      Ingresa el correo con el que te registraste
+                      ✉️ Ingresa el correo <strong>exacto</strong> con el que te registraste
                     </p>
                   </div>
                   <div className="flex gap-2">
                     <Button type="submit" className="flex-1" disabled={loading}>
-                      {loading ? t("auth.sending") : t("auth.sendResetLink")}
+                      {loading ? "Enviando..." : "Enviar enlace de recuperación"}
                     </Button>
                     <Button 
                       type="button" 
@@ -229,13 +264,26 @@ const Auth = () => {
                       }}
                       disabled={loading}
                     >
-                      {t("auth.cancel")}
+                      Cancelar
                     </Button>
                   </div>
-                  <div className="mt-4 p-3 bg-muted/50 rounded-lg">
-                    <p className="text-xs text-muted-foreground">
-                      💡 El correo puede tardar algunos minutos. <strong>Revisa tu carpeta de spam</strong>.
-                    </p>
+                  <div className="space-y-2">
+                    <div className="p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                      <p className="text-xs font-semibold text-yellow-700 dark:text-yellow-400 mb-1">
+                        ⚠️ IMPORTANTE: Problemas con correo de recuperación
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Si no recibes el correo en 5 minutos:<br/>
+                        1. Revisa SPAM/Promociones<br/>
+                        2. Intenta crear una cuenta nueva con otro email<br/>
+                        3. Contacta soporte si el problema persiste
+                      </p>
+                    </div>
+                    <div className="p-3 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                      <p className="text-xs text-muted-foreground">
+                        💡 <strong>Alternativa:</strong> Si no funciona, puedes crear una nueva cuenta con un correo diferente.
+                      </p>
+                    </div>
                   </div>
                 </form>
               </div>
