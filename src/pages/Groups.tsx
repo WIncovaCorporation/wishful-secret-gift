@@ -119,8 +119,8 @@ const Groups = () => {
     if (!user) return;
 
     try {
-      // Generate a unique share code
-      const shareCode = Math.random().toString(36).substring(2, 10);
+      // Generate a unique share code (lowercase for consistency)
+      const shareCode = Math.random().toString(36).substring(2, 10).toLowerCase();
       
       const { data: groupData, error: groupError } = await supabase
         .from("groups")
@@ -165,21 +165,38 @@ const Groups = () => {
     if (!user) return;
 
     try {
+      // Trim and normalize the code
+      const normalizedCode = joinCode.trim().toLowerCase();
+      
+      if (!normalizedCode) {
+        toast.error("Por favor ingresa un código válido");
+        return;
+      }
+
       const { data: groupData, error: groupError } = await supabase
         .from("groups")
         .select("id")
-        .eq("share_code", joinCode)
-        .single();
+        .eq("share_code", normalizedCode)
+        .maybeSingle();
 
-      if (groupError) throw new Error("Código de grupo inválido");
+      if (groupError) {
+        console.error("Error al buscar grupo:", groupError);
+        toast.error("Error al buscar el grupo");
+        return;
+      }
+
+      if (!groupData) {
+        toast.error("Código de grupo inválido");
+        return;
+      }
 
       // Check if already a member
       const { data: existingMember } = await supabase
         .from("group_members")
         .select("id")
-        .eq("group_id", groupData?.id)
+        .eq("group_id", groupData.id)
         .eq("user_id", user.id)
-        .single();
+        .maybeSingle();
 
       if (existingMember) {
         toast.error("Ya eres miembro de este grupo");
@@ -188,16 +205,21 @@ const Groups = () => {
 
       const { error: memberError } = await supabase
         .from("group_members")
-        .insert([{ group_id: groupData?.id, user_id: user.id }]);
+        .insert([{ group_id: groupData.id, user_id: user.id }]);
 
-      if (memberError) throw memberError;
+      if (memberError) {
+        console.error("Error al unirse al grupo:", memberError);
+        toast.error("Error al unirse al grupo");
+        return;
+      }
 
       toast.success("¡Te has unido al grupo!");
       setJoinDialogOpen(false);
       setJoinCode("");
       await loadGroups(user.id);
     } catch (error: any) {
-      toast.error(error.message);
+      console.error("Error inesperado:", error);
+      toast.error("Error inesperado al unirse al grupo");
     }
   };
 
