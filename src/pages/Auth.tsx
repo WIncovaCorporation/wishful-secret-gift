@@ -164,7 +164,7 @@ const Auth = () => {
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
-        redirectTo: `${window.location.origin}/auth`,
+        redirectTo: `${window.location.origin}/update-password`,
       });
 
       if (error) {
@@ -177,9 +177,6 @@ const Auth = () => {
       });
       toast.info("📧 Revisa tu bandeja de entrada y SPAM. El correo puede tardar hasta 5 minutos.", {
         duration: 8000,
-      });
-      toast.warning("⚠️ Si no recibes el correo, intenta crear una nueva cuenta con otro email o contacta soporte.", {
-        duration: 10000,
       });
       
       setShowResetPassword(false);

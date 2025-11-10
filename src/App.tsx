@@ -9,6 +9,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
+import UpdatePassword from "./pages/UpdatePassword";
 import Dashboard from "./pages/Dashboard";
 import Lists from "./pages/Lists";
 import Groups from "./pages/Groups";
@@ -32,6 +33,7 @@ const App = () => (
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/auth" element={<Auth />} />
+                <Route path="/update-password" element={<UpdatePassword />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/lists" element={<Lists />} />
                 <Route path="/groups" element={<Groups />} />
