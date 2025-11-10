@@ -102,17 +102,20 @@ const translations = {
     
     // Onboarding Tour
     "welcome": "Welcome",
-    "tourWelcomeMessage": "Welcome to GiftApp! Let's take a quick tour of the main features.",
-    "tourListsStep": "Here you can create and manage your gift lists. Organize ideas by occasion, person, or category.",
-    "tourGroupsStep": "Create groups with friends and family to share lists and coordinate gifts together.",
-    "tourEventsStep": "Plan special events like birthdays, weddings, or holidays. Associate lists and groups to each event.",
-    "tourCreateListStep": "Click here to create your first list. You can add products, descriptions, and keep it private or shared.",
-    "tourAIStep": "Use our AI-powered suggestions to find the perfect gift based on interests and occasion.",
     "back": "Back",
     "close": "Close",
     "finish": "Finish",
     "next": "Next",
     "skip": "Skip",
+    "tourWelcome": "Welcome to GiftApp! 🎁",
+    "tourWelcomeMessage": "Organize, share, and coordinate your gifts intelligently.",
+    "tourWelcomeSubtitle": "We'll show you in 4 steps how everything works.",
+    "tourActionsStep": "These are the 3 main functions of GiftApp:",
+    "tourActionsLists": "📝 Lists: Organize gift ideas",
+    "tourActionsGroups": "👥 Groups: Share and coordinate with friends/family",
+    "tourActionsEvents": "🎉 Events: Plan special occasions",
+    "tourCreateListStep": "Start here! Create your first gift list. Add products manually or search for ideas with AI. Decide if it's private or shared.",
+    "tourStatsStep": "Here you'll see your progress: lists created, groups you participate in, and upcoming events. Your entire gift universe at a glance!",
   },
   es: {
     // Landing Page
@@ -205,17 +208,20 @@ const translations = {
     
     // Tour de Bienvenida
     "welcome": "Bienvenido",
-    "tourWelcomeMessage": "¡Bienvenido a GiftApp! Te mostraremos las funciones principales en un tour rápido.",
-    "tourListsStep": "Aquí puedes crear y gestionar tus listas de regalos. Organiza ideas por ocasión, persona o categoría.",
-    "tourGroupsStep": "Crea grupos con amigos y familia para compartir listas y coordinar regalos entre varias personas.",
-    "tourEventsStep": "Planifica eventos especiales como cumpleaños, bodas o navidades. Asocia listas y grupos a cada evento.",
-    "tourCreateListStep": "Haz clic aquí para crear tu primera lista. Puedes añadir productos, descripción y mantenerla privada o compartida.",
-    "tourAIStep": "Usa nuestras sugerencias con IA para encontrar el regalo perfecto basado en intereses y ocasión.",
     "back": "Atrás",
     "close": "Cerrar",
     "finish": "Finalizar",
     "next": "Siguiente",
     "skip": "Saltar",
+    "tourWelcome": "¡Bienvenido a GiftApp! 🎁",
+    "tourWelcomeMessage": "Organiza, comparte y coordina tus regalos de forma inteligente.",
+    "tourWelcomeSubtitle": "Te mostraremos en 4 pasos cómo funciona todo.",
+    "tourActionsStep": "Estas son las 3 funciones principales de GiftApp:",
+    "tourActionsLists": "📝 Listas: Organiza ideas de regalos",
+    "tourActionsGroups": "👥 Grupos: Comparte y coordina con amigos/familia",
+    "tourActionsEvents": "🎉 Eventos: Planifica ocasiones especiales",
+    "tourCreateListStep": "¡Empieza aquí! Crea tu primera lista de regalos. Puedes añadir productos manualmente o buscar ideas con IA. Decide si es privada o compartida.",
+    "tourStatsStep": "Aquí verás tu progreso: listas creadas, grupos donde participas y eventos próximos. ¡Todo tu universo de regalos en un vistazo!",
   },
 };
 

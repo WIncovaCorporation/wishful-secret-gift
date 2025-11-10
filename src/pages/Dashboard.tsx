@@ -134,7 +134,7 @@ const Dashboard = () => {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
         {/* Quick Actions */}
-        <div className="mb-8">
+        <div className="mb-8" data-tour="quick-actions">
           <h2 className="text-2xl font-bold mb-4">{t("dashboard.quickActions")}</h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <Button
@@ -169,7 +169,7 @@ const Dashboard = () => {
         </div>
 
         {/* Stats Overview */}
-        <div className="mb-8">
+        <div className="mb-8" data-tour="stats-overview">
           <h2 className="text-2xl font-bold mb-4">{t("dashboard.overview")}</h2>
           <div className="grid sm:grid-cols-3 gap-6">
             <StatsCard

@@ -34,10 +34,13 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ run = true, onCo
       content: (
         <div>
           <h2 className="text-xl font-bold mb-2">
-            {t('welcome')} 🎁
+            {t('tourWelcome') || '¡Bienvenido a GiftApp! 🎁'}
           </h2>
-          <p>
-            {t('tourWelcomeMessage') || 'Bienvenido a GiftApp. Te mostraremos las funciones principales en un tour rápido.'}
+          <p className="mb-3">
+            {t('tourWelcomeMessage') || 'Organiza, comparte y coordina tus regalos de forma inteligente.'}
+          </p>
+          <p className="text-sm text-muted-foreground">
+            {t('tourWelcomeSubtitle') || 'Te mostraremos en 4 pasos cómo funciona todo.'}
           </p>
         </div>
       ),
@@ -45,29 +48,30 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ run = true, onCo
       disableBeacon: true,
     },
     {
-      target: '[data-tour="nav-lists"]',
-      content: t('tourListsStep') || 'Aquí puedes crear y gestionar tus listas de regalos. Organiza ideas por ocasión, persona o categoría.',
-      placement: 'bottom',
-    },
-    {
-      target: '[data-tour="nav-groups"]',
-      content: t('tourGroupsStep') || 'Crea grupos con amigos y familia para compartir listas y coordinar regalos entre varias personas.',
-      placement: 'bottom',
-    },
-    {
-      target: '[data-tour="nav-events"]',
-      content: t('tourEventsStep') || 'Planifica eventos especiales como cumpleaños, bodas o navidades. Asocia listas y grupos a cada evento.',
+      target: '[data-tour="quick-actions"]',
+      content: (
+        <div>
+          <p className="mb-2">
+            {t('tourActionsStep') || 'Estas son las 3 funciones principales de GiftApp:'}
+          </p>
+          <ul className="list-disc pl-5 space-y-1 text-sm">
+            <li>{t('tourActionsLists') || '📝 Listas: Organiza ideas de regalos'}</li>
+            <li>{t('tourActionsGroups') || '👥 Grupos: Comparte y coordina con amigos/familia'}</li>
+            <li>{t('tourActionsEvents') || '🎉 Eventos: Planifica ocasiones especiales'}</li>
+          </ul>
+        </div>
+      ),
       placement: 'bottom',
     },
     {
       target: '[data-tour="create-list"]',
-      content: t('tourCreateListStep') || 'Haz clic aquí para crear tu primera lista. Puedes añadir productos, descripción y mantenerla privada o compartida.',
-      placement: 'left',
+      content: t('tourCreateListStep') || '¡Empieza aquí! Crea tu primera lista de regalos. Puedes añadir productos manualmente o buscar ideas con IA. Decide si es privada o compartida.',
+      placement: 'bottom',
     },
     {
-      target: '[data-tour="ai-suggestions"]',
-      content: t('tourAIStep') || 'Usa nuestras sugerencias con IA para encontrar el regalo perfecto basado en intereses y ocasión.',
-      placement: 'left',
+      target: '[data-tour="stats-overview"]',
+      content: t('tourStatsStep') || 'Aquí verás tu progreso: listas creadas, grupos donde participas y eventos próximos. ¡Todo tu universo de regalos en un vistazo!',
+      placement: 'top',
     },
   ];
 
