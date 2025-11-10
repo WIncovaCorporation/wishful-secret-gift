@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.80.0';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -8,7 +9,6 @@ const corsHeaders = {
 
 interface PasswordResetRequest {
   email: string;
-  resetLink: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -18,9 +18,45 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { email, resetLink }: PasswordResetRequest = await req.json();
+    const { email }: PasswordResetRequest = await req.json();
 
-    console.log("Sending password reset email to:", email);
+    console.log("Generating password reset link for:", email);
+
+    // Initialize Supabase Admin Client
+    const supabaseUrl = Deno.env.get("VITE_SUPABASE_URL");
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    
+    if (!supabaseUrl || !supabaseServiceKey) {
+      throw new Error("Supabase configuration missing");
+    }
+
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    });
+
+    // Generate password recovery link using Admin API
+    const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+      type: 'recovery',
+      email: email,
+      options: {
+        redirectTo: `${req.headers.get('origin') || 'https://d1e5732b-571d-479b-b2b4-be0895c674d9.lovableproject.com'}/update-password`,
+      },
+    });
+
+    if (linkError) {
+      console.error("Error generating recovery link:", linkError);
+      throw new Error(`Failed to generate recovery link: ${linkError.message}`);
+    }
+
+    if (!linkData.properties?.action_link) {
+      throw new Error("Recovery link not generated");
+    }
+
+    const resetLink = linkData.properties.action_link;
+    console.log("Recovery link generated successfully");
 
     const resendApiKey = Deno.env.get("RESEND_API_KEY");
     if (!resendApiKey) {

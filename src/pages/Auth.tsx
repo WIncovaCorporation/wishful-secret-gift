@@ -163,12 +163,13 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
-        redirectTo: `${window.location.origin}/update-password`,
+      // Call edge function to generate link and send email
+      const { error } = await supabase.functions.invoke('send-password-reset', {
+        body: { email: normalizedEmail }
       });
 
       if (error) {
-        console.error("Error Supabase:", error);
+        console.error("Error al enviar correo:", error);
         throw error;
       }
 
