@@ -7,13 +7,15 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Users, Plus, Copy, Check, Trash2, Sparkles } from "lucide-react";
+import { Users, Plus, Copy, Check, Trash2, Sparkles, Gift, Lock, Shield, Scale, AlertCircle, Calendar, DollarSign } from "lucide-react";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import LanguageSelector from "@/components/LanguageSelector";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import Footer from "@/components/Footer";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import type { User } from "@supabase/supabase-js";
 
 interface Group {
@@ -57,6 +59,11 @@ const Groups = () => {
   const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; id: string }>({ 
     open: false, 
     id: "" 
+  });
+  const [drawConfirm, setDrawConfirm] = useState<{ open: boolean; groupId: string; group: Group | null }>({
+    open: false,
+    groupId: "",
+    group: null
   });
 
   useEffect(() => {
@@ -259,10 +266,17 @@ const Groups = () => {
     setTimeout(() => setCopiedCode(null), 2000);
   };
 
-  const handleDrawExchange = async (groupId: string) => {
-    if (!user) return;
+  const showDrawConfirmation = (group: Group) => {
+    setDrawConfirm({ open: true, groupId: group.id, group });
+  };
+
+  const handleDrawExchange = async () => {
+    const groupId = drawConfirm.groupId;
+    if (!user || !groupId) return;
 
     try {
+      setDrawConfirm({ open: false, groupId: "", group: null });
+
       // Get all group members
       const { data: members, error: membersError } = await supabase
         .from("group_members")
@@ -271,31 +285,58 @@ const Groups = () => {
 
       if (membersError) throw membersError;
 
-      if (!members || members.length < 2) {
-        toast.error("Se necesitan al menos 2 miembros para hacer el sorteo");
+      if (!members || members.length < 3) {
+        toast.error(t("groups.confirmDraw.minMembers"));
         return;
       }
 
-      // Create shuffled assignments
-      const shuffled = [...members];
-      for (let i = shuffled.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      // Fisher-Yates shuffle algorithm (improved)
+      const shuffleArray = (array: any[]) => {
+        const shuffled = [...array];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        return shuffled;
+      };
+
+      // Try up to 10 times to find a valid assignment (no self-gifting)
+      let exchanges: any[] = [];
+      let attempts = 0;
+      let valid = false;
+
+      while (!valid && attempts < 10) {
+        const shuffled = shuffleArray(members);
+        exchanges = shuffled.map((giver: any, index: number) => ({
+          group_id: groupId,
+          giver_id: giver.user_id,
+          receiver_id: shuffled[(index + 1) % shuffled.length].user_id,
+        }));
+
+        // Validate no one gifts themselves
+        valid = exchanges.every((ex) => ex.giver_id !== ex.receiver_id);
+        attempts++;
       }
 
-      // Create exchanges
-      const exchanges = shuffled.map((giver: any, index: number) => ({
-        group_id: groupId,
-        giver_id: giver.user_id,
-        receiver_id: shuffled[(index + 1) % shuffled.length].user_id,
-      }));
+      if (!valid) {
+        toast.error("No se pudo generar un sorteo válido. Intenta de nuevo.");
+        return;
+      }
 
+      // Delete previous exchanges if any
+      await supabase
+        .from("gift_exchanges")
+        .delete()
+        .eq("group_id", groupId);
+
+      // Insert new exchanges
       const { error: exchangeError } = await supabase
         .from("gift_exchanges")
         .insert(exchanges);
 
       if (exchangeError) throw exchangeError;
 
+      // Mark group as drawn
       const { error: updateError } = await supabase
         .from("groups")
         .update({ is_drawn: true })
@@ -303,9 +344,10 @@ const Groups = () => {
 
       if (updateError) throw updateError;
 
-      toast.success("¡Sorteo realizado! Revisa tu asignación");
+      toast.success(t("groups.drawComplete"));
       await loadGroups(user.id);
     } catch (error: any) {
+      console.error("Error in draw exchange:", error);
       toast.error(error.message);
     }
   };
@@ -510,16 +552,27 @@ const Groups = () => {
                         )}
                       </div>
                     </div>
-                    <div className="flex gap-2">
-                      {group.created_by === user?.id && !group.is_drawn && (
+                     <div className="flex gap-2">
+                      {group.is_drawn ? (
                         <Button
                           size="sm"
-                          onClick={() => handleDrawExchange(group.id)}
+                          onClick={() => navigate(`/groups/${group.id}/assignment`)}
                           className="gap-2"
                         >
-                          <Sparkles className="w-4 h-4" />
-                          Sortear
+                          <Gift className="w-4 h-4" />
+                          {t("groups.viewAssignment")}
                         </Button>
+                      ) : (
+                        group.created_by === user?.id && (
+                          <Button
+                            size="sm"
+                            onClick={() => showDrawConfirmation(group)}
+                            className="gap-2"
+                          >
+                            <Sparkles className="w-4 h-4" />
+                            Sortear
+                          </Button>
+                        )
                       )}
                       {group.created_by === user?.id && (
                         <Button
@@ -535,6 +588,73 @@ const Groups = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
+                    {/* How It Works Section - Only show if draw hasn't been done */}
+                    {!group.is_drawn && (
+                      <Card className="border-primary/20 bg-primary/5">
+                        <CardHeader className="pb-3">
+                          <CardTitle className="text-base flex items-center gap-2">
+                            <Sparkles className="h-4 w-4" />
+                            {t("groups.howItWorks")}
+                          </CardTitle>
+                          <CardDescription className="text-xs">
+                            {t("groups.howItWorksDesc")}
+                          </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-3 text-sm">
+                          <div className="flex gap-3">
+                            <div className="text-2xl">🎲</div>
+                            <div>
+                              <p className="font-semibold">{t("groups.algorithm.title")}</p>
+                              <p className="text-xs text-muted-foreground">{t("groups.algorithm.desc")}</p>
+                            </div>
+                          </div>
+                          <div className="flex gap-3">
+                            <div className="text-2xl">🔒</div>
+                            <div>
+                              <p className="font-semibold">{t("groups.privacy.title")}</p>
+                              <p className="text-xs text-muted-foreground">{t("groups.privacy.desc")}</p>
+                            </div>
+                          </div>
+                          <div className="flex gap-3">
+                            <div className="text-2xl">⚖️</div>
+                            <div>
+                              <p className="font-semibold">{t("groups.fairness.title")}</p>
+                              <p className="text-xs text-muted-foreground">{t("groups.fairness.desc")}</p>
+                            </div>
+                          </div>
+                          <div className="flex gap-3">
+                            <div className="text-2xl">🛡️</div>
+                            <div>
+                              <p className="font-semibold">{t("groups.security.title")}</p>
+                              <p className="text-xs text-muted-foreground">{t("groups.security.desc")}</p>
+                            </div>
+                          </div>
+
+                          <Accordion type="single" collapsible className="mt-4">
+                            <AccordionItem value="faq" className="border-0">
+                              <AccordionTrigger className="text-sm py-2 hover:no-underline">
+                                {t("groups.confidence.title")}
+                              </AccordionTrigger>
+                              <AccordionContent className="space-y-2 text-xs">
+                                <div>
+                                  <p className="font-semibold">{t("groups.confidence.privacy")}</p>
+                                  <p className="text-muted-foreground">{t("groups.confidence.privacyAnswer")}</p>
+                                </div>
+                                <div>
+                                  <p className="font-semibold">{t("groups.confidence.redraw")}</p>
+                                  <p className="text-muted-foreground">{t("groups.confidence.redrawAnswer")}</p>
+                                </div>
+                                <div>
+                                  <p className="font-semibold">{t("groups.confidence.memberLeaves")}</p>
+                                  <p className="text-muted-foreground">{t("groups.confidence.memberLeavesAnswer")}</p>
+                                </div>
+                              </AccordionContent>
+                            </AccordionItem>
+                          </Accordion>
+                        </CardContent>
+                      </Card>
+                    )}
+
                     <div>
                       <h4 className="font-semibold mb-2">Código de Invitación</h4>
                       <div className="flex gap-2">
@@ -584,6 +704,78 @@ const Groups = () => {
         onConfirm={confirmDeleteGroup}
         variant="destructive"
       />
+
+      {/* Draw Confirmation Dialog */}
+      <Dialog open={drawConfirm.open} onOpenChange={(open) => setDrawConfirm({ ...drawConfirm, open })}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              {t("groups.confirmDraw.title")}
+            </DialogTitle>
+            <DialogDescription>
+              {t("groups.confirmDraw.description")}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <Alert className="border-yellow-500/50 bg-yellow-500/5">
+            <AlertCircle className="h-4 w-4 text-yellow-600 dark:text-yellow-500" />
+            <AlertDescription className="text-sm text-yellow-800 dark:text-yellow-200">
+              {t("groups.confirmDraw.warning")}
+            </AlertDescription>
+          </Alert>
+
+          {drawConfirm.group && (
+            <div className="space-y-3 py-2">
+              <div className="flex items-center gap-3 text-sm">
+                <Users className="h-4 w-4 text-muted-foreground" />
+                <span className="font-semibold">{t("groups.confirmDraw.membersCount")}:</span>
+                <span>{drawConfirm.group.members?.length || 0}</span>
+              </div>
+
+              {(drawConfirm.group.min_budget || drawConfirm.group.max_budget) && (
+                <div className="flex items-center gap-3 text-sm">
+                  <DollarSign className="h-4 w-4 text-muted-foreground" />
+                  <span className="font-semibold">{t("groups.confirmDraw.budget")}:</span>
+                  <span>
+                    {drawConfirm.group.min_budget && drawConfirm.group.max_budget
+                      ? `$${drawConfirm.group.min_budget} - $${drawConfirm.group.max_budget}`
+                      : drawConfirm.group.min_budget
+                      ? `Min $${drawConfirm.group.min_budget}`
+                      : `Max $${drawConfirm.group.max_budget}`}
+                  </span>
+                </div>
+              )}
+
+              {drawConfirm.group.exchange_date && (
+                <div className="flex items-center gap-3 text-sm">
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <span className="font-semibold">{t("groups.confirmDraw.date")}:</span>
+                  <span>{new Date(drawConfirm.group.exchange_date).toLocaleDateString()}</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="flex gap-3 pt-2">
+            <Button
+              variant="outline"
+              onClick={() => setDrawConfirm({ open: false, groupId: "", group: null })}
+              className="flex-1"
+            >
+              {t("groups.confirmDraw.cancel")}
+            </Button>
+            <Button
+              onClick={handleDrawExchange}
+              className="flex-1 gap-2"
+              disabled={!drawConfirm.group || (drawConfirm.group.members?.length || 0) < 3}
+            >
+              <Sparkles className="h-4 w-4" />
+              {t("groups.confirmDraw.confirm")}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Footer />
     </div>

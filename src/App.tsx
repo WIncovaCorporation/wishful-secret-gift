@@ -14,6 +14,7 @@ import Dashboard from "./pages/Dashboard";
 import Lists from "./pages/Lists";
 import Groups from "./pages/Groups";
 import Events from "./pages/Events";
+import Assignment from "./pages/Assignment";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import NotFound from "./pages/NotFound";
@@ -37,6 +38,7 @@ const App = () => (
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/lists" element={<Lists />} />
                 <Route path="/groups" element={<Groups />} />
+                <Route path="/groups/:groupId/assignment" element={<Assignment />} />
                 <Route path="/events" element={<Events />} />
                 <Route path="/terms" element={<Terms />} />
                 <Route path="/privacy" element={<Privacy />} />
