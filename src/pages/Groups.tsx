@@ -175,26 +175,28 @@ const Groups = () => {
 
       console.log("Buscando grupo con código:", normalizedCode);
 
-      // Search for the group
-      const { data: groupData, error: groupError } = await supabase
+      // First, search for the group using a more permissive query
+      // We need to check all groups that match the code, regardless of membership
+      const { data: allGroups, error: searchError } = await supabase
         .from("groups")
-        .select("id, name")
-        .eq("share_code", normalizedCode)
-        .maybeSingle();
+        .select("id, name, created_by")
+        .eq("share_code", normalizedCode);
 
-      console.log("Resultado de búsqueda:", { groupData, groupError });
+      console.log("Resultado de búsqueda:", { allGroups, searchError });
 
-      if (groupError) {
-        console.error("Error al buscar grupo:", groupError);
+      if (searchError) {
+        console.error("Error al buscar grupo:", searchError);
         toast.error("Error al buscar el grupo");
         return;
       }
 
-      if (!groupData) {
+      if (!allGroups || allGroups.length === 0) {
         console.log("No se encontró grupo con código:", normalizedCode);
         toast.error("Código de grupo inválido");
         return;
       }
+
+      const groupData = allGroups[0];
 
       // Check if already a member
       const { data: existingMember } = await supabase
