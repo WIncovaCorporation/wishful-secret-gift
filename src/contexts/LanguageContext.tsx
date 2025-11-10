@@ -164,6 +164,27 @@ const translations = {
     "assignment.confidentialityDesc": "Remember: this is a secret! Don't reveal to anyone who your assigned person is. The magic of Secret Santa is in the surprise.",
     "assignment.backToGroup": "Back to Group",
     "assignment.loading": "Loading your assignment...",
+    
+    // Anonymous Chat
+    "chat.title": "Anonymous Questions",
+    "chat.description": "Ask questions without revealing your identity",
+    "chat.placeholder": "Ask about size, color, preferences...",
+    "chat.send": "Send",
+    "chat.noMessages": "No messages yet",
+    "chat.you": "You",
+    "chat.secretSanta": "Your Secret Santa",
+    "chat.typing": "Typing...",
+    "chat.howItWorks": "How does it work?",
+    "chat.howItWorksDesc": "Send anonymous messages to the person you're giving a gift to. They'll receive your questions but won't know who's asking. Perfect for clarifying sizes, colors, or preferences!",
+    "chat.receivedMessages": "Messages from your Secret Santa",
+    "chat.receivedMessagesDesc": "Someone wants to know more about your preferences!",
+    
+    // Dashboard Assignments
+    "dashboard.myAssignments": "My Secret Santa Assignments",
+    "dashboard.myAssignmentsDesc": "Groups where you have an active assignment",
+    "dashboard.viewAssignment": "View Assignment",
+    "dashboard.noAssignments": "No active assignments yet",
+    "dashboard.newMessage": "New message",
   },
   es: {
     // Landing Page
@@ -318,6 +339,27 @@ const translations = {
     "assignment.confidentialityDesc": "Recuerda: ¡esto es un secreto! No reveles a nadie quién es tu persona asignada. La magia del Amigo Secreto está en la sorpresa.",
     "assignment.backToGroup": "Volver al Grupo",
     "assignment.loading": "Cargando tu asignación...",
+    
+    // Chat Anónimo
+    "chat.title": "Preguntas Anónimas",
+    "chat.description": "Haz preguntas sin revelar tu identidad",
+    "chat.placeholder": "Pregunta sobre talla, color, preferencias...",
+    "chat.send": "Enviar",
+    "chat.noMessages": "Aún no hay mensajes",
+    "chat.you": "Tú",
+    "chat.secretSanta": "Tu Amigo Secreto",
+    "chat.typing": "Escribiendo...",
+    "chat.howItWorks": "¿Cómo funciona?",
+    "chat.howItWorksDesc": "Envía mensajes anónimos a la persona a quien le vas a regalar. Recibirá tus preguntas pero no sabrá quién pregunta. ¡Perfecto para aclarar tallas, colores o preferencias!",
+    "chat.receivedMessages": "Mensajes de tu Amigo Secreto",
+    "chat.receivedMessagesDesc": "¡Alguien quiere saber más sobre tus preferencias!",
+    
+    // Asignaciones Dashboard
+    "dashboard.myAssignments": "Mis Asignaciones de Amigo Secreto",
+    "dashboard.myAssignmentsDesc": "Grupos donde tienes una asignación activa",
+    "dashboard.viewAssignment": "Ver Asignación",
+    "dashboard.noAssignments": "Aún no tienes asignaciones activas",
+    "dashboard.newMessage": "Mensaje nuevo",
   },
 };
 

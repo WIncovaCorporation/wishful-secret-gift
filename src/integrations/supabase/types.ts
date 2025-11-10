@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      anonymous_messages: {
+        Row: {
+          created_at: string
+          giver_id: string
+          group_id: string
+          id: string
+          is_read: boolean | null
+          message: string
+          receiver_id: string
+        }
+        Insert: {
+          created_at?: string
+          giver_id: string
+          group_id: string
+          id?: string
+          is_read?: boolean | null
+          message: string
+          receiver_id: string
+        }
+        Update: {
+          created_at?: string
+          giver_id?: string
+          group_id?: string
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          receiver_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "anonymous_messages_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
           created_at: string
@@ -203,6 +241,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "gift_lists"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
           },
         ]
       }

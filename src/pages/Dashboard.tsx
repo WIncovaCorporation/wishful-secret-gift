@@ -23,6 +23,7 @@ const Dashboard = () => {
     myGroups: 0,
     upcomingEvents: 0,
   });
+  const [activeAssignments, setActiveAssignments] = useState<any[]>([]);
 
   useEffect(() => {
     // Check authentication
@@ -36,6 +37,7 @@ const Dashboard = () => {
 
       setUser(session.user);
       await loadStats(session.user.id);
+      await loadActiveAssignments(session.user.id);
       setLoading(false);
     };
 
@@ -85,6 +87,29 @@ const Dashboard = () => {
       });
     } catch (error) {
       console.error("Error loading dashboard stats:", error);
+    }
+  };
+
+  const loadActiveAssignments = async (userId: string) => {
+    try {
+      const { data: exchanges, error } = await supabase
+        .from("gift_exchanges")
+        .select(`
+          group_id,
+          receiver_id,
+          groups (
+            id,
+            name,
+            exchange_date
+          )
+        `)
+        .eq("giver_id", userId);
+
+      if (error) throw error;
+
+      setActiveAssignments(exchanges || []);
+    } catch (error) {
+      console.error("Error loading active assignments:", error);
     }
   };
 
@@ -242,6 +267,45 @@ const Dashboard = () => {
             />
           </CardContent>
         </Card>
+
+        {/* Active Assignments Section */}
+        {activeAssignments.length > 0 && (
+          <Card className="shadow-medium border-primary/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Gift className="h-5 w-5" />
+                {t("dashboard.myAssignments")}
+              </CardTitle>
+              <CardDescription>{t("dashboard.myAssignmentsDesc")}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {activeAssignments.map((assignment: any) => (
+                <div
+                  key={assignment.group_id}
+                  className="flex items-center justify-between p-4 bg-secondary/20 rounded-lg hover:bg-secondary/30 transition-colors"
+                >
+                  <div className="flex-1">
+                    <h4 className="font-semibold">{assignment.groups?.name}</h4>
+                    {assignment.groups?.exchange_date && (
+                      <p className="text-sm text-muted-foreground flex items-center gap-1 mt-1">
+                        <Calendar className="h-3 w-3" />
+                        {new Date(assignment.groups.exchange_date).toLocaleDateString()}
+                      </p>
+                    )}
+                  </div>
+                  <Button
+                    size="sm"
+                    onClick={() => navigate(`/groups/${assignment.group_id}/assignment`)}
+                    className="gap-2"
+                  >
+                    <Gift className="h-4 w-4" />
+                    {t("dashboard.viewAssignment")}
+                  </Button>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
       </main>
 
       <Footer />

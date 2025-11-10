@@ -9,10 +9,12 @@ import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { Badge } from "@/components/ui/badge";
 import Footer from "@/components/Footer";
 import LanguageSelector from "@/components/LanguageSelector";
+import { AnonymousChat } from "@/components/AnonymousChat";
 
 interface Assignment {
   receiver_id: string;
   group_id: string;
+  giver_id?: string;
   groups?: {
     name: string;
     min_budget: number | null;
@@ -85,6 +87,7 @@ const Assignment = () => {
 
       const assignmentWithProfile = {
         ...exchangeData,
+        giver_id: session.user.id,
         receiver_profile: profileData,
       };
 
@@ -318,6 +321,13 @@ const Assignment = () => {
               </CardContent>
             )}
           </Card>
+
+          {/* Anonymous Chat Component */}
+          <AnonymousChat 
+            groupId={groupId!}
+            receiverId={assignment.receiver_id}
+            currentUserId={assignment.giver_id!}
+          />
 
           {/* Confidentiality Reminder */}
           <Card className="border-yellow-500/50 bg-yellow-500/5">
