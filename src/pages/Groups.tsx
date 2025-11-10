@@ -98,10 +98,23 @@ const Groups = () => {
       if (groupsData) {
         const groupsWithMembers = await Promise.all(
           groupsData.map(async (group: any) => {
-            const { data: members } = await supabase
+            // Get group members with their profile information
+            const { data: members, error: membersError } = await supabase
               .from("group_members")
-              .select("id, user_id, profiles(display_name)")
+              .select(`
+                id,
+                user_id,
+                profiles!group_members_user_id_fkey (
+                  display_name
+                )
+              `)
               .eq("group_id", group.id);
+
+            if (membersError) {
+              console.error("Error loading members for group:", group.id, membersError);
+            }
+
+            console.log(`Miembros del grupo ${group.name}:`, members);
 
             return { ...group, members: members || [] };
           })
