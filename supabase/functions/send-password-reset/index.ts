@@ -23,7 +23,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log("Generating password reset link for:", email);
 
     // Initialize Supabase Admin Client
-    const supabaseUrl = Deno.env.get("VITE_SUPABASE_URL");
+    const supabaseUrl = Deno.env.get("SUPABASE_URL");
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     
     if (!supabaseUrl || !supabaseServiceKey) {
