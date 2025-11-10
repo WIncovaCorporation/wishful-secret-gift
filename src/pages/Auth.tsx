@@ -154,11 +154,17 @@ const Auth = () => {
 
       if (error) throw error;
 
-      toast.success(t("auth.resetEmailSent"));
+      toast.success("Correo de recuperación enviado. Revisa tu bandeja de entrada y spam.", {
+        duration: 6000,
+      });
+      toast.info("Si no recibes el correo en 5 minutos, contacta a soporte.", {
+        duration: 6000,
+      });
       setShowResetPassword(false);
       setResetEmail("");
     } catch (error: any) {
-      toast.error(error.message || t("auth.resetEmailFailed"));
+      console.error("Error al enviar correo de recuperación:", error);
+      toast.error("Error al enviar correo. Verifica que el email esté registrado.");
     } finally {
       setLoading(false);
     }
@@ -204,7 +210,11 @@ const Auth = () => {
                       value={resetEmail}
                       onChange={(e) => setResetEmail(e.target.value)}
                       required
+                      autoComplete="email"
                     />
+                    <p className="text-xs text-muted-foreground">
+                      Ingresa el correo con el que te registraste
+                    </p>
                   </div>
                   <div className="flex gap-2">
                     <Button type="submit" className="flex-1" disabled={loading}>
@@ -221,6 +231,11 @@ const Auth = () => {
                     >
                       {t("auth.cancel")}
                     </Button>
+                  </div>
+                  <div className="mt-4 p-3 bg-muted/50 rounded-lg">
+                    <p className="text-xs text-muted-foreground">
+                      💡 El correo puede tardar algunos minutos. <strong>Revisa tu carpeta de spam</strong>.
+                    </p>
                   </div>
                 </form>
               </div>
