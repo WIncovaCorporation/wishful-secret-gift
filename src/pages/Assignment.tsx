@@ -90,7 +90,8 @@ const Assignment = () => {
 
       setAssignment(assignmentWithProfile);
 
-      // Try to get receiver's wish list
+      // Try to get receiver's wish list - improved query
+      // First try from group_members link
       const { data: listData } = await supabase
         .from("group_members")
         .select("list_id")
@@ -98,11 +99,26 @@ const Assignment = () => {
         .eq("user_id", exchangeData.receiver_id)
         .maybeSingle();
 
-      if (listData?.list_id) {
+      let finalListId = listData?.list_id;
+
+      // If no list linked in group, get ANY list from the user
+      if (!finalListId) {
+        const { data: userLists } = await supabase
+          .from("gift_lists")
+          .select("id")
+          .eq("user_id", exchangeData.receiver_id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        
+        finalListId = userLists?.id;
+      }
+
+      if (finalListId) {
         const { data: itemsData } = await supabase
           .from("gift_items")
           .select("id, name, category, priority, reference_link, image_url")
-          .eq("list_id", listData.list_id)
+          .eq("list_id", finalListId)
           .order("created_at", { ascending: false })
           .limit(5);
 

@@ -552,16 +552,29 @@ const Groups = () => {
                         )}
                       </div>
                     </div>
-                     <div className="flex gap-2">
+                     <div className="flex gap-2 flex-wrap">
                       {group.is_drawn ? (
-                        <Button
-                          size="sm"
-                          onClick={() => navigate(`/groups/${group.id}/assignment`)}
-                          className="gap-2"
-                        >
-                          <Gift className="w-4 h-4" />
-                          {t("groups.viewAssignment")}
-                        </Button>
+                        <>
+                          <Button
+                            size="sm"
+                            onClick={() => navigate(`/groups/${group.id}/assignment`)}
+                            className="gap-2"
+                          >
+                            <Gift className="w-4 h-4" />
+                            {t("groups.viewAssignment")}
+                          </Button>
+                          {group.created_by === user?.id && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => navigate(`/groups/${group.id}/admin`)}
+                              className="gap-2"
+                            >
+                              <Shield className="w-4 h-4" />
+                              Admin: Ver Todas
+                            </Button>
+                          )}
+                        </>
                       ) : (
                         group.created_by === user?.id && (
                           <Button

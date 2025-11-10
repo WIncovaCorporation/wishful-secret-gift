@@ -90,10 +90,24 @@ const Dashboard = () => {
 
   const handleSignOut = async () => {
     try {
-      await supabase.auth.signOut();
+      // Clear local state first
+      setUser(null);
+      
+      // Sign out from Supabase
+      await supabase.auth.signOut({ scope: 'local' });
+      
+      // Force clear any cached session data
+      localStorage.clear();
+      sessionStorage.clear();
+      
       toast.success(t("dashboard.signedOut"));
-      navigate("/");
+      
+      // Navigate after a brief delay to ensure state is cleared
+      setTimeout(() => {
+        navigate("/auth", { replace: true });
+      }, 100);
     } catch (error) {
+      console.error("Sign out error:", error);
       toast.error(t("dashboard.signOutFailed"));
     }
   };
@@ -199,17 +213,33 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Recent Activity */}
+        {/* Getting Started Checklist - Dynamic */}
         <Card className="shadow-medium">
           <CardHeader>
             <CardTitle>{t("dashboard.gettingStarted")}</CardTitle>
             <CardDescription>{t("dashboard.gettingStartedDesc")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <ChecklistItem completed={stats.myLists > 0} text={t("dashboard.step1")} />
-            <ChecklistItem completed={stats.myGroups > 0} text={t("dashboard.step2")} />
-            <ChecklistItem completed={false} text={t("dashboard.step3")} />
-            <ChecklistItem completed={false} text={t("dashboard.step4")} />
+            <ChecklistItem 
+              completed={stats.myLists > 0} 
+              text={t("dashboard.step1")} 
+              onClick={() => !stats.myLists && navigate("/lists")}
+            />
+            <ChecklistItem 
+              completed={stats.myGroups > 0} 
+              text={t("dashboard.step2")}
+              onClick={() => !stats.myGroups && navigate("/groups")}
+            />
+            <ChecklistItem 
+              completed={stats.myLists > 0 && stats.myGroups > 0} 
+              text={t("dashboard.step3")}
+              onClick={() => !(stats.myLists > 0 && stats.myGroups > 0) && navigate("/groups")}
+            />
+            <ChecklistItem 
+              completed={stats.upcomingEvents > 0} 
+              text={t("dashboard.step4")}
+              onClick={() => !stats.upcomingEvents && navigate("/events")}
+            />
           </CardContent>
         </Card>
       </main>
@@ -251,8 +281,15 @@ const StatsCard = ({ icon, title, value, description, gradient, onClick }: {
   </Card>
 );
 
-const ChecklistItem = ({ completed, text }: { completed: boolean; text: string }) => (
-  <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors">
+const ChecklistItem = ({ completed, text, onClick }: { completed: boolean; text: string; onClick?: () => void }) => (
+  <div 
+    className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
+      onClick && !completed ? 'cursor-pointer hover:bg-muted/50' : ''
+    }`}
+    onClick={onClick}
+    role={onClick ? "button" : undefined}
+    tabIndex={onClick ? 0 : undefined}
+  >
     <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
       completed ? "bg-gradient-warm text-primary-foreground" : "border-2 border-border"
     }`}>

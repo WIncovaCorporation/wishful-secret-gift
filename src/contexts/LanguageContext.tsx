@@ -146,6 +146,8 @@ const translations = {
     "groups.confirmDraw.cancel": "Cancel",
     "groups.viewAssignment": "View My Assignment",
     "groups.drawComplete": "Draw completed! Each member can now view their assignment.",
+    "groups.adminView": "Admin: View All",
+    "groups.adminViewDesc": "View all assignments (creator only)",
     
     // Assignment Page
     "assignment.title": "Your Secret Santa Assignment",
@@ -298,6 +300,8 @@ const translations = {
     "groups.confirmDraw.cancel": "Cancelar",
     "groups.viewAssignment": "Ver Mi Asignación",
     "groups.drawComplete": "¡Sorteo completado! Cada miembro puede ver ahora su asignación.",
+    "groups.adminView": "Admin: Ver Todas",
+    "groups.adminViewDesc": "Ver todas las asignaciones (solo creador)",
     
     // Página de Asignación
     "assignment.title": "Tu Asignación de Amigo Secreto",
