@@ -62,16 +62,19 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ run = true, onCo
         </div>
       ),
       placement: 'bottom',
+      disableBeacon: true,
     },
     {
       target: '[data-tour="create-list"]',
       content: t('tourCreateListStep') || '¡Empieza aquí! Crea tu primera lista de regalos. Puedes añadir productos manualmente o buscar ideas con IA. Decide si es privada o compartida.',
       placement: 'bottom',
+      disableBeacon: true,
     },
     {
       target: '[data-tour="stats-overview"]',
       content: t('tourStatsStep') || 'Aquí verás tu progreso: listas creadas, grupos donde participas y eventos próximos. ¡Todo tu universo de regalos en un vistazo!',
-      placement: 'top',
+      placement: 'bottom',
+      disableBeacon: true,
     },
   ];
 
@@ -106,6 +109,9 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ run = true, onCo
       continuous
       showProgress
       showSkipButton
+      scrollToFirstStep
+      scrollOffset={100}
+      disableScrolling={false}
       callback={handleJoyrideCallback}
       styles={{
         options: {
