@@ -11,6 +11,8 @@ import { Calendar, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import LanguageSelector from "@/components/LanguageSelector";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import Footer from "@/components/Footer";
 import type { User } from "@supabase/supabase-js";
 
@@ -40,6 +42,10 @@ const Events = () => {
     name: "",
     type: "christmas",
     date: "",
+  });
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; id: string }>({ 
+    open: false, 
+    id: "" 
   });
 
   useEffect(() => {
@@ -105,18 +111,23 @@ const Events = () => {
   };
 
   const handleDeleteEvent = async (eventId: string) => {
+    setDeleteConfirm({ open: true, id: eventId });
+  };
+
+  const confirmDeleteEvent = async () => {
     if (!user) return;
 
     try {
       const { error } = await supabase
         .from("events")
         .delete()
-        .eq("id", eventId);
+        .eq("id", deleteConfirm.id);
 
       if (error) throw error;
 
       toast.success("Evento eliminado!");
       await loadEvents(user.id);
+      setDeleteConfirm({ open: false, id: "" });
     } catch (error: any) {
       toast.error(error.message);
     }
@@ -125,10 +136,7 @@ const Events = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Cargando...</p>
-        </div>
+        <LoadingSpinner message="Cargando tus eventos..." />
       </div>
     );
   }
@@ -265,6 +273,17 @@ const Events = () => {
           </div>
         )}
       </main>
+
+      <ConfirmDialog
+        open={deleteConfirm.open}
+        onOpenChange={(open) => setDeleteConfirm({ ...deleteConfirm, open })}
+        title="¿Eliminar evento?"
+        description="Esta acción no se puede deshacer. El evento será eliminado permanentemente."
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        onConfirm={confirmDeleteEvent}
+        variant="destructive"
+      />
 
       <Footer />
     </div>

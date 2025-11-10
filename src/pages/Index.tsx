@@ -93,8 +93,8 @@ const Index = () => {
       </header>
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-hero opacity-5" />
+      <section className="relative overflow-hidden" aria-label="Sección principal">
+        <div className="absolute inset-0 bg-gradient-hero opacity-5" aria-hidden="true" />
         
         <div className="container mx-auto px-4 pt-20 pb-32">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
@@ -121,6 +121,7 @@ const Index = () => {
                   size="lg" 
                   className="text-lg px-8 shadow-large hover:shadow-glow transition-all"
                   onClick={() => navigate("/auth")}
+                  aria-label={t("hero.cta")}
                 >
                   {t("hero.cta")}
                 </Button>
@@ -129,6 +130,7 @@ const Index = () => {
                   variant="outline" 
                   className="text-lg px-8"
                   onClick={() => navigate("/dashboard")}
+                  aria-label={t("hero.demo")}
                 >
                   {t("hero.demo")}
                 </Button>
@@ -136,11 +138,12 @@ const Index = () => {
             </div>
             
             <div className="relative">
-              <div className="absolute inset-0 bg-gradient-warm rounded-3xl blur-3xl opacity-20" />
+              <div className="absolute inset-0 bg-gradient-warm rounded-3xl blur-3xl opacity-20" aria-hidden="true" />
               <img 
                 src={heroImage} 
-                alt="Beautiful gift boxes"
+                alt="Cajas de regalo coloridas y elegantes decoradas con lazos dorados"
                 className="relative rounded-3xl shadow-large w-full"
+                loading="lazy"
               />
             </div>
           </div>
@@ -148,10 +151,10 @@ const Index = () => {
       </section>
 
       {/* Features Section */}
-      <section className="py-24 bg-card">
+      <section className="py-24 bg-card" aria-labelledby="features-heading">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4">{t("features.title")}</h2>
+            <h2 id="features-heading" className="text-4xl font-bold mb-4">{t("features.title")}</h2>
             <p className="text-xl text-muted-foreground">{t("features.subtitle")}</p>
           </div>
           

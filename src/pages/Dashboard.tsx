@@ -8,6 +8,8 @@ import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import LanguageSelector from "@/components/LanguageSelector";
 import { OnboardingTour } from "@/components/OnboardingTour";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { SkipToContent } from "@/components/SkipToContent";
 import Footer from "@/components/Footer";
 import type { User } from "@supabase/supabase-js";
 
@@ -99,10 +101,7 @@ const Dashboard = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">{t("dashboard.loading")}</p>
-        </div>
+        <LoadingSpinner message={t("dashboard.loading")} />
       </div>
     );
   }
@@ -111,6 +110,7 @@ const Dashboard = () => {
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
       {/* Header */}
       <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50">
+        <SkipToContent />
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-gradient-warm rounded-xl flex items-center justify-center shadow-soft">
@@ -123,8 +123,8 @@ const Dashboard = () => {
           </div>
           <div className="flex items-center gap-2">
             <LanguageSelector />
-            <Button variant="outline" size="sm" onClick={handleSignOut}>
-              <LogOut className="w-4 h-4 mr-2" />
+            <Button variant="outline" size="sm" onClick={handleSignOut} aria-label={t("dashboard.signOut")}>
+              <LogOut className="w-4 h-4 mr-2" aria-hidden="true" />
               {t("dashboard.signOut")}
             </Button>
           </div>
@@ -132,7 +132,7 @@ const Dashboard = () => {
       </header>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
+      <main id="main-content" className="container mx-auto px-4 py-8">
         {/* Quick Actions */}
         <div className="mb-8" data-tour="quick-actions">
           <h2 className="text-2xl font-bold mb-4">{t("dashboard.quickActions")}</h2>

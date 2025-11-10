@@ -13,6 +13,8 @@ import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import LanguageSelector from "@/components/LanguageSelector";
 import { GIFT_CATEGORIES, COMMON_COLORS, CLOTHING_SIZES, SHOE_SIZES, POPULAR_BRANDS, getSmartOptions } from "@/lib/giftOptions";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import Footer from "@/components/Footer";
 import type { User } from "@supabase/supabase-js";
 
@@ -71,6 +73,11 @@ const Lists = () => {
   const [showProducts, setShowProducts] = useState(false);
   const formScrollRef = useRef<HTMLDivElement>(null);
   const categoryRef = useRef<HTMLDivElement>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; id: string; type: "list" | "item" }>({ 
+    open: false, 
+    id: "", 
+    type: "list" 
+  });
 
   useEffect(() => {
     checkAuth();
@@ -142,18 +149,33 @@ const Lists = () => {
   };
 
   const handleDeleteList = async (listId: string) => {
+    setDeleteConfirm({ open: true, id: listId, type: "list" });
+  };
+
+  const confirmDelete = async () => {
     if (!user) return;
 
     try {
-      const { error } = await supabase
-        .from("gift_lists")
-        .delete()
-        .eq("id", listId);
+      if (deleteConfirm.type === "list") {
+        const { error } = await supabase
+          .from("gift_lists")
+          .delete()
+          .eq("id", deleteConfirm.id);
 
-      if (error) throw error;
+        if (error) throw error;
+        toast.success("Lista eliminada!");
+      } else {
+        const { error } = await supabase
+          .from("gift_items")
+          .delete()
+          .eq("id", deleteConfirm.id);
 
-      toast.success("Lista eliminada!");
+        if (error) throw error;
+        toast.success("Regalo eliminado!");
+      }
+
       await loadLists(user.id);
+      setDeleteConfirm({ open: false, id: "", type: "list" });
     } catch (error: any) {
       toast.error(error.message);
     }
@@ -189,21 +211,7 @@ const Lists = () => {
   };
 
   const handleDeleteItem = async (itemId: string) => {
-    if (!user) return;
-
-    try {
-      const { error } = await supabase
-        .from("gift_items")
-        .delete()
-        .eq("id", itemId);
-
-      if (error) throw error;
-
-      toast.success("Regalo eliminado!");
-      await loadLists(user.id);
-    } catch (error: any) {
-      toast.error(error.message);
-    }
+    setDeleteConfirm({ open: true, id: itemId, type: "item" });
   };
 
   const handleTogglePurchased = async (itemId: string, currentStatus: boolean) => {
@@ -368,10 +376,7 @@ const Lists = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Cargando...</p>
-        </div>
+        <LoadingSpinner message="Cargando tus listas..." />
       </div>
     );
   }
@@ -1067,6 +1072,21 @@ const Lists = () => {
           </DialogContent>
         </Dialog>
       </main>
+
+      <ConfirmDialog
+        open={deleteConfirm.open}
+        onOpenChange={(open) => setDeleteConfirm({ ...deleteConfirm, open })}
+        title={deleteConfirm.type === "list" ? "¿Eliminar lista?" : "¿Eliminar regalo?"}
+        description={
+          deleteConfirm.type === "list"
+            ? "Esta acción no se puede deshacer. Se eliminarán todos los regalos de esta lista."
+            : "Esta acción no se puede deshacer. El regalo será eliminado permanentemente."
+        }
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        onConfirm={confirmDelete}
+        variant="destructive"
+      />
 
       <Footer />
     </div>

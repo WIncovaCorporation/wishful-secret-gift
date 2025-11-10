@@ -11,6 +11,8 @@ import { Users, Plus, Copy, Check, Trash2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import LanguageSelector from "@/components/LanguageSelector";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import Footer from "@/components/Footer";
 import type { User } from "@supabase/supabase-js";
 
@@ -51,6 +53,10 @@ const Groups = () => {
     min_budget: "",
     max_budget: "",
     exchange_date: "",
+  });
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; id: string }>({ 
+    open: false, 
+    id: "" 
   });
 
   useEffect(() => {
@@ -305,19 +311,24 @@ const Groups = () => {
   };
 
   const handleDeleteGroup = async (groupId: string) => {
+    setDeleteConfirm({ open: true, id: groupId });
+  };
+
+  const confirmDeleteGroup = async () => {
     if (!user) return;
 
     try {
       const { error } = await supabase
         .from("groups")
         .delete()
-        .eq("id", groupId)
+        .eq("id", deleteConfirm.id)
         .eq("created_by", user.id);
 
       if (error) throw error;
 
       toast.success("Grupo eliminado!");
       await loadGroups(user.id);
+      setDeleteConfirm({ open: false, id: "" });
     } catch (error: any) {
       toast.error(error.message);
     }
@@ -326,10 +337,7 @@ const Groups = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-muted-foreground">Cargando...</p>
-        </div>
+        <LoadingSpinner message="Cargando tus grupos..." />
       </div>
     );
   }
@@ -565,6 +573,17 @@ const Groups = () => {
           </div>
         )}
       </main>
+
+      <ConfirmDialog
+        open={deleteConfirm.open}
+        onOpenChange={(open) => setDeleteConfirm({ ...deleteConfirm, open })}
+        title="¿Eliminar grupo?"
+        description="Esta acción no se puede deshacer. Se eliminará el grupo y todas sus asignaciones."
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        onConfirm={confirmDeleteGroup}
+        variant="destructive"
+      />
 
       <Footer />
     </div>
