@@ -833,6 +833,66 @@ Tag de release creado: `v1.0.0-audit-corrections`
 2. ✅ **PHASE4_PRODUCTION_READINESS_REPORT.md** - Reporte exhaustivo de 78 páginas
 3. ✅ **DEPLOYMENT_RUNBOOK.md** - Procedimientos de despliegue y rollback
 4. ✅ **AAHGPA_AUDIT_LOG.md** - Actualizado con hallazgos FASE 4
+5. ✅ **PRODUCTION_READINESS_WORKPLAN.md** - Plan de trabajo detallado para correcciones
+
+---
+
+## Corrección #08: Plan de Trabajo para Preparación de Producción
+**Fecha:** 2025-11-10  
+**Auditoría:** Fase 4 - Validación Final Pre-Producción  
+**Prioridad:** P0 (Crítico) - Planning  
+**Tipo:** Documentación y Planificación
+
+### Síntoma
+Se identificaron 7 blockers críticos (4 P0 + 3 P1) que impiden el deploy a producción. No existía un plan estructurado para resolverlos de forma sistemática y eficiente.
+
+### Causa
+El proceso de auditoría Phase 4 detectó múltiples brechas en testing, monitoreo, y documentación que requieren corrección coordinada antes de producción.
+
+### Acción Tomada
+✅ Creado documento `docs/PRODUCTION_READINESS_WORKPLAN.md` con:
+- Plan detallado de 5 fases para resolver todos los blockers
+- 40+ tareas granulares con tiempos estimados y responsables
+- Cronograma semanal con fechas específicas (11-18 Nov 2025)
+- Asignación de roles y responsabilidades
+- Gestión de riesgos y planes de contingencia
+- Métricas de éxito cuantificables
+- Daily standup format
+- Checklist de inicio
+
+**Fases del Plan:**
+1. **Fase 1:** Deploy inmediato a staging (0.5h)
+2. **Fase 2:** Corrección de 4 blockers P0 (12-18h)
+   - Test Suite (6-8h)
+   - Sentry Integration (2-3h)
+   - Environment Variables (1h)
+   - Groups Page Fix (3-4h) ✅ Migración completada
+3. **Fase 3:** Corrección de 3 blockers P1 (8-13h)
+   - Performance Baseline (3-4h)
+   - Backup/Disaster Recovery (2-3h)
+   - Health Check Endpoints (3-6h)
+4. **Fase 4:** Re-validación Phase 4 completa (4-6h)
+5. **Fase 5:** Deploy a producción (2-3h)
+
+**Tiempo Total Estimado:** 20-31 horas de trabajo  
+**Duración Calendario:** 5 días hábiles  
+**Fecha Target Producción:** 2025-11-18
+
+### Impacto
+✅ **Claridad:** Roadmap claro para llegar a producción  
+✅ **Accountability:** Cada tarea tiene responsable y deadline  
+✅ **Predictibilidad:** Timeline realista con contingencias  
+✅ **Trazabilidad:** Todas las correcciones se documentarán en AAHGPA  
+✅ **Visibilidad:** Daily standups aseguran comunicación constante
+
+### Validado por
+Auditor: AI Assistant (Phase 4 Validation)  
+Fecha: 2025-11-10
+
+### Referencias
+- `docs/PRODUCTION_READINESS_WORKPLAN.md` (nuevo)
+- `docs/PHASE4_PRODUCTION_READINESS_REPORT.md`
+- `docs/DEPLOYMENT_RUNBOOK.md`
 
 ---
 
