@@ -11,6 +11,7 @@ import { Calendar, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import LanguageSelector from "@/components/LanguageSelector";
+import Footer from "@/components/Footer";
 import type { User } from "@supabase/supabase-js";
 
 interface Event {
@@ -264,6 +265,8 @@ const Events = () => {
           </div>
         )}
       </main>
+
+      <Footer />
     </div>
   );
 };

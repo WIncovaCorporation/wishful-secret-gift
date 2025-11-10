@@ -7,6 +7,8 @@ import { Gift, Users, Calendar, LogOut, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import LanguageSelector from "@/components/LanguageSelector";
+import { OnboardingTour } from "@/components/OnboardingTour";
+import Footer from "@/components/Footer";
 import type { User } from "@supabase/supabase-js";
 
 const Dashboard = () => {
@@ -136,26 +138,31 @@ const Dashboard = () => {
           <h2 className="text-2xl font-bold mb-4">{t("dashboard.quickActions")}</h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <Button
+              data-tour="create-list"
               onClick={() => navigate("/lists")}
               className="h-auto py-6 flex-col gap-2 shadow-medium hover:shadow-large transition-all"
+              aria-label={t("dashboard.createList")}
             >
-              <Plus className="w-6 h-6" />
+              <Plus className="w-6 h-6" aria-hidden="true" />
               <span>{t("dashboard.createList")}</span>
             </Button>
             <Button
               onClick={() => navigate("/groups")}
               variant="secondary"
               className="h-auto py-6 flex-col gap-2 shadow-medium hover:shadow-large transition-all"
+              aria-label={t("dashboard.joinGroup")}
             >
-              <Users className="w-6 h-6" />
+              <Users className="w-6 h-6" aria-hidden="true" />
               <span>{t("dashboard.joinGroup")}</span>
             </Button>
             <Button
+              data-tour="ai-suggestions"
               onClick={() => navigate("/events")}
               variant="outline"
               className="h-auto py-6 flex-col gap-2 shadow-soft hover:shadow-medium transition-all"
+              aria-label={t("dashboard.planEvent")}
             >
-              <Calendar className="w-6 h-6" />
+              <Calendar className="w-6 h-6" aria-hidden="true" />
               <span>{t("dashboard.manageEvents")}</span>
             </Button>
           </div>
@@ -203,6 +210,9 @@ const Dashboard = () => {
           </CardContent>
         </Card>
       </main>
+
+      <Footer />
+      <OnboardingTour />
     </div>
   );
 };

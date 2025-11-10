@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import LanguageSelector from "@/components/LanguageSelector";
 import { GIFT_CATEGORIES, COMMON_COLORS, CLOTHING_SIZES, SHOE_SIZES, POPULAR_BRANDS, getSmartOptions } from "@/lib/giftOptions";
+import Footer from "@/components/Footer";
 import type { User } from "@supabase/supabase-js";
 
 interface GiftList {
@@ -1066,6 +1067,8 @@ const Lists = () => {
           </DialogContent>
         </Dialog>
       </main>
+
+      <Footer />
     </div>
   );
 };

@@ -94,6 +94,25 @@ const translations = {
     "dashboard.signedOut": "Signed out successfully",
     "dashboard.signOutFailed": "Failed to sign out",
     "dashboard.loading": "Loading...",
+    "dashboard.upcomingEvents": "Upcoming Events",
+    "dashboard.listsDescription": "Gift lists created",
+    "dashboard.groupsDescription": "Groups joined",
+    "dashboard.eventsDescription": "Upcoming occasions",
+    "dashboard.planEvent": "Plan an Event",
+    
+    // Onboarding Tour
+    "welcome": "Welcome",
+    "tourWelcomeMessage": "Welcome to GiftApp! Let's take a quick tour of the main features.",
+    "tourListsStep": "Here you can create and manage your gift lists. Organize ideas by occasion, person, or category.",
+    "tourGroupsStep": "Create groups with friends and family to share lists and coordinate gifts together.",
+    "tourEventsStep": "Plan special events like birthdays, weddings, or holidays. Associate lists and groups to each event.",
+    "tourCreateListStep": "Click here to create your first list. You can add products, descriptions, and keep it private or shared.",
+    "tourAIStep": "Use our AI-powered suggestions to find the perfect gift based on interests and occasion.",
+    "back": "Back",
+    "close": "Close",
+    "finish": "Finish",
+    "next": "Next",
+    "skip": "Skip",
   },
   es: {
     // Landing Page
@@ -178,6 +197,25 @@ const translations = {
     "dashboard.signedOut": "Sesión cerrada exitosamente",
     "dashboard.signOutFailed": "Error al cerrar sesión",
     "dashboard.loading": "Cargando...",
+    "dashboard.upcomingEvents": "Eventos Próximos",
+    "dashboard.listsDescription": "Listas de regalos creadas",
+    "dashboard.groupsDescription": "Grupos unidos",
+    "dashboard.eventsDescription": "Ocasiones próximas",
+    "dashboard.planEvent": "Planificar Evento",
+    
+    // Tour de Bienvenida
+    "welcome": "Bienvenido",
+    "tourWelcomeMessage": "¡Bienvenido a GiftApp! Te mostraremos las funciones principales en un tour rápido.",
+    "tourListsStep": "Aquí puedes crear y gestionar tus listas de regalos. Organiza ideas por ocasión, persona o categoría.",
+    "tourGroupsStep": "Crea grupos con amigos y familia para compartir listas y coordinar regalos entre varias personas.",
+    "tourEventsStep": "Planifica eventos especiales como cumpleaños, bodas o navidades. Asocia listas y grupos a cada evento.",
+    "tourCreateListStep": "Haz clic aquí para crear tu primera lista. Puedes añadir productos, descripción y mantenerla privada o compartida.",
+    "tourAIStep": "Usa nuestras sugerencias con IA para encontrar el regalo perfecto basado en intereses y ocasión.",
+    "back": "Atrás",
+    "close": "Cerrar",
+    "finish": "Finalizar",
+    "next": "Siguiente",
+    "skip": "Saltar",
   },
 };
 

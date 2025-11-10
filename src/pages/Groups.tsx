@@ -11,6 +11,7 @@ import { Users, Plus, Copy, Check, Trash2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import LanguageSelector from "@/components/LanguageSelector";
+import Footer from "@/components/Footer";
 import type { User } from "@supabase/supabase-js";
 
 interface Group {
@@ -519,6 +520,8 @@ const Groups = () => {
           </div>
         )}
       </main>
+
+      <Footer />
     </div>
   );
 };

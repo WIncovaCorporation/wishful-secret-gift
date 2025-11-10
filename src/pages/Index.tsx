@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Gift, Users, Sparkles, Shield, LogOut, User } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import LanguageSelector from "@/components/LanguageSelector";
+import Footer from "@/components/Footer";
 import heroImage from "@/assets/hero-gifts.jpg";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -204,6 +205,8 @@ const Index = () => {
           </div>
         </div>
       </section>
+
+      <Footer />
     </div>
   );
 };
