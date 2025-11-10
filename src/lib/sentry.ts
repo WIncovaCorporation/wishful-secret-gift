@@ -1,31 +1,26 @@
 /**
  * Sentry Error Monitoring Configuration
  * Fix #04: Integrate Sentry for error monitoring and tracking
+ * Corrección #08 (P0-2): Sentry activado para producción
  */
 
-// Note: In production, you'll need to:
-// 1. Install Sentry: npm install @sentry/react
-// 2. Add your Sentry DSN to environment variables
-// 3. Uncomment the code below
-
-/*
 import * as Sentry from "@sentry/react";
-import { BrowserTracing } from "@sentry/tracing";
 
 export const initSentry = () => {
-  if (import.meta.env.PROD) {
+  // Only initialize in production or when VITE_SENTRY_DSN is configured
+  if (import.meta.env.VITE_SENTRY_DSN) {
     Sentry.init({
       dsn: import.meta.env.VITE_SENTRY_DSN,
       integrations: [
-        new BrowserTracing(),
-        new Sentry.Replay({
+        Sentry.browserTracingIntegration(),
+        Sentry.replayIntegration({
           maskAllText: true,
           blockAllMedia: true,
         }),
       ],
       
       // Performance Monitoring
-      tracesSampleRate: 0.1, // 10% of transactions
+      tracesSampleRate: import.meta.env.PROD ? 0.1 : 1.0, // 10% in prod, 100% in dev
       
       // Session Replay
       replaysSessionSampleRate: 0.1, // 10% of sessions
@@ -37,21 +32,24 @@ export const initSentry = () => {
       // Release tracking
       release: import.meta.env.VITE_APP_VERSION || "1.0.0",
       
-      // Filter out non-error events
+      // Filter out non-error events in development
       beforeSend(event, hint) {
-        // Don't send events in development
+        // Log in development but still send to Sentry if DSN is configured
         if (import.meta.env.DEV) {
           console.error('Sentry Event:', event, hint);
-          return null;
         }
         return event;
       },
     });
+    
+    console.log(`✅ Sentry initialized (${import.meta.env.MODE} mode)`);
+  } else {
+    console.warn('⚠️ Sentry DSN not configured. Set VITE_SENTRY_DSN to enable error monitoring.');
   }
 };
 
 export const captureException = (error: Error, context?: Record<string, any>) => {
-  if (import.meta.env.PROD) {
+  if (import.meta.env.VITE_SENTRY_DSN) {
     Sentry.captureException(error, {
       extra: context,
     });
@@ -61,7 +59,7 @@ export const captureException = (error: Error, context?: Record<string, any>) =>
 };
 
 export const captureMessage = (message: string, level: Sentry.SeverityLevel = 'info') => {
-  if (import.meta.env.PROD) {
+  if (import.meta.env.VITE_SENTRY_DSN) {
     Sentry.captureMessage(message, level);
   } else {
     console.log(`[${level}] ${message}`);
@@ -69,35 +67,17 @@ export const captureMessage = (message: string, level: Sentry.SeverityLevel = 'i
 };
 
 export const setUserContext = (user: { id: string; email?: string; username?: string }) => {
-  if (import.meta.env.PROD) {
+  if (import.meta.env.VITE_SENTRY_DSN) {
     Sentry.setUser(user);
+  } else {
+    console.log('User context set:', user);
   }
 };
 
 export const clearUserContext = () => {
-  if (import.meta.env.PROD) {
+  if (import.meta.env.VITE_SENTRY_DSN) {
     Sentry.setUser(null);
+  } else {
+    console.log('User context cleared');
   }
-};
-*/
-
-// Temporary stub implementation until Sentry is configured
-export const initSentry = () => {
-  console.log('Sentry monitoring ready (configure VITE_SENTRY_DSN to enable)');
-};
-
-export const captureException = (error: Error, context?: Record<string, any>) => {
-  console.error('Error captured:', error, context);
-};
-
-export const captureMessage = (message: string, level: 'info' | 'warning' | 'error' = 'info') => {
-  console.log(`[${level}] ${message}`);
-};
-
-export const setUserContext = (user: { id: string; email?: string; username?: string }) => {
-  console.log('User context set:', user);
-};
-
-export const clearUserContext = () => {
-  console.log('User context cleared');
 };
