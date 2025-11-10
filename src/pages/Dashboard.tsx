@@ -178,6 +178,7 @@ const Dashboard = () => {
               value={stats.myLists}
               description={t("dashboard.listsCreated")}
               gradient="warm"
+              onClick={() => navigate("/lists")}
             />
             <StatsCard
               icon={<Users className="w-8 h-8" />}
@@ -185,6 +186,7 @@ const Dashboard = () => {
               value={stats.myGroups}
               description={t("dashboard.groupsJoined")}
               gradient="mint"
+              onClick={() => navigate("/groups")}
             />
             <StatsCard
               icon={<Calendar className="w-8 h-8" />}
@@ -192,6 +194,7 @@ const Dashboard = () => {
               value={stats.upcomingEvents}
               description={t("dashboard.upcomingOccasions")}
               gradient="hero"
+              onClick={() => navigate("/events")}
             />
           </div>
         </div>
@@ -217,14 +220,26 @@ const Dashboard = () => {
   );
 };
 
-const StatsCard = ({ icon, title, value, description, gradient }: {
+const StatsCard = ({ icon, title, value, description, gradient, onClick }: {
   icon: React.ReactNode;
   title: string;
   value: number;
   description: string;
   gradient: "warm" | "mint" | "hero";
+  onClick: () => void;
 }) => (
-  <Card className="shadow-medium hover:shadow-large transition-all">
+  <Card 
+    className="shadow-medium hover:shadow-large transition-all cursor-pointer hover:scale-105 active:scale-95" 
+    onClick={onClick}
+    role="button"
+    tabIndex={0}
+    onKeyDown={(e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        onClick();
+      }
+    }}
+  >
     <CardContent className="pt-6">
       <div className={`w-14 h-14 bg-gradient-${gradient} rounded-2xl flex items-center justify-center text-primary-foreground mb-4 shadow-soft`}>
         {icon}
