@@ -165,19 +165,24 @@ const Groups = () => {
     if (!user) return;
 
     try {
-      // Trim and normalize the code
-      const normalizedCode = joinCode.trim().toLowerCase();
+      // Trim and normalize the code - remove all whitespace and convert to lowercase
+      const normalizedCode = joinCode.trim().replace(/\s+/g, '').toLowerCase();
       
       if (!normalizedCode) {
         toast.error("Por favor ingresa un código válido");
         return;
       }
 
+      console.log("Buscando grupo con código:", normalizedCode);
+
+      // Search for the group
       const { data: groupData, error: groupError } = await supabase
         .from("groups")
-        .select("id")
+        .select("id, name")
         .eq("share_code", normalizedCode)
         .maybeSingle();
+
+      console.log("Resultado de búsqueda:", { groupData, groupError });
 
       if (groupError) {
         console.error("Error al buscar grupo:", groupError);
@@ -186,6 +191,7 @@ const Groups = () => {
       }
 
       if (!groupData) {
+        console.log("No se encontró grupo con código:", normalizedCode);
         toast.error("Código de grupo inválido");
         return;
       }
@@ -200,6 +206,8 @@ const Groups = () => {
 
       if (existingMember) {
         toast.error("Ya eres miembro de este grupo");
+        setJoinDialogOpen(false);
+        setJoinCode("");
         return;
       }
 
@@ -213,7 +221,7 @@ const Groups = () => {
         return;
       }
 
-      toast.success("¡Te has unido al grupo!");
+      toast.success(`¡Te has unido al grupo "${groupData.name}"!`);
       setJoinDialogOpen(false);
       setJoinCode("");
       await loadGroups(user.id);
