@@ -3,7 +3,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Gift, Calendar, DollarSign, List, Lock } from "lucide-react";
+import { ArrowLeft, Gift, Calendar, DollarSign, List, Lock, ChevronDown, ExternalLink, Tag, Palette, Ruler, Package, FileText } from "lucide-react";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { Badge } from "@/components/ui/badge";
@@ -34,6 +35,10 @@ interface GiftItem {
   priority: string | null;
   reference_link: string | null;
   image_url: string | null;
+  color: string | null;
+  size: string | null;
+  brand: string | null;
+  notes: string | null;
 }
 
 const Assignment = () => {
@@ -120,10 +125,9 @@ const Assignment = () => {
       if (finalListId) {
         const { data: itemsData } = await supabase
           .from("gift_items")
-          .select("id, name, category, priority, reference_link, image_url")
+          .select("id, name, category, priority, reference_link, image_url, color, size, brand, notes")
           .eq("list_id", finalListId)
-          .order("created_at", { ascending: false })
-          .limit(5);
+          .order("created_at", { ascending: false });
 
         if (itemsData) {
           setWishListItems(itemsData);
@@ -270,54 +274,140 @@ const Assignment = () => {
                 <List className="h-5 w-5" />
                 {t("assignment.wishList")}
               </CardTitle>
-              {wishListItems.length === 0 && (
+              {wishListItems.length === 0 ? (
                 <CardDescription>{t("assignment.noWishList")}</CardDescription>
+              ) : (
+                <CardDescription>
+                  {wishListItems.length} {wishListItems.length === 1 ? 'item' : 'items'}
+                </CardDescription>
               )}
             </CardHeader>
             {wishListItems.length > 0 && (
               <CardContent>
-                <div className="space-y-3">
-                  {wishListItems.map((item) => (
-                    <div 
-                      key={item.id}
-                      className="flex items-start gap-3 p-3 bg-secondary/20 rounded-lg hover:bg-secondary/30 transition-colors"
-                    >
-                      {item.image_url && (
-                        <img 
-                          src={item.image_url} 
-                          alt={item.name}
-                          className="h-16 w-16 object-cover rounded"
-                        />
-                      )}
-                      <div className="flex-1 min-w-0">
-                        <h4 className="font-semibold truncate">{item.name}</h4>
-                        {item.category && (
-                          <p className="text-sm text-muted-foreground">{item.category}</p>
-                        )}
-                        {item.priority && (
-                          <Badge variant="outline" className="mt-1">
-                            {item.priority}
-                          </Badge>
-                        )}
-                      </div>
-                      {item.reference_link && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          asChild
-                        >
-                          <a 
-                            href={item.reference_link} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                          >
-                            {t("View")}
-                          </a>
-                        </Button>
-                      )}
-                    </div>
+                <Accordion type="single" collapsible className="w-full">
+                  {wishListItems.map((item, index) => (
+                    <AccordionItem key={item.id} value={`item-${item.id}`}>
+                      <AccordionTrigger className="hover:no-underline">
+                        <div className="flex items-center gap-3 flex-1 text-left">
+                          {item.image_url && (
+                            <img 
+                              src={item.image_url} 
+                              alt={item.name}
+                              className="h-12 w-12 object-cover rounded"
+                            />
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-base">{index + 1}. {item.name}</span>
+                              {item.priority && (
+                                <Badge 
+                                  variant={
+                                    item.priority === 'high' ? 'destructive' : 
+                                    item.priority === 'medium' ? 'default' : 
+                                    'secondary'
+                                  }
+                                  className="text-xs"
+                                >
+                                  {item.priority}
+                                </Badge>
+                              )}
+                            </div>
+                            {item.category && (
+                              <p className="text-sm text-muted-foreground">{item.category}</p>
+                            )}
+                          </div>
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <div className="pt-4 space-y-4">
+                          {/* Image Display */}
+                          {item.image_url && (
+                            <div className="flex justify-center">
+                              <img 
+                                src={item.image_url} 
+                                alt={item.name}
+                                className="max-w-full h-auto max-h-64 object-contain rounded-lg border"
+                              />
+                            </div>
+                          )}
+
+                          {/* Item Details Grid */}
+                          <div className="grid gap-3 sm:grid-cols-2">
+                            {item.brand && (
+                              <div className="flex items-start gap-2 p-3 bg-secondary/20 rounded-lg">
+                                <Package className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                                <div className="min-w-0">
+                                  <p className="text-xs font-medium text-muted-foreground">{t("Brand")}</p>
+                                  <p className="text-sm font-semibold truncate">{item.brand}</p>
+                                </div>
+                              </div>
+                            )}
+
+                            {item.color && (
+                              <div className="flex items-start gap-2 p-3 bg-secondary/20 rounded-lg">
+                                <Palette className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                                <div className="min-w-0">
+                                  <p className="text-xs font-medium text-muted-foreground">{t("Color")}</p>
+                                  <p className="text-sm font-semibold truncate">{item.color}</p>
+                                </div>
+                              </div>
+                            )}
+
+                            {item.size && (
+                              <div className="flex items-start gap-2 p-3 bg-secondary/20 rounded-lg">
+                                <Ruler className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                                <div className="min-w-0">
+                                  <p className="text-xs font-medium text-muted-foreground">{t("Size")}</p>
+                                  <p className="text-sm font-semibold truncate">{item.size}</p>
+                                </div>
+                              </div>
+                            )}
+
+                            {item.category && (
+                              <div className="flex items-start gap-2 p-3 bg-secondary/20 rounded-lg">
+                                <Tag className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                                <div className="min-w-0">
+                                  <p className="text-xs font-medium text-muted-foreground">{t("Category")}</p>
+                                  <p className="text-sm font-semibold truncate">{item.category}</p>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Notes Section */}
+                          {item.notes && (
+                            <div className="p-3 bg-secondary/20 rounded-lg">
+                              <div className="flex items-start gap-2 mb-2">
+                                <FileText className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                                <p className="text-xs font-medium text-muted-foreground">{t("Notes")}</p>
+                              </div>
+                              <p className="text-sm whitespace-pre-wrap ml-6">{item.notes}</p>
+                            </div>
+                          )}
+
+                          {/* Reference Link */}
+                          {item.reference_link && (
+                            <Button
+                              className="w-full"
+                              variant="default"
+                              asChild
+                            >
+                              <a 
+                                href={item.reference_link} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="flex items-center justify-center gap-2"
+                              >
+                                <ExternalLink className="h-4 w-4" />
+                                {t("View Reference Link")}
+                              </a>
+                            </Button>
+                          )}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
                   ))}
-                </div>
+                </Accordion>
               </CardContent>
             )}
           </Card>
