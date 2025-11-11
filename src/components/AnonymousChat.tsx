@@ -38,12 +38,12 @@ export const AnonymousChat = ({ groupId, receiverId, currentUserId }: AnonymousC
 
   const loadMessages = async () => {
     try {
+      // Load messages in BOTH directions: currentUser ↔ otherUser
       const { data, error } = await supabase
         .from("anonymous_messages")
         .select("*")
         .eq("group_id", groupId)
-        .eq("giver_id", currentUserId)
-        .eq("receiver_id", receiverId)
+        .or(`and(giver_id.eq.${currentUserId},receiver_id.eq.${receiverId}),and(giver_id.eq.${receiverId},receiver_id.eq.${currentUserId})`)
         .order("created_at", { ascending: true });
 
       if (error) throw error;

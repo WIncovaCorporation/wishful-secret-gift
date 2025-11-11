@@ -16,6 +16,7 @@ import Groups from "./pages/Groups";
 import Events from "./pages/Events";
 import Assignment from "./pages/Assignment";
 import GroupAssignments from "./pages/GroupAssignments";
+import Messages from "./pages/Messages";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import NotFound from "./pages/NotFound";
@@ -41,6 +42,7 @@ const App = () => (
                 <Route path="/groups" element={<Groups />} />
                 <Route path="/groups/:groupId/assignment" element={<Assignment />} />
                 <Route path="/groups/:groupId/admin" element={<GroupAssignments />} />
+                <Route path="/messages" element={<Messages />} />
                 <Route path="/events" element={<Events />} />
                 <Route path="/terms" element={<Terms />} />
                 <Route path="/privacy" element={<Privacy />} />

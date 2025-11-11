@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Gift, Users, Calendar, LogOut, Plus } from "lucide-react";
+import { Gift, Users, Calendar, LogOut, Plus, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import LanguageSelector from "@/components/LanguageSelector";
@@ -175,7 +175,7 @@ const Dashboard = () => {
         {/* Quick Actions */}
         <div className="mb-8" data-tour="quick-actions">
           <h2 className="text-2xl font-bold mb-4">{t("dashboard.quickActions")}</h2>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <Button
               data-tour="create-list"
               onClick={() => navigate("/lists")}
@@ -193,6 +193,15 @@ const Dashboard = () => {
             >
               <Users className="w-6 h-6" aria-hidden="true" />
               <span>{t("dashboard.joinGroup")}</span>
+            </Button>
+            <Button
+              onClick={() => navigate("/messages")}
+              variant="default"
+              className="h-auto py-6 flex-col gap-2 shadow-medium hover:shadow-large transition-all bg-gradient-to-br from-orange-500 to-pink-500"
+              aria-label="Mis Mensajes"
+            >
+              <MessageCircle className="w-6 h-6" aria-hidden="true" />
+              <span>Mis Mensajes</span>
             </Button>
             <Button
               data-tour="ai-suggestions"
