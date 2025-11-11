@@ -88,22 +88,28 @@ export const AnonymousChat = ({ groupId, receiverId, currentUserId }: AnonymousC
 
     setSending(true);
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("anonymous_messages")
         .insert({
           group_id: groupId,
           giver_id: currentUserId,
           receiver_id: receiverId,
           message: newMessage.trim(),
-        });
+        })
+        .select()
+        .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Database error:", error);
+        throw error;
+      }
 
+      console.log("Message inserted successfully:", data);
       setNewMessage("");
       toast.success("Mensaje enviado anónimamente");
     } catch (error: any) {
       console.error("Error sending message:", error);
-      toast.error("Error al enviar mensaje: " + error.message);
+      toast.error("Error al enviar mensaje. Por favor intenta de nuevo.");
     } finally {
       setSending(false);
     }
