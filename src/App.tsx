@@ -20,6 +20,7 @@ import Messages from "./pages/Messages";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 import NotFound from "./pages/NotFound";
+import RolesTest from "./pages/RolesTest";
 
 const queryClient = new QueryClient();
 
@@ -46,6 +47,7 @@ const App = () => (
                 <Route path="/events" element={<Events />} />
                 <Route path="/terms" element={<Terms />} />
                 <Route path="/privacy" element={<Privacy />} />
+                <Route path="/roles-test" element={<RolesTest />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
