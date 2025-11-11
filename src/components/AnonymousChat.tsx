@@ -105,6 +105,21 @@ export const AnonymousChat = ({ groupId, receiverId, currentUserId }: AnonymousC
       }
 
       console.log("Message inserted successfully:", data);
+
+      // Call edge function to send notification
+      try {
+        await supabase.functions.invoke('notify-anonymous-message', {
+          body: {
+            type: 'INSERT',
+            table: 'anonymous_messages',
+            record: data,
+            schema: 'public'
+          }
+        });
+      } catch (notifError) {
+        console.warn("Notification error (non-blocking):", notifError);
+      }
+
       setNewMessage("");
       toast.success("Mensaje enviado anónimamente");
     } catch (error: any) {
