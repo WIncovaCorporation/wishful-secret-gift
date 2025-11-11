@@ -47,6 +47,11 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        plan: {
+          free: "hsl(var(--plan-free))",
+          premium: "hsl(var(--plan-premium))",
+          corporate: "hsl(var(--plan-corporate))",
+        },
       },
       backgroundImage: {
         'gradient-warm': 'var(--gradient-warm)',

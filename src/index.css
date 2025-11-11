@@ -96,3 +96,38 @@ All colors MUST be HSL.
     @apply bg-background text-foreground;
   }
 }
+
+/* Plan badges y colores para monetización */
+@layer base {
+  :root {
+    --plan-free: 210 100% 50%;
+    --plan-premium: 280 100% 60%;
+    --plan-corporate: 25 100% 50%;
+  }
+
+  .dark {
+    --plan-free: 210 80% 60%;
+    --plan-premium: 280 80% 70%;
+    --plan-corporate: 25 80% 60%;
+  }
+}
+
+@layer components {
+  .plan-badge-free {
+    background: hsl(var(--plan-free) / 0.1);
+    color: hsl(var(--plan-free));
+    border: 1px solid hsl(var(--plan-free) / 0.3);
+  }
+
+  .plan-badge-premium {
+    background: hsl(var(--plan-premium) / 0.1);
+    color: hsl(var(--plan-premium));
+    border: 1px solid hsl(var(--plan-premium) / 0.3);
+  }
+
+  .plan-badge-corporate {
+    background: hsl(var(--plan-corporate) / 0.1);
+    color: hsl(var(--plan-corporate));
+    border: 1px solid hsl(var(--plan-corporate) / 0.3);
+  }
+}
