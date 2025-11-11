@@ -77,6 +77,7 @@ export type Database = {
           image_url: string | null
           is_active: boolean | null
           name: string
+          owner_id: string | null
           price: number | null
           product_url: string | null
           rating: number | null
@@ -95,6 +96,7 @@ export type Database = {
           image_url?: string | null
           is_active?: boolean | null
           name: string
+          owner_id?: string | null
           price?: number | null
           product_url?: string | null
           rating?: number | null
@@ -113,6 +115,7 @@ export type Database = {
           image_url?: string | null
           is_active?: boolean | null
           name?: string
+          owner_id?: string | null
           price?: number | null
           product_url?: string | null
           rating?: number | null

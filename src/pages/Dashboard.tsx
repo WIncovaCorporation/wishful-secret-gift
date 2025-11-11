@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Gift, Users, Calendar, Plus, MessageCircle } from "lucide-react";
+import { Gift, Users, Calendar, Plus, MessageCircle, Package, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import LanguageSelector from "@/components/LanguageSelector";
@@ -189,6 +189,43 @@ const Dashboard = () => {
               <span>{t("dashboard.manageEvents")}</span>
             </Button>
           </div>
+        </div>
+
+        {/* Marketplace & Affiliate Section */}
+        <div className="mb-8 grid sm:grid-cols-2 gap-4">
+          <Card 
+            className="shadow-medium hover:shadow-large transition-all cursor-pointer hover:scale-105 active:scale-95"
+            onClick={() => navigate("/marketplace")}
+          >
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center text-white shadow-soft">
+                  <Sparkles className="w-8 h-8" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold">Marketplace</h3>
+                  <p className="text-sm text-muted-foreground">Descubre productos recomendados</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card 
+            className="shadow-medium hover:shadow-large transition-all cursor-pointer hover:scale-105 active:scale-95"
+            onClick={() => navigate("/my-products")}
+          >
+            <CardContent className="pt-6">
+              <div className="flex items-center gap-4">
+                <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-2xl flex items-center justify-center text-white shadow-soft">
+                  <Package className="w-8 h-8" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold">Mis Productos</h3>
+                  <p className="text-sm text-muted-foreground">Gestiona tus enlaces de afiliado</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Stats Overview */}
