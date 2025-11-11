@@ -14,6 +14,113 @@ export type Database = {
   }
   public: {
     Tables: {
+      affiliate_clicks: {
+        Row: {
+          clicked_at: string | null
+          commission_earned: number | null
+          conversion_date: string | null
+          converted: boolean | null
+          id: string
+          ip_address: unknown
+          order_value: number | null
+          product_id: string
+          referrer: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          clicked_at?: string | null
+          commission_earned?: number | null
+          conversion_date?: string | null
+          converted?: boolean | null
+          id?: string
+          ip_address?: unknown
+          order_value?: number | null
+          product_id: string
+          referrer?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          clicked_at?: string | null
+          commission_earned?: number | null
+          conversion_date?: string | null
+          converted?: boolean | null
+          id?: string
+          ip_address?: unknown
+          order_value?: number | null
+          product_id?: string
+          referrer?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_clicks_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "affiliate_products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      affiliate_products: {
+        Row: {
+          affiliate_link: string
+          affiliate_network: string
+          category: string
+          commission_rate: number | null
+          created_at: string | null
+          currency: string | null
+          description: string | null
+          id: string
+          image_url: string | null
+          is_active: boolean | null
+          name: string
+          price: number | null
+          product_url: string | null
+          rating: number | null
+          reviews_count: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          affiliate_link: string
+          affiliate_network: string
+          category: string
+          commission_rate?: number | null
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          name: string
+          price?: number | null
+          product_url?: string | null
+          rating?: number | null
+          reviews_count?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          affiliate_link?: string
+          affiliate_network?: string
+          category?: string
+          commission_rate?: number | null
+          created_at?: string | null
+          currency?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          is_active?: boolean | null
+          name?: string
+          price?: number | null
+          product_url?: string | null
+          rating?: number | null
+          reviews_count?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       anonymous_messages: {
         Row: {
           created_at: string
@@ -76,6 +183,57 @@ export type Database = {
           id?: string
           name?: string
           type?: string
+        }
+        Relationships: []
+      }
+      gift_card_inventory: {
+        Row: {
+          code: string
+          cost: number
+          created_at: string | null
+          currency: string | null
+          denomination: number
+          expires_at: string | null
+          id: string
+          is_sold: boolean | null
+          margin: number | null
+          pin: string | null
+          retailer: string
+          selling_price: number
+          sold_at: string | null
+          sold_to_user_id: string | null
+        }
+        Insert: {
+          code: string
+          cost: number
+          created_at?: string | null
+          currency?: string | null
+          denomination: number
+          expires_at?: string | null
+          id?: string
+          is_sold?: boolean | null
+          margin?: number | null
+          pin?: string | null
+          retailer: string
+          selling_price: number
+          sold_at?: string | null
+          sold_to_user_id?: string | null
+        }
+        Update: {
+          code?: string
+          cost?: number
+          created_at?: string | null
+          currency?: string | null
+          denomination?: number
+          expires_at?: string | null
+          id?: string
+          is_sold?: boolean | null
+          margin?: number | null
+          pin?: string | null
+          retailer?: string
+          selling_price?: number
+          sold_at?: string | null
+          sold_to_user_id?: string | null
         }
         Relationships: []
       }
@@ -521,6 +679,20 @@ export type Database = {
       can_add_participant: { Args: { _group_id: string }; Returns: boolean }
       can_create_group: { Args: { _user_id: string }; Returns: boolean }
       can_use_ai: { Args: { _user_id: string }; Returns: boolean }
+      get_products_by_category: {
+        Args: { _category?: string; _limit?: number; _offset?: number }
+        Returns: {
+          affiliate_link: string
+          category: string
+          description: string
+          id: string
+          image_url: string
+          name: string
+          price: number
+          rating: number
+          reviews_count: number
+        }[]
+      }
       get_user_features: { Args: { _user_id: string }; Returns: Json }
       get_user_roles: {
         Args: { _user_id: string }
@@ -544,6 +716,21 @@ export type Database = {
         Returns: boolean
       }
       reset_monthly_usage: { Args: never; Returns: undefined }
+      search_affiliate_products: {
+        Args: { _limit?: number; _query: string }
+        Returns: {
+          affiliate_link: string
+          category: string
+          description: string
+          id: string
+          image_url: string
+          name: string
+          price: number
+          rating: number
+          relevance: number
+          reviews_count: number
+        }[]
+      }
     }
     Enums: {
       app_role: "free_user" | "premium_user" | "corporate_manager" | "admin"
