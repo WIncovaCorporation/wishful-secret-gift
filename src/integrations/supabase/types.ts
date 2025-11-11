@@ -334,6 +334,99 @@ export type Database = {
         }
         Relationships: []
       }
+      subscription_plans: {
+        Row: {
+          created_at: string | null
+          currency: string
+          description: string | null
+          display_name: string
+          features: Json
+          id: string
+          is_active: boolean | null
+          name: string
+          price_annual: number
+          price_monthly: number
+          sort_order: number | null
+          stripe_price_id_annual: string | null
+          stripe_price_id_monthly: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          currency?: string
+          description?: string | null
+          display_name: string
+          features?: Json
+          id?: string
+          is_active?: boolean | null
+          name: string
+          price_annual?: number
+          price_monthly?: number
+          sort_order?: number | null
+          stripe_price_id_annual?: string | null
+          stripe_price_id_monthly?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          currency?: string
+          description?: string | null
+          display_name?: string
+          features?: Json
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          price_annual?: number
+          price_monthly?: number
+          sort_order?: number | null
+          stripe_price_id_annual?: string | null
+          stripe_price_id_monthly?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      usage_tracking: {
+        Row: {
+          ai_suggestions_used: number | null
+          created_at: string | null
+          groups_count: number | null
+          id: string
+          last_reset_at: string | null
+          participants_total: number | null
+          period_end: string | null
+          period_start: string | null
+          updated_at: string | null
+          user_id: string
+          wishlists_count: number | null
+        }
+        Insert: {
+          ai_suggestions_used?: number | null
+          created_at?: string | null
+          groups_count?: number | null
+          id?: string
+          last_reset_at?: string | null
+          participants_total?: number | null
+          period_end?: string | null
+          period_start?: string | null
+          updated_at?: string | null
+          user_id: string
+          wishlists_count?: number | null
+        }
+        Update: {
+          ai_suggestions_used?: number | null
+          created_at?: string | null
+          groups_count?: number | null
+          id?: string
+          last_reset_at?: string | null
+          participants_total?: number | null
+          period_end?: string | null
+          period_start?: string | null
+          updated_at?: string | null
+          user_id?: string
+          wishlists_count?: number | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           assigned_at: string | null
@@ -361,11 +454,74 @@ export type Database = {
         }
         Relationships: []
       }
+      user_subscriptions: {
+        Row: {
+          cancel_at_period_end: boolean | null
+          canceled_at: string | null
+          created_at: string | null
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          plan_id: string
+          status: string
+          stripe_customer_id: string | null
+          stripe_price_id: string | null
+          stripe_subscription_id: string | null
+          trial_end: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          cancel_at_period_end?: boolean | null
+          canceled_at?: string | null
+          created_at?: string | null
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          plan_id: string
+          status: string
+          stripe_customer_id?: string | null
+          stripe_price_id?: string | null
+          stripe_subscription_id?: string | null
+          trial_end?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          cancel_at_period_end?: boolean | null
+          canceled_at?: string | null
+          created_at?: string | null
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          plan_id?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_price_id?: string | null
+          stripe_subscription_id?: string | null
+          trial_end?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      can_add_participant: { Args: { _group_id: string }; Returns: boolean }
+      can_create_group: { Args: { _user_id: string }; Returns: boolean }
+      can_use_ai: { Args: { _user_id: string }; Returns: boolean }
+      get_user_features: { Args: { _user_id: string }; Returns: Json }
       get_user_roles: {
         Args: { _user_id: string }
         Returns: {
@@ -387,6 +543,7 @@ export type Database = {
         Args: { _group_id: string; _user_id: string }
         Returns: boolean
       }
+      reset_monthly_usage: { Args: never; Returns: undefined }
     }
     Enums: {
       app_role: "free_user" | "premium_user" | "corporate_manager" | "admin"
