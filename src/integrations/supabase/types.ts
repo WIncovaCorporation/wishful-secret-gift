@@ -263,6 +263,7 @@ export type Database = {
           max_budget: number | null
           min_budget: number | null
           name: string
+          notification_mode: string
           share_code: string
           updated_at: string
         }
@@ -277,6 +278,7 @@ export type Database = {
           max_budget?: number | null
           min_budget?: number | null
           name: string
+          notification_mode?: string
           share_code: string
           updated_at?: string
         }
@@ -291,6 +293,7 @@ export type Database = {
           max_budget?: number | null
           min_budget?: number | null
           name?: string
+          notification_mode?: string
           share_code?: string
           updated_at?: string
         }

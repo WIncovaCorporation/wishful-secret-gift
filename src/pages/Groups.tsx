@@ -28,6 +28,7 @@ interface Group {
   exchange_date: string | null;
   is_drawn: boolean;
   created_by: string;
+  notification_mode: string;
   members?: GroupMember[];
 }
 
@@ -55,6 +56,7 @@ const Groups = () => {
     min_budget: "",
     max_budget: "",
     exchange_date: "",
+    notification_mode: "group",
   });
   const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; id: string }>({ 
     open: false, 
@@ -158,6 +160,7 @@ const Groups = () => {
           exchange_date: newGroup.exchange_date || null,
           created_by: user.id,
           share_code: shareCode,
+          notification_mode: newGroup.notification_mode,
         }])
         .select()
         .single();
@@ -179,6 +182,7 @@ const Groups = () => {
         min_budget: "",
         max_budget: "",
         exchange_date: "",
+        notification_mode: "group",
       });
       await loadGroups(user.id);
     } catch (error: any) {
@@ -497,6 +501,23 @@ const Groups = () => {
                       onChange={(e) => setNewGroup({ ...newGroup, exchange_date: e.target.value })}
                     />
                   </div>
+                  <div>
+                    <Label htmlFor="notification-mode">Modo de Notificaciones 🔔</Label>
+                    <select
+                      id="notification-mode"
+                      value={newGroup.notification_mode}
+                      onChange={(e) => setNewGroup({ ...newGroup, notification_mode: e.target.value })}
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      <option value="group">🎉 Notificar a todo el grupo (más emoción)</option>
+                      <option value="private">🔒 Solo notificar al receptor (privado)</option>
+                    </select>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {newGroup.notification_mode === 'group' 
+                        ? '✨ Todos recibirán un email cuando haya mensajes anónimos. ¡Más diversión!'
+                        : '🔐 Solo el receptor recibirá notificación. Máxima privacidad.'}
+                    </p>
+                  </div>
                   <Button type="submit" className="w-full">Crear Grupo</Button>
                 </form>
               </DialogContent>
@@ -550,6 +571,9 @@ const Groups = () => {
                             Fecha: {new Date(group.exchange_date).toLocaleDateString()}
                           </span>
                         )}
+                        <span className="px-2 py-1 bg-muted rounded flex items-center gap-1">
+                          {group.notification_mode === 'group' ? '🎉 Notificaciones grupales' : '🔒 Notificaciones privadas'}
+                        </span>
                       </div>
                     </div>
                      <div className="flex gap-2 flex-wrap">

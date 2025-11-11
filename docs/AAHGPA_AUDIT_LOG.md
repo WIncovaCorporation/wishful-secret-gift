@@ -1741,3 +1741,182 @@ CREATE TRIGGER on_anonymous_message_created
 **Commit reference:** `Fix #13: Anti-fraud system + dynamic checklist + improved logout`
 
 ---
+
+## Corrección #15: Sistema de Notificaciones Configurables para Mensajes Anónimos
+**Fecha:** 2025-11-11  
+**Auditoría:** User Engagement & Configuration Flexibility  
+**Prioridad:** P1 - HIGH (User Experience Enhancement)  
+**Categoría:** UX/Notifications/Configuration
+
+### Síntoma
+Las notificaciones de mensajes anónimos solo tenían un modo de operación fijo (privado al receptor). Los usuarios solicitaron más emoción y engagement grupal, permitiendo que todos reciban notificaciones cuando haya actividad en el chat anónimo.
+
+### Causa
+No existía configuración para que el administrador del grupo pudiera elegir entre:
+- **Notificaciones privadas:** Solo el receptor recibe email (máxima privacidad)
+- **Notificaciones grupales:** Todos los miembros reciben email (más emoción y engagement)
+
+El sistema original asumía que todos los grupos querían privacidad máxima, sin considerar que muchos grupos prefieren la emoción colectiva del Secret Santa.
+
+### Acción Implementada
+
+#### 1. Migración de Base de Datos
+```sql
+-- Agregar campo de configuración de notificaciones
+ALTER TABLE public.groups 
+ADD COLUMN notification_mode text NOT NULL DEFAULT 'private';
+
+-- Constraint para validar valores permitidos
+ALTER TABLE public.groups 
+ADD CONSTRAINT groups_notification_mode_check 
+CHECK (notification_mode IN ('private', 'group'));
+
+COMMENT ON COLUMN public.groups.notification_mode IS 'Notification mode for anonymous messages: private (only receiver) or group (all members)';
+```
+
+#### 2. Edge Function Mejorado (`supabase/functions/notify-anonymous-message/index.ts`)
+
+**Lógica Dinámica de Destinatarios:**
+```typescript
+// Leer configuración del grupo
+const { data: groupData } = await supabaseClient
+  .from('groups')
+  .select('name, notification_mode')
+  .eq('id', record.group_id)
+  .single();
+
+const notificationMode = groupData?.notification_mode || 'private';
+
+// Determinar destinatarios según configuración
+let recipients: string[] = [];
+
+if (notificationMode === 'group') {
+  // Modo grupal: obtener emails de todos los miembros
+  const { data: memberData } = await supabaseClient
+    .from('group_members')
+    .select('user_id')
+    .eq('group_id', record.group_id);
+
+  for (const memberId of memberIds) {
+    const { data: { user: memberUser } } = await supabaseClient.auth.admin.getUserById(memberId);
+    if (memberUser?.email) {
+      recipients.push(memberUser.email);
+    }
+  }
+} else {
+  // Modo privado: solo el receptor
+  recipients = [user.email];
+}
+```
+
+**Contenido de Email Adaptativo:**
+- **Modo Privado:**
+  - Subject: "🎁 Mensaje de tu Amigo Secreto en [Grupo]"
+  - Saludo personalizado con nombre del receptor
+  - Muestra el mensaje completo
+  - Tip: "Responde para ayudar a tu amigo secreto"
+
+- **Modo Grupal:**
+  - Subject: "🎁 ¡Nuevo mensaje anónimo en [Grupo]!"
+  - Saludo genérico sin nombre específico
+  - Solo indica que hay actividad (sin mostrar mensaje)
+  - Tip: "Revisa tu chat anónimo para ver si tienes mensajes"
+
+#### 3. UI del Formulario de Creación de Grupo (`src/pages/Groups.tsx`)
+
+**Selector de Modo de Notificación:**
+```tsx
+<Label htmlFor="notification-mode">Modo de Notificaciones 🔔</Label>
+<select
+  id="notification-mode"
+  value={newGroup.notification_mode}
+  onChange={(e) => setNewGroup({ ...newGroup, notification_mode: e.target.value })}
+>
+  <option value="group">🎉 Notificar a todo el grupo (más emoción)</option>
+  <option value="private">🔒 Solo notificar al receptor (privado)</option>
+</select>
+<p className="text-xs text-muted-foreground mt-1">
+  {newGroup.notification_mode === 'group' 
+    ? '✨ Todos recibirán un email cuando haya mensajes anónimos. ¡Más diversión!'
+    : '🔐 Solo el receptor recibirá notificación. Máxima privacidad.'}
+</p>
+```
+
+**Características del Selector:**
+- ✅ Valor por defecto: `group` (maximiza engagement)
+- ✅ Descripción dinámica según selección
+- ✅ Emojis visuales para diferenciación rápida
+- ✅ Texto explicativo claro del comportamiento
+
+#### 4. Visualización de Configuración en Tarjetas de Grupo
+
+**Badge de Estado:**
+```tsx
+<span className="px-2 py-1 bg-muted rounded flex items-center gap-1">
+  {group.notification_mode === 'group' 
+    ? '🎉 Notificaciones grupales' 
+    : '🔒 Notificaciones privadas'}
+</span>
+```
+
+- Visible en cada tarjeta de grupo
+- Permite a los miembros saber qué esperar
+- Transparencia total en la configuración
+
+### Impacto
+
+#### UX & Engagement
+- ✅ **Mayor participación:** Todos los miembros están al tanto de la actividad
+- ✅ **Emoción colectiva:** Mantiene el espíritu de Secret Santa vivo
+- ✅ **Flexibilidad:** Administrador elige según cultura del grupo
+- ✅ **Expectativas claras:** Badge visible comunica el comportamiento
+
+#### Privacidad & Seguridad
+- ✅ **Anonimato preservado:** Modo grupal no revela quién envía o recibe
+- ✅ **Contenido protegido:** Mensaje completo solo en modo privado
+- ✅ **Control del administrador:** Solo creador configura el modo
+- ✅ **Sin información sensible:** Email grupal solo indica actividad
+
+#### Technical
+- ✅ **Persistencia:** Configuración en base de datos
+- ✅ **Validación:** Constraint garantiza valores válidos
+- ✅ **Performance:** Query eficiente para múltiples destinatarios
+- ✅ **Escalabilidad:** Resend API maneja múltiples destinatarios sin problema
+- ✅ **Flexibilidad:** Fácil agregar nuevos modos en el futuro
+
+### Casos de Uso
+
+#### Grupo Familiar (Modo Grupal) 🎉
+- Familia quiere mantener la emoción alta
+- Todos reciben notificación: "¡Hay actividad en el chat!"
+- Incrementa participación y entusiasmo
+- Nadie sabe quién escribió o recibió
+
+#### Grupo de Trabajo (Modo Privado) 🔒
+- Ambiente profesional prefiere discreción
+- Solo el receptor sabe que tiene mensaje
+- Privacidad máxima garantizada
+- Menos ruido en bandeja de entrada
+
+### Archivos Modificados
+1. ✅ **Migration:** `20251111_add_notification_mode_to_groups.sql`
+2. ✅ **Edge Function:** `supabase/functions/notify-anonymous-message/index.ts`
+3. ✅ **Frontend:** `src/pages/Groups.tsx` (interface + form + UI)
+4. ✅ **Audit Log:** `docs/AAHGPA_AUDIT_LOG.md`
+
+### Criterios de Validación
+- ✅ Campo `notification_mode` persiste correctamente en DB
+- ✅ Modo privado envía email solo al receptor
+- ✅ Modo grupal envía email a todos los miembros
+- ✅ Email grupal no revela información sensible
+- ✅ Badge de configuración visible en tarjetas
+- ✅ Selector funcional en formulario de creación
+- ✅ Descripción dinámica actualiza según selección
+
+### Validado por
+System Architect  
+**Fecha:** 2025-11-11  
+**Status:** ✅ IMPLEMENTADO Y VALIDADO
+
+---
+

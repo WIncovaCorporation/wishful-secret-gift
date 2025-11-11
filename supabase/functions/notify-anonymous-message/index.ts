@@ -63,10 +63,10 @@ Deno.serve(async (req) => {
       throw new Error('Could not fetch receiver email');
     }
 
-    // Get group name
+    // Get group name and notification mode
     const { data: groupData, error: groupError } = await supabaseClient
       .from('groups')
-      .select('name')
+      .select('name, notification_mode')
       .eq('id', record.group_id)
       .single();
 
@@ -76,12 +76,61 @@ Deno.serve(async (req) => {
     }
 
     const groupName = groupData?.name || 'Amigo Secreto';
+    const notificationMode = groupData?.notification_mode || 'private';
+
+    // Get recipients based on notification mode
+    let recipients: string[] = [];
+    
+    if (notificationMode === 'group') {
+      // Get all group members
+      const { data: memberData, error: memberError } = await supabaseClient
+        .from('group_members')
+        .select('user_id')
+        .eq('group_id', record.group_id);
+
+      if (memberError) {
+        console.error('Error fetching group members:', memberError);
+        throw memberError;
+      }
+
+      // Get emails for all members
+      const memberIds = memberData?.map((m: any) => m.user_id) || [];
+      for (const memberId of memberIds) {
+        const { data: { user: memberUser }, error: memberUserError } = await supabaseClient.auth.admin.getUserById(memberId);
+        if (!memberUserError && memberUser?.email) {
+          recipients.push(memberUser.email);
+        }
+      }
+    } else {
+      // Only notify receiver (private mode)
+      recipients = [user.email];
+    }
 
     // Send email notification using Resend
     const resendApiKey = Deno.env.get('RESEND_API_KEY');
     if (!resendApiKey) {
       throw new Error('RESEND_API_KEY not configured');
     }
+
+    // Customize email content based on notification mode
+    const emailSubject = notificationMode === 'group' 
+      ? `🎁 ¡Nuevo mensaje anónimo en "${groupName}"!`
+      : `🎁 Mensaje de tu Amigo Secreto en "${groupName}"`;
+    
+    const emailGreeting = notificationMode === 'group'
+      ? `<h2 style="margin-top: 0; color: #667eea;">¡Hola!</h2>
+         <p>Hay un nuevo mensaje anónimo en el grupo <strong>"${groupName}"</strong>.</p>`
+      : `<h2 style="margin-top: 0; color: #667eea;">¡Hola ${receiverData.display_name}!</h2>
+         <p>Tu <strong>Amigo Secreto</strong> del grupo <strong>"${groupName}"</strong> te ha enviado un mensaje anónimo.</p>`;
+
+    const messagePreview = notificationMode === 'group'
+      ? `<p style="color: #718096; font-size: 14px; font-style: italic;">
+           "Un amigo secreto está compartiendo algo especial... 🎁"
+         </p>`
+      : `<div class="message-box">
+           <strong>💬 Mensaje:</strong>
+           <p style="margin: 8px 0 0 0;">"${record.message}"</p>
+         </div>`;
 
     const emailHtml = `
       <!DOCTYPE html>
@@ -147,18 +196,12 @@ Deno.serve(async (req) => {
             <div class="content">
               <div class="emoji">🎅</div>
               
-              <h2 style="margin-top: 0; color: #667eea;">¡Hola ${receiverData.display_name}!</h2>
+              ${emailGreeting}
               
-              <p>Tu <strong>Amigo Secreto</strong> del grupo <strong>"${groupName}"</strong> te ha enviado un mensaje anónimo.</p>
-              
-              <div class="message-box">
-                <strong>💬 Mensaje:</strong>
-                <p style="margin: 8px 0 0 0;">"${record.message}"</p>
-              </div>
+              ${messagePreview}
               
               <p style="color: #718096; font-size: 14px;">
-                <strong>💡 Tip:</strong> Tu Amigo Secreto quiere asegurarse de darte el regalo perfecto. 
-                Responde sus preguntas para ayudarle a elegir algo que realmente te guste.
+                <strong>💡 Tip:</strong> ${notificationMode === 'group' ? 'Revisa tu chat anónimo para ver si tienes mensajes nuevos.' : 'Tu Amigo Secreto quiere asegurarse de darte el regalo perfecto. Responde sus preguntas para ayudarle a elegir algo que realmente te guste.'}
               </p>
               
               <div style="text-align: center;">
@@ -194,8 +237,8 @@ Deno.serve(async (req) => {
       },
       body: JSON.stringify({
         from: 'GiftApp <notifications@resend.dev>',
-        to: [user.email],
-        subject: `🎁 Mensaje de tu Amigo Secreto en "${groupName}"`,
+        to: recipients,
+        subject: emailSubject,
         html: emailHtml,
       }),
     });
