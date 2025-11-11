@@ -3,13 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Gift, Users, Calendar, LogOut, Plus, MessageCircle } from "lucide-react";
+import { Gift, Users, Calendar, Plus, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import LanguageSelector from "@/components/LanguageSelector";
 import { OnboardingTour } from "@/components/OnboardingTour";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { SkipToContent } from "@/components/SkipToContent";
+import { ProfileMenu } from "@/components/ProfileMenu";
 import Footer from "@/components/Footer";
 import type { User } from "@supabase/supabase-js";
 
@@ -113,29 +114,6 @@ const Dashboard = () => {
     }
   };
 
-  const handleSignOut = async () => {
-    try {
-      // Clear local state first
-      setUser(null);
-      
-      // Sign out from Supabase
-      await supabase.auth.signOut({ scope: 'local' });
-      
-      // Force clear any cached session data
-      localStorage.clear();
-      sessionStorage.clear();
-      
-      toast.success(t("dashboard.signedOut"));
-      
-      // Navigate after a brief delay to ensure state is cleared
-      setTimeout(() => {
-        navigate("/auth", { replace: true });
-      }, 100);
-    } catch (error) {
-      console.error("Sign out error:", error);
-      toast.error(t("dashboard.signOutFailed"));
-    }
-  };
 
   if (loading) {
     return (
@@ -160,12 +138,9 @@ const Dashboard = () => {
               <p className="text-sm text-muted-foreground">{t("dashboard.welcomeBack")}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <LanguageSelector />
-            <Button variant="outline" size="sm" onClick={handleSignOut} aria-label={t("dashboard.signOut")}>
-              <LogOut className="w-4 h-4 mr-2" aria-hidden="true" />
-              {t("dashboard.signOut")}
-            </Button>
+            {user && <ProfileMenu user={user} />}
           </div>
         </div>
       </header>
