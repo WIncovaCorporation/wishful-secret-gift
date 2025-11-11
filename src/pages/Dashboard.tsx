@@ -12,13 +12,17 @@ import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { SkipToContent } from "@/components/SkipToContent";
 import { ProfileMenu } from "@/components/ProfileMenu";
 import Footer from "@/components/Footer";
+import { useUserRole } from "@/hooks/useUserRole";
+import { UpgradePrompt } from "@/components/UpgradePrompt";
 import type { User } from "@supabase/supabase-js";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const { isFree } = useUserRole();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showFreeBanner, setShowFreeBanner] = useState(false);
   const [stats, setStats] = useState({
     myLists: 0,
     myGroups: 0,
@@ -39,6 +43,12 @@ const Dashboard = () => {
       setUser(session.user);
       await loadStats(session.user.id);
       await loadActiveAssignments(session.user.id);
+      
+      // Show free banner for free users
+      if (isFree()) {
+        setTimeout(() => setShowFreeBanner(true), 2000);
+      }
+      
       setLoading(false);
     };
 
@@ -147,6 +157,18 @@ const Dashboard = () => {
 
       {/* Main Content */}
       <main id="main-content" className="container mx-auto px-4 py-8">
+        {showFreeBanner && (
+          <div className="mb-6">
+            <UpgradePrompt
+              variant="banner"
+              title="¡Desbloquea todo el potencial de GiftApp!"
+              description="Grupos y listas ilimitados, chat anónimo con tu asignado, sugerencias con IA y más."
+              feature="premium_features"
+              onDismiss={() => setShowFreeBanner(false)}
+            />
+          </div>
+        )}
+
         {/* Quick Actions */}
         <div className="mb-8" data-tour="quick-actions">
           <h2 className="text-2xl font-bold mb-4">{t("dashboard.quickActions")}</h2>

@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { useUserRole } from "@/hooks/useUserRole";
+import { useSubscription } from "@/hooks/useSubscription";
+import { UpgradePrompt } from "@/components/UpgradePrompt";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -43,9 +46,12 @@ interface GroupMember {
 const Groups = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const { isFree } = useUserRole();
+  const { features, getLimit } = useSubscription();
   const [user, setUser] = useState<User | null>(null);
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [joinDialogOpen, setJoinDialogOpen] = useState(false);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
@@ -145,6 +151,15 @@ const Groups = () => {
   const handleCreateGroup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
+
+    // Check limits for free users
+    const groupLimit = getLimit('groups');
+    if (isFree() && groups.length >= groupLimit) {
+      setShowUpgradePrompt(true);
+      setDialogOpen(false);
+      toast.error(`Plan Free: máximo ${groupLimit} grupos. Actualiza para crear más.`);
+      return;
+    }
 
     try {
       // Generate a unique share code (lowercase for consistency)
@@ -405,6 +420,17 @@ const Groups = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
+        {showUpgradePrompt && (
+          <div className="mb-6">
+            <UpgradePrompt
+              title="¡Alcanzaste el límite de grupos!"
+              description={`Tu plan Free permite hasta ${getLimit('groups')} grupos. Actualiza a Premium para grupos ilimitados.`}
+              feature="unlimited_groups"
+              onDismiss={() => setShowUpgradePrompt(false)}
+            />
+          </div>
+        )}
+
         <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
           <p className="text-muted-foreground">Gestiona tus grupos de intercambio</p>
           <div className="flex gap-2">
