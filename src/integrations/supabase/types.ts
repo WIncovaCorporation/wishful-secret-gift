@@ -124,6 +124,63 @@ export type Database = {
         }
         Relationships: []
       }
+      amazon_credentials: {
+        Row: {
+          access_key: string
+          associate_tag: string
+          created_at: string
+          id: string
+          marketplace: string
+          secret_key: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_key: string
+          associate_tag: string
+          created_at?: string
+          id?: string
+          marketplace?: string
+          secret_key: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_key?: string
+          associate_tag?: string
+          created_at?: string
+          id?: string
+          marketplace?: string
+          secret_key?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      amazon_search_tracking: {
+        Row: {
+          created_at: string
+          id: string
+          results_count: number
+          search_query: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          results_count?: number
+          search_query: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          results_count?: number
+          search_query?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       anonymous_messages: {
         Row: {
           created_at: string

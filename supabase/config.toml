@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.notify-anonymous-message]
 verify_jwt = false
+
+[functions.search-amazon-products]
+verify_jwt = true

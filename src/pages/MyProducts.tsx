@@ -4,10 +4,13 @@ import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ProductForm } from '@/components/ProductForm';
-import { ArrowLeft, Plus, Pencil, Trash2, ExternalLink, Package } from 'lucide-react';
+import AmazonProductSearch from '@/components/AmazonProductSearch';
+import AmazonCredentialsForm from '@/components/AmazonCredentialsForm';
+import { ArrowLeft, Plus, Pencil, Trash2, ExternalLink, Package, Search } from 'lucide-react';
 import { toast } from 'sonner';
 import { useSubscription } from '@/hooks/useSubscription';
 
@@ -124,33 +127,64 @@ export default function MyProducts() {
               </div>
             </div>
 
-            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-              <DialogTrigger asChild>
-                <Button 
-                  className="gap-2"
-                  disabled={!canAddMore}
-                  onClick={() => setEditingProduct(null)}
-                >
-                  <Plus className="w-4 h-4" />
-                  Agregar Producto
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>
-                    {editingProduct ? 'Editar Producto' : 'Agregar Producto'}
-                  </DialogTitle>
-                </DialogHeader>
-                <ProductForm
-                  onSuccess={handleFormSuccess}
-                  onCancel={() => {
-                    setDialogOpen(false);
-                    setEditingProduct(null);
-                  }}
-                  initialData={editingProduct}
-                />
-              </DialogContent>
-            </Dialog>
+            <div className="flex gap-2">
+              <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button 
+                    className="gap-2"
+                    disabled={!canAddMore}
+                    onClick={() => setEditingProduct(null)}
+                  >
+                    <Plus className="w-4 h-4" />
+                    Agregar Manual
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>
+                      {editingProduct ? 'Editar Producto' : 'Agregar Producto'}
+                    </DialogTitle>
+                  </DialogHeader>
+                  <ProductForm
+                    onSuccess={handleFormSuccess}
+                    onCancel={() => {
+                      setDialogOpen(false);
+                      setEditingProduct(null);
+                    }}
+                    initialData={editingProduct}
+                  />
+                </DialogContent>
+              </Dialog>
+
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="gap-2">
+                    <Search className="w-4 h-4" />
+                    Buscar en Amazon
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Búsqueda de Productos Amazon</DialogTitle>
+                    <DialogDescription>
+                      Busca y agrega productos directamente desde Amazon con tu tag de afiliado
+                    </DialogDescription>
+                  </DialogHeader>
+                  <Tabs defaultValue="search" className="w-full">
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="search">Buscar Productos</TabsTrigger>
+                      <TabsTrigger value="config">Configurar API</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="search" className="space-y-4">
+                      <AmazonProductSearch onProductAdded={loadProducts} />
+                    </TabsContent>
+                    <TabsContent value="config">
+                      <AmazonCredentialsForm />
+                    </TabsContent>
+                  </Tabs>
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
         </div>
       </div>
