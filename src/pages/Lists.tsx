@@ -685,6 +685,17 @@ const Lists = () => {
           setShowProducts(false);
           setUrlMetadata(null);
           setIsExtractingUrl(false);
+          setSelectedCategory("");
+          setNewItem({
+            name: "",
+            category: "",
+            color: "",
+            size: "",
+            brand: "",
+            notes: "",
+            reference_link: "",
+            priority: "medium",
+          });
         }
         }}>
           <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
@@ -1199,14 +1210,19 @@ const Lists = () => {
                           </p>
                           
                           {urlMetadata && (
-                            <div className="mt-3 p-4 border rounded-lg bg-gradient-to-br from-muted/30 to-background space-y-3">
+                            <a 
+                              href={newItem.reference_link} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="mt-3 p-4 border rounded-lg bg-gradient-to-br from-muted/30 to-background space-y-3 block hover:border-primary hover:shadow-md transition-all duration-200 cursor-pointer group"
+                            >
                               <div className="flex gap-4">
                                 {urlMetadata.image && (
                                   <div className="relative flex-shrink-0">
                                     <img 
                                       src={urlMetadata.image} 
                                       alt={urlMetadata.title}
-                                      className="w-24 h-24 object-contain rounded border bg-white"
+                                      className="w-24 h-24 object-contain rounded border bg-white group-hover:scale-105 transition-transform duration-200"
                                       onError={(e) => {
                                         e.currentTarget.style.display = 'none';
                                       }}
@@ -1214,7 +1230,7 @@ const Lists = () => {
                                   </div>
                                 )}
                                 <div className="flex-1 min-w-0 space-y-2">
-                                  <h4 className="text-sm font-semibold line-clamp-2 leading-tight">{urlMetadata.title}</h4>
+                                  <h4 className="text-sm font-semibold line-clamp-2 leading-tight group-hover:text-primary transition-colors">{urlMetadata.title}</h4>
                                   
                                   {/* Price Information */}
                                   <div className="flex items-baseline gap-2 flex-wrap">
@@ -1278,16 +1294,11 @@ const Lists = () => {
                                 </div>
                               </div>
                               
-                              <a 
-                                href={newItem.reference_link} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1 text-xs text-primary hover:underline font-medium"
-                              >
+                              <div className="inline-flex items-center gap-1 text-xs text-primary group-hover:underline font-medium">
                                 <ExternalLink className="h-3 w-3" />
-                                Ver producto completo
-                              </a>
-                            </div>
+                                Ver producto completo en tienda
+                              </div>
+                            </a>
                           )}
                         </div>
 

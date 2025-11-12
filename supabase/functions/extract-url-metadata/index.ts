@@ -120,12 +120,14 @@ serve(async (req) => {
     // Advanced price extraction for Amazon and e-commerce sites
     // Try multiple price patterns in order of reliability
     
-    // Pattern 1: Amazon's priceblock
-    let priceMatch = html.match(/class=["']a-price-whole["'][^>]*>(\d+)[\.,]?(\d*)</i);
+    // Pattern 1: Amazon's priceblock with separate whole and fraction parts
+    let priceMatch = html.match(/class=["']a-price-whole["'][^>]*>(\d+)[\.,]?/i);
     if (priceMatch) {
       const dollars = priceMatch[1];
-      const cents = priceMatch[2] || '00';
-      metadata.price = `${dollars}.${cents.padEnd(2, '0')}`;
+      // Try to find the cents/fraction part
+      const centsMatch = html.match(/class=["']a-price-fraction["'][^>]*>(\d+)/i);
+      const cents = centsMatch ? centsMatch[1].padStart(2, '0').slice(0, 2) : '00';
+      metadata.price = `${dollars}.${cents}`;
     }
 
     // Pattern 2: Amazon deal price
