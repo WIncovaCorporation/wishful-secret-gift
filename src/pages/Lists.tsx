@@ -19,6 +19,8 @@ import { GIFT_CATEGORIES, COMMON_COLORS, CLOTHING_SIZES, SHOE_SIZES, POPULAR_BRA
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import Footer from "@/components/Footer";
+import { HelpTooltip } from "@/components/HelpTooltip";
+import { EmptyStateCard } from "@/components/EmptyStateCard";
 import type { User } from "@supabase/supabase-js";
 
 interface GiftList {
@@ -405,7 +407,10 @@ const Lists = () => {
             <Button variant="ghost" onClick={() => navigate("/dashboard")}>
               ← Volver
             </Button>
-            <h1 className="text-2xl font-bold">Mis Listas de Regalos</h1>
+            <h1 className="text-2xl font-bold flex items-center gap-2">
+              Mis Listas de Regalos
+              <HelpTooltip content="Crea listas organizadas con ideas de regalos. Puedes añadir productos manualmente, buscar con IA o encontrar productos reales en tiendas online." />
+            </h1>
           </div>
           <LanguageSelector />
         </div>
@@ -425,7 +430,14 @@ const Lists = () => {
         )}
 
         <div className="flex justify-between items-center mb-6">
-          <p className="text-muted-foreground">Gestiona tus listas de deseos</p>
+          <div>
+            <p className="text-muted-foreground text-base">
+              📋 Organiza ideas de regalos para cualquier ocasión
+            </p>
+            <p className="text-sm text-muted-foreground/70 mt-1">
+              Añade detalles como categoría, color, talla, marca y prioridad
+            </p>
+          </div>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
               <Button className="gap-2">
@@ -456,17 +468,13 @@ const Lists = () => {
         </div>
 
         {lists.length === 0 ? (
-          <Card className="text-center py-12">
-            <CardContent>
-              <Gift className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-xl font-semibold mb-2">No tienes listas aún</h3>
-              <p className="text-muted-foreground mb-4">Crea tu primera lista de regalos</p>
-              <Button onClick={() => setDialogOpen(true)}>
-                <Plus className="w-4 h-4 mr-2" />
-                Crear Primera Lista
-              </Button>
-            </CardContent>
-          </Card>
+          <EmptyStateCard
+            icon={Gift}
+            title="¡Empieza tu primera lista!"
+            description="Las listas te permiten organizar ideas de regalos para cualquier ocasión: cumpleaños, Navidad, bodas, etc. Puedes añadir productos manualmente con todos sus detalles, o usar nuestra IA para obtener sugerencias personalizadas."
+            actionLabel="Crear Mi Primera Lista"
+            onAction={() => setDialogOpen(true)}
+          />
         ) : (
           <div className="grid gap-6">
             {lists.map((list) => (

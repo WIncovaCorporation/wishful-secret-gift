@@ -14,6 +14,8 @@ import LanguageSelector from "@/components/LanguageSelector";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import Footer from "@/components/Footer";
+import { HelpTooltip } from "@/components/HelpTooltip";
+import { EmptyStateCard } from "@/components/EmptyStateCard";
 import type { User } from "@supabase/supabase-js";
 
 interface Event {
@@ -150,7 +152,10 @@ const Events = () => {
             <Button variant="ghost" onClick={() => navigate("/dashboard")}>
               ← Volver
             </Button>
-            <h1 className="text-2xl font-bold">Mis Eventos</h1>
+            <h1 className="text-2xl font-bold flex items-center gap-2">
+              Mis Eventos
+              <HelpTooltip content="Crea eventos especiales (Navidad, cumpleaños, bodas) para organizar todas tus listas y grupos relacionados en un solo lugar." />
+            </h1>
           </div>
           <LanguageSelector />
         </div>
@@ -159,7 +164,14 @@ const Events = () => {
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
         <div className="flex justify-between items-center mb-6">
-          <p className="text-muted-foreground">Gestiona tus eventos especiales</p>
+          <div>
+            <p className="text-muted-foreground text-base">
+              🎉 Organiza ocasiones especiales y asocia listas/grupos
+            </p>
+            <p className="text-sm text-muted-foreground/70 mt-1">
+              Navidad, cumpleaños, bodas... todo en un solo lugar
+            </p>
+          </div>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
               <Button className="gap-2">
@@ -216,17 +228,13 @@ const Events = () => {
         </div>
 
         {events.length === 0 ? (
-          <Card className="text-center py-12">
-            <CardContent>
-              <Calendar className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-xl font-semibold mb-2">No tienes eventos aún</h3>
-              <p className="text-muted-foreground mb-4">Crea tu primer evento especial</p>
-              <Button onClick={() => setDialogOpen(true)}>
-                <Plus className="w-4 h-4 mr-2" />
-                Crear Primer Evento
-              </Button>
-            </CardContent>
-          </Card>
+          <EmptyStateCard
+            icon={Calendar}
+            title="¡Organiza tu primer evento!"
+            description="Los eventos te ayudan a mantener todo organizado. Crea un evento como 'Navidad 2025' y luego asocia listas de regalos y grupos de intercambio a ese evento. Perfecto para ver todo relacionado a una ocasión especial en un solo vistazo."
+            actionLabel="Crear Mi Primer Evento"
+            onAction={() => setDialogOpen(true)}
+          />
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {events.map((event) => (

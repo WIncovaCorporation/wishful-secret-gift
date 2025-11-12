@@ -19,6 +19,8 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import Footer from "@/components/Footer";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { HelpTooltip } from "@/components/HelpTooltip";
+import { EmptyStateCard } from "@/components/EmptyStateCard";
 import type { User } from "@supabase/supabase-js";
 
 interface Group {
@@ -467,7 +469,10 @@ const Groups = () => {
             <Button variant="ghost" onClick={() => navigate("/dashboard")}>
               ← Volver
             </Button>
-            <h1 className="text-2xl font-bold">Mis Grupos</h1>
+            <h1 className="text-2xl font-bold flex items-center gap-2">
+              Mis Grupos de Intercambio
+              <HelpTooltip content="Crea grupos para organizar intercambios de regalos tipo 'amigo secreto'. Invita participantes, establece presupuesto y fecha, luego realiza el sorteo automático." />
+            </h1>
           </div>
           <LanguageSelector />
         </div>
@@ -487,7 +492,14 @@ const Groups = () => {
         )}
 
         <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
-          <p className="text-muted-foreground">Gestiona tus grupos de intercambio</p>
+          <div>
+            <p className="text-muted-foreground text-base">
+              👥 Organiza intercambios de regalos tipo "amigo secreto"
+            </p>
+            <p className="text-sm text-muted-foreground/70 mt-1">
+              Crea grupos, invita amigos, define presupuesto y fecha, ¡luego sortea!
+            </p>
+          </div>
           <div className="flex gap-2">
             <Dialog open={joinDialogOpen} onOpenChange={setJoinDialogOpen}>
               <DialogTrigger asChild>
@@ -628,22 +640,15 @@ const Groups = () => {
         </div>
 
         {groups.length === 0 ? (
-          <Card className="text-center py-12">
-            <CardContent>
-              <Users className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-xl font-semibold mb-2">No tienes grupos aún</h3>
-              <p className="text-muted-foreground mb-4">Crea un grupo o únete usando un código</p>
-              <div className="flex gap-2 justify-center">
-                <Button onClick={() => setDialogOpen(true)}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Crear Grupo
-                </Button>
-                <Button variant="outline" onClick={() => setJoinDialogOpen(true)}>
-                  Unirse con Código
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <EmptyStateCard
+            icon={Users}
+            title="¡Tu primer intercambio de regalos!"
+            description="Los grupos son perfectos para organizar 'amigos secretos' o intercambios familiares. Crea un grupo para ser el organizador, o únete con un código si te invitaron. Una vez todos se unan, podrás realizar el sorteo automático y cada persona sabrá a quién regalarle."
+            actionLabel="Crear Mi Primer Grupo"
+            onAction={() => setDialogOpen(true)}
+            secondaryActionLabel="Tengo un Código"
+            onSecondaryAction={() => setJoinDialogOpen(true)}
+          />
         ) : (
           <div className="grid gap-6">
             {groups.map((group) => (
