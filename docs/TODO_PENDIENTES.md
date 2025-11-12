@@ -34,6 +34,22 @@
   - **Status**: ✅ IMPLEMENTADO
   - **Fecha**: 2025-01-12
 
+- [x] **P0-UX-002**: ✅ Rediseño de Checklist Dashboard (IMPLEMENTADO)
+  - **Dónde**: `src/pages/Dashboard.tsx` - Sección "Comenzando"
+  - **Problema**: Tareas completadas mostraban línea tachada (line-through) poco atractiva
+  - **Acción**: Rediseño completo del componente ChecklistItem:
+    - Eliminado estilo line-through
+    - Agregado diseño con gradientes verdes para items completados
+    - Badge "Completado" visible y animado
+    - Checkmark SVG animado con escala
+    - Transiciones suaves con duration-300
+    - Mejor contraste en modo oscuro
+  - **Impacto**: Interfaz más limpia, moderna y visualmente atractiva
+  - **Tiempo**: 15 minutos
+  - **Responsable**: Dev
+  - **Status**: ✅ IMPLEMENTADO
+  - **Fecha**: 2025-01-12
+
 ---
 
 ## 🔴 CRÍTICO - P1 (Resolver antes de Producción Completa)

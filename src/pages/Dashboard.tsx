@@ -282,12 +282,15 @@ const Dashboard = () => {
         </div>
 
         {/* Getting Started Checklist - Dynamic */}
-        <Card className="shadow-medium">
+        <Card className="shadow-medium mb-8">
           <CardHeader>
-            <CardTitle>{t("dashboard.gettingStarted")}</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              {t("dashboard.gettingStarted")}
+            </CardTitle>
             <CardDescription>{t("dashboard.gettingStartedDesc")}</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-3">
             <ChecklistItem 
               completed={stats.myLists > 0} 
               text={t("dashboard.step1")} 
@@ -390,19 +393,36 @@ const StatsCard = ({ icon, title, value, description, gradient, onClick }: {
 
 const ChecklistItem = ({ completed, text, onClick }: { completed: boolean; text: string; onClick?: () => void }) => (
   <div 
-    className={`flex items-center gap-3 p-3 rounded-lg transition-colors ${
-      onClick && !completed ? 'cursor-pointer hover:bg-muted/50' : ''
-    }`}
+    className={`flex items-center gap-4 p-4 rounded-lg border transition-all duration-300 ${
+      completed 
+        ? 'bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 border-green-200 dark:border-green-800' 
+        : 'bg-muted/30 border-border hover:border-primary/50 hover:bg-muted/50'
+    } ${onClick && !completed ? 'cursor-pointer' : ''}`}
     onClick={onClick}
     role={onClick ? "button" : undefined}
     tabIndex={onClick ? 0 : undefined}
   >
-    <div className={`w-6 h-6 rounded-full flex items-center justify-center ${
-      completed ? "bg-gradient-warm text-primary-foreground" : "border-2 border-border"
+    <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-300 ${
+      completed 
+        ? "bg-gradient-to-br from-green-500 to-emerald-600 text-white shadow-lg scale-110" 
+        : "border-2 border-muted-foreground/30"
     }`}>
-      {completed && "✓"}
+      {completed && (
+        <svg className="w-5 h-5 animate-scale-in" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" viewBox="0 0 24 24" stroke="currentColor">
+          <path d="M5 13l4 4L19 7"></path>
+        </svg>
+      )}
     </div>
-    <span className={completed ? "line-through text-muted-foreground" : ""}>{text}</span>
+    <span className={`font-medium transition-all duration-300 ${
+      completed ? 'text-green-700 dark:text-green-400' : 'text-foreground'
+    }`}>
+      {text}
+    </span>
+    {completed && (
+      <span className="ml-auto px-3 py-1 text-xs font-semibold rounded-full bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 animate-fade-in">
+        Completado
+      </span>
+    )}
   </div>
 );
 
