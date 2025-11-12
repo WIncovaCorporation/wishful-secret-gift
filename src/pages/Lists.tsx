@@ -41,6 +41,7 @@ interface GiftItem {
   brand?: string;
   notes?: string;
   reference_link?: string;
+  image_url?: string;
   priority: string;
   is_purchased: boolean;
 }
@@ -208,9 +209,15 @@ const Lists = () => {
     if (!selectedList) return;
 
     try {
+      const itemData = {
+        ...newItem,
+        list_id: selectedList,
+        image_url: urlMetadata?.image || null
+      };
+
       const { error } = await supabase
         .from("gift_items")
-        .insert([{ ...newItem, list_id: selectedList }]);
+        .insert([itemData]);
 
       if (error) throw error;
 
@@ -612,6 +619,27 @@ const Lists = () => {
                               {item.is_purchased ? "Comprado" : "Pendiente"}
                             </span>
                           </div>
+                          
+                          {/* Product Image */}
+                          {item.image_url && item.reference_link && (
+                            <a
+                              href={item.reference_link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex-shrink-0"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <img 
+                                src={item.image_url} 
+                                alt={item.name}
+                                className="w-20 h-20 object-cover rounded-md border border-border hover:scale-105 transition-transform cursor-pointer"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none';
+                                }}
+                              />
+                            </a>
+                          )}
+
                           <div className="flex-1">
                             <div className="flex items-start gap-2 mb-1">
                               <h4 className={`font-semibold flex-1 ${
