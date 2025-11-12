@@ -11,7 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from "@/components/ui/select";
-import { Gift, Plus, Trash2, ExternalLink, Sparkles, Loader2, Search, X, ShoppingBag, Store } from "lucide-react";
+import { Gift, Plus, Trash2, ExternalLink, Sparkles, Loader2, Search, X, ShoppingBag, Store, RefreshCw } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import LanguageSelector from "@/components/LanguageSelector";
@@ -79,6 +80,8 @@ const Lists = () => {
   const [productSearchLoading, setProductSearchLoading] = useState(false);
   const [foundProducts, setFoundProducts] = useState<any[]>([]);
   const [showProducts, setShowProducts] = useState(false);
+  const [urlMetadata, setUrlMetadata] = useState<any>(null);
+  const [isExtractingUrl, setIsExtractingUrl] = useState(false);
   const formScrollRef = useRef<HTMLDivElement>(null);
   const categoryRef = useRef<HTMLDivElement>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; id: string; type: "list" | "item" }>({ 
@@ -405,6 +408,63 @@ const Lists = () => {
     toast.success("Producto seleccionado. Ajusta los detalles si lo deseas.");
   };
 
+  const extractUrlMetadata = async (url: string) => {
+    if (!url || url.trim() === '') {
+      setUrlMetadata(null);
+      return;
+    }
+
+    setIsExtractingUrl(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('extract-url-metadata', {
+        body: { url: url.trim() }
+      });
+
+      if (error) throw error;
+
+      if (data?.metadata) {
+        setUrlMetadata(data.metadata);
+        
+        // Auto-fill form fields if they're empty
+        if (data.metadata.title && !newItem.name) {
+          setNewItem(prev => ({ ...prev, name: data.metadata.title }));
+        }
+        if (data.metadata.price) {
+          // Add price to notes since we don't have a price field
+          const priceNote = `Precio: $${data.metadata.price} ${data.metadata.currency}`;
+          if (!newItem.notes) {
+            setNewItem(prev => ({ ...prev, notes: priceNote }));
+          }
+        }
+        if (data.metadata.description && !newItem.notes) {
+          setNewItem(prev => ({ ...prev, notes: data.metadata.description }));
+        }
+        
+        toast.success("Información del producto extraída");
+      }
+    } catch (error: any) {
+      console.error('Error extracting URL metadata:', error);
+      toast.error("No se pudo extraer información del enlace");
+      setUrlMetadata(null);
+    } finally {
+      setIsExtractingUrl(false);
+    }
+  };
+
+  const handleLinkChange = (value: string) => {
+    setNewItem({ ...newItem, reference_link: value });
+    
+    // Debounce URL extraction
+    if (value && value.startsWith('http')) {
+      const timeoutId = setTimeout(() => {
+        extractUrlMetadata(value);
+      }, 1000);
+      return () => clearTimeout(timeoutId);
+    } else {
+      setUrlMetadata(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 flex items-center justify-center">
@@ -572,9 +632,12 @@ const Lists = () => {
                                 href={item.reference_link}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-sm text-primary hover:underline flex items-center gap-1 mt-1"
+                                onClick={(e) => e.stopPropagation()}
+                                className="inline-flex items-center gap-1 px-3 py-1.5 mt-2 rounded-md border border-primary/30 bg-primary/5 hover:bg-primary/10 text-primary text-sm font-medium transition-colors"
                               >
-                                Ver enlace <ExternalLink className="w-3 h-3" />
+                                <ShoppingBag className="w-3.5 h-3.5" />
+                                Ver en tienda
+                                <ExternalLink className="w-3 h-3" />
                               </a>
                             )}
                           </div>
@@ -611,16 +674,18 @@ const Lists = () => {
         {/* Add Item Dialog */}
         <Dialog open={itemDialogOpen} onOpenChange={(open) => {
           setItemDialogOpen(open);
-          if (!open) {
-            setShowSuggestions(false);
-            setAiContext("");
-            setBudget("");
-            setAiSuggestions([]);
-            setMainCategory("");
-            setSearchQuery("");
-            setFoundProducts([]);
-            setShowProducts(false);
-          }
+        if (!open) {
+          setShowSuggestions(false);
+          setAiContext("");
+          setBudget("");
+          setAiSuggestions([]);
+          setMainCategory("");
+          setSearchQuery("");
+          setFoundProducts([]);
+          setShowProducts(false);
+          setUrlMetadata(null);
+          setIsExtractingUrl(false);
+        }
         }}>
           <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
             <DialogHeader>
@@ -1102,15 +1167,78 @@ const Lists = () => {
                         </div>
 
                         <div className="space-y-2">
-                          <Label htmlFor="url" className="text-sm font-medium">Enlace de referencia</Label>
-                          <Input
-                            id="url"
-                            type="url"
-                            placeholder="https://amazon.com/producto"
-                            value={newItem.reference_link}
-                            onChange={(e) => setNewItem({ ...newItem, reference_link: e.target.value })}
-                          />
-                          <p className="text-xs text-muted-foreground">Link al producto para que otros sepan exactamente cuál es</p>
+                          <Label htmlFor="url" className="text-sm font-medium flex items-center gap-2">
+                            Enlace de referencia
+                            {isExtractingUrl && (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            )}
+                          </Label>
+                          <div className="flex gap-2">
+                            <Input
+                              id="url"
+                              type="url"
+                              placeholder="https://amazon.com/producto..."
+                              value={newItem.reference_link}
+                              onChange={(e) => handleLinkChange(e.target.value)}
+                              className="flex-1"
+                            />
+                            {newItem.reference_link && (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => extractUrlMetadata(newItem.reference_link)}
+                                disabled={isExtractingUrl}
+                              >
+                                <RefreshCw className={cn("h-4 w-4", isExtractingUrl && "animate-spin")} />
+                              </Button>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            Pega el enlace del producto y extraeremos la información automáticamente
+                          </p>
+                          
+                          {urlMetadata && (
+                            <div className="mt-3 p-3 border rounded-lg bg-muted/30 space-y-2">
+                              <div className="flex gap-3">
+                                {urlMetadata.image && (
+                                  <img 
+                                    src={urlMetadata.image} 
+                                    alt={urlMetadata.title}
+                                    className="w-20 h-20 object-cover rounded"
+                                    onError={(e) => {
+                                      e.currentTarget.style.display = 'none';
+                                    }}
+                                  />
+                                )}
+                                <div className="flex-1 min-w-0">
+                                  <h4 className="text-sm font-medium truncate">{urlMetadata.title}</h4>
+                                  {urlMetadata.price && (
+                                    <p className="text-sm font-semibold text-primary">
+                                      ${urlMetadata.price} {urlMetadata.currency}
+                                    </p>
+                                  )}
+                                  <p className="text-xs text-muted-foreground truncate">
+                                    {urlMetadata.siteName}
+                                  </p>
+                                  {!urlMetadata.availability && (
+                                    <span className="inline-block mt-1 px-2 py-0.5 rounded-md bg-warning/20 text-warning text-xs">
+                                      Podría no estar disponible
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                              <a 
+                                href={newItem.reference_link} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-xs text-primary hover:underline flex items-center gap-1"
+                              >
+                                <ExternalLink className="h-3 w-3" />
+                                Ver en tienda
+                              </a>
+                            </div>
+                          )}
                         </div>
 
                         <div className="space-y-2">
