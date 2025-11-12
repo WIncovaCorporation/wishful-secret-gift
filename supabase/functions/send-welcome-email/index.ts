@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { Resend } from "npm:resend@2.0.0";
+import Resend from "https://esm.sh/resend@3.2.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -28,7 +28,7 @@ serve(async (req) => {
       );
     }
 
-    const resend = new Resend(resendApiKey);
+    const resend = new Resend.Resend(resendApiKey);
     const { email, name, plan }: WelcomeEmailRequest = await req.json();
 
     const emailHtml = `
@@ -95,7 +95,7 @@ serve(async (req) => {
     console.log("Welcome email sent successfully:", result);
 
     return new Response(
-      JSON.stringify({ success: true, messageId: result.id }),
+      JSON.stringify({ success: true }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );
   } catch (error: any) {
