@@ -112,6 +112,25 @@
   - **Status**: ✅ IMPLEMENTADO
   - **Fecha**: 2025-01-12
 
+- [x] **P0-UX-004**: ✅ Clarificación de Propósito de "Mis Listas" (IMPLEMENTADO)
+  - **Dónde**: `src/pages/Lists.tsx` - Descripciones y tooltips
+  - **Problema**: Usuarios no entendían que es una "lista de deseos personal" (lo que quieren recibir)
+  - **Acción**: Rediseño completo de textos descriptivos:
+    - Header tooltip: Explica que es lista de deseos personal compartible
+    - Descripción principal: Aclara que es "lo que TÚ quieres recibir"
+    - Enfatiza el uso en grupos de intercambio (tu giver ve tu lista)
+    - Clarifica cuándo marcar como "Comprado" (cuando ya lo tienes o no lo quieres)
+    - Empty state expandido con flujo completo de uso
+  - **Impacto**: 
+    - Usuarios entienden el propósito real de la página
+    - Reduce confusión sobre si es lista de compras vs lista de deseos
+    - Clarifica el flujo de uso en grupos de intercambio
+    - Mejora onboarding y adopción de funcionalidad
+  - **Tiempo**: 15 minutos
+  - **Responsable**: Dev
+  - **Status**: ✅ IMPLEMENTADO
+  - **Fecha**: 2025-01-12
+
 ---
 
 ## 🔴 CRÍTICO - P1 (Resolver antes de Producción Completa)

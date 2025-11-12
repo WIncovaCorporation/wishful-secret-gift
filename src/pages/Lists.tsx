@@ -409,7 +409,7 @@ const Lists = () => {
             </Button>
             <h1 className="text-2xl font-bold flex items-center gap-2">
               Mis Listas de Regalos
-              <HelpTooltip content="Crea listas organizadas con ideas de regalos. Puedes añadir productos manualmente, buscar con IA o encontrar productos reales en tiendas online." />
+              <HelpTooltip content="Tu lista de deseos personal. Añade lo que quieres recibir como regalo y compártela con amigos/familia. Perfecta para grupos de intercambio donde otros puedan ver qué te gustaría recibir." />
             </h1>
           </div>
           <LanguageSelector />
@@ -430,12 +430,14 @@ const Lists = () => {
         )}
 
         <div className="flex justify-between items-center mb-6">
-          <div>
-            <p className="text-muted-foreground text-base">
-              📋 Organiza ideas de regalos para cualquier ocasión
+          <div className="max-w-2xl">
+            <p className="text-muted-foreground text-base font-medium">
+              💝 Tu Lista de Deseos Personal
             </p>
-            <p className="text-sm text-muted-foreground/70 mt-1">
-              Añade detalles como categoría, color, talla, marca y prioridad
+            <p className="text-sm text-muted-foreground/80 mt-2 leading-relaxed">
+              Aquí guardas <strong>lo que TÚ quieres recibir</strong> como regalo. Añade productos con todos sus detalles (color, talla, marca). 
+              Cuando estés en un grupo, la persona que te toque regalar podrá ver tu lista. 
+              Marca como "Comprado" cuando ya tengas el artículo o ya no lo quieras.
             </p>
           </div>
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
@@ -470,8 +472,8 @@ const Lists = () => {
         {lists.length === 0 ? (
           <EmptyStateCard
             icon={Gift}
-            title="¡Empieza tu primera lista!"
-            description="Las listas te permiten organizar ideas de regalos para cualquier ocasión: cumpleaños, Navidad, bodas, etc. Puedes añadir productos manualmente con todos sus detalles, o usar nuestra IA para obtener sugerencias personalizadas."
+            title="¡Crea tu primera lista de deseos!"
+            description="Las listas son tu espacio personal para guardar ideas de regalos que te gustaría recibir. Puedes crear listas para diferentes ocasiones (Navidad, cumpleaños, bodas) y compartirlas con amigos y familia. Cuando estés en un grupo de intercambio, la persona que te toque regalar podrá ver tu lista para saber exactamente qué te gustaría recibir. Añade productos con todos los detalles: color, talla, marca, enlaces, y usa nuestra IA para obtener sugerencias personalizadas."
             actionLabel="Crear Mi Primera Lista"
             onAction={() => setDialogOpen(true)}
           />
