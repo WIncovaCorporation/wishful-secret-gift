@@ -383,19 +383,42 @@ const Lists = () => {
 
     setProductSearchLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke('search-products', {
-        body: { 
-          query: aiContext,
-          store: selectedStore || undefined,
-          budget: budget ? parseFloat(budget) : undefined
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/search-products`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({
+            query: aiContext,
+            store: selectedStore || undefined,
+            budget: budget ? parseFloat(budget) : undefined
+          })
         }
-      });
+      );
 
-      if (error) {
-        console.error('Search error:', error);
-        throw error;
+      if (response.status === 402) {
+        toast.error("⚠️ Créditos de IA agotados. Ve a Configuración → Workspace → Usage para recargar créditos.", {
+          duration: 6000,
+        });
+        return;
       }
 
+      if (response.status === 429) {
+        toast.error("⏱️ Demasiadas solicitudes. Espera un momento e intenta de nuevo.", {
+          duration: 4000,
+        });
+        return;
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Error al buscar productos");
+      }
+
+      const data = await response.json();
       setFoundProducts(data.products || []);
       setShowProducts(true);
       toast.success(`¡Encontré ${data.products.length} productos reales!`);
