@@ -85,6 +85,31 @@ serve(async (req) => {
         }
 
         console.log('Subscription created successfully for user:', user_id);
+
+        // Send confirmation email
+        try {
+          const { data: userData } = await supabase.auth.admin.getUserById(user_id);
+          if (userData?.user?.email) {
+            await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-subscription-email`, {
+              method: 'POST',
+              headers: { 
+                'Content-Type': 'application/json', 
+                'Authorization': `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}` 
+              },
+              body: JSON.stringify({
+                email: userData.user.email,
+                name: userData.user.user_metadata?.name || userData.user.email?.split('@')[0],
+                type: 'confirmed',
+                plan: plan_id,
+                nextBillingDate: new Date(subscription.current_period_end * 1000).toLocaleDateString('es-MX'),
+                amount: subscription.items.data[0]?.plan?.amount ? subscription.items.data[0].plan.amount / 100 : 0
+              })
+            });
+          }
+        } catch (emailError) {
+          console.error('Error sending confirmation email:', emailError);
+        }
+
         break;
       }
 
@@ -102,6 +127,41 @@ serve(async (req) => {
           .eq('stripe_subscription_id', subscription.id);
 
         console.log('Subscription updated:', subscription.id);
+
+        // Send renewal email if subscription is active
+        if (subscription.status === 'active') {
+          try {
+            const { data: subData } = await supabase
+              .from('user_subscriptions')
+              .select('user_id, plan_id')
+              .eq('stripe_subscription_id', subscription.id)
+              .single();
+
+            if (subData?.user_id) {
+              const { data: userData } = await supabase.auth.admin.getUserById(subData.user_id);
+              if (userData?.user?.email) {
+                await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-subscription-email`, {
+                  method: 'POST',
+                  headers: { 
+                    'Content-Type': 'application/json', 
+                    'Authorization': `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}` 
+                  },
+                  body: JSON.stringify({
+                    email: userData.user.email,
+                    name: userData.user.user_metadata?.name || userData.user.email?.split('@')[0],
+                    type: 'renewed',
+                    plan: subData.plan_id,
+                    nextBillingDate: new Date(subscription.current_period_end * 1000).toLocaleDateString('es-MX'),
+                    amount: subscription.items.data[0]?.plan?.amount ? subscription.items.data[0].plan.amount / 100 : 0
+                  })
+                });
+              }
+            }
+          } catch (emailError) {
+            console.error('Error sending renewal email:', emailError);
+          }
+        }
+
         break;
       }
 
@@ -142,6 +202,31 @@ serve(async (req) => {
         }
 
         console.log('Subscription canceled:', subscription.id);
+
+        // Send cancellation email
+        if (subData?.user_id) {
+          try {
+            const { data: userData } = await supabase.auth.admin.getUserById(subData.user_id);
+            if (userData?.user?.email) {
+              await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-subscription-email`, {
+                method: 'POST',
+                headers: { 
+                  'Content-Type': 'application/json', 
+                  'Authorization': `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}` 
+                },
+                body: JSON.stringify({
+                  email: userData.user.email,
+                  name: userData.user.user_metadata?.name || userData.user.email?.split('@')[0],
+                  type: 'cancelled',
+                  plan: subscription.items.data[0]?.plan?.id || 'premium'
+                })
+              });
+            }
+          } catch (emailError) {
+            console.error('Error sending cancellation email:', emailError);
+          }
+        }
+
         break;
       }
 
@@ -154,6 +239,38 @@ serve(async (req) => {
           .eq('stripe_subscription_id', invoice.subscription);
 
         console.log('Payment failed for subscription:', invoice.subscription);
+
+        // Send payment failed email
+        try {
+          const { data: subData } = await supabase
+            .from('user_subscriptions')
+            .select('user_id, plan_id')
+            .eq('stripe_subscription_id', invoice.subscription)
+            .single();
+
+          if (subData?.user_id) {
+            const { data: userData } = await supabase.auth.admin.getUserById(subData.user_id);
+            if (userData?.user?.email) {
+              await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/send-subscription-email`, {
+                method: 'POST',
+                headers: { 
+                  'Content-Type': 'application/json', 
+                  'Authorization': `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}` 
+                },
+                body: JSON.stringify({
+                  email: userData.user.email,
+                  name: userData.user.user_metadata?.name || userData.user.email?.split('@')[0],
+                  type: 'payment_failed',
+                  plan: subData.plan_id,
+                  amount: invoice.amount_due ? invoice.amount_due / 100 : 0
+                })
+              });
+            }
+          }
+        } catch (emailError) {
+          console.error('Error sending payment failed email:', emailError);
+        }
+
         break;
       }
 
