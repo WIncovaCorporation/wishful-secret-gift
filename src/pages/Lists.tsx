@@ -1199,43 +1199,93 @@ const Lists = () => {
                           </p>
                           
                           {urlMetadata && (
-                            <div className="mt-3 p-3 border rounded-lg bg-muted/30 space-y-2">
-                              <div className="flex gap-3">
+                            <div className="mt-3 p-4 border rounded-lg bg-gradient-to-br from-muted/30 to-background space-y-3">
+                              <div className="flex gap-4">
                                 {urlMetadata.image && (
-                                  <img 
-                                    src={urlMetadata.image} 
-                                    alt={urlMetadata.title}
-                                    className="w-20 h-20 object-cover rounded"
-                                    onError={(e) => {
-                                      e.currentTarget.style.display = 'none';
-                                    }}
-                                  />
+                                  <div className="relative flex-shrink-0">
+                                    <img 
+                                      src={urlMetadata.image} 
+                                      alt={urlMetadata.title}
+                                      className="w-24 h-24 object-contain rounded border bg-white"
+                                      onError={(e) => {
+                                        e.currentTarget.style.display = 'none';
+                                      }}
+                                    />
+                                  </div>
                                 )}
-                                <div className="flex-1 min-w-0">
-                                  <h4 className="text-sm font-medium truncate">{urlMetadata.title}</h4>
-                                  {urlMetadata.price && (
-                                    <p className="text-sm font-semibold text-primary">
-                                      ${urlMetadata.price} {urlMetadata.currency}
-                                    </p>
+                                <div className="flex-1 min-w-0 space-y-2">
+                                  <h4 className="text-sm font-semibold line-clamp-2 leading-tight">{urlMetadata.title}</h4>
+                                  
+                                  {/* Price Information */}
+                                  <div className="flex items-baseline gap-2 flex-wrap">
+                                    {urlMetadata.price && (
+                                      <p className="text-lg font-bold text-primary">
+                                        ${urlMetadata.price} {urlMetadata.currency}
+                                      </p>
+                                    )}
+                                    {urlMetadata.originalPrice && urlMetadata.originalPrice !== urlMetadata.price && (
+                                      <>
+                                        <p className="text-sm text-muted-foreground line-through">
+                                          ${urlMetadata.originalPrice}
+                                        </p>
+                                        {urlMetadata.discountPercentage && (
+                                          <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-destructive/15 text-destructive text-xs font-bold">
+                                            -{urlMetadata.discountPercentage}%
+                                          </span>
+                                        )}
+                                      </>
+                                    )}
+                                  </div>
+
+                                  {/* Rating and Reviews */}
+                                  {urlMetadata.rating && (
+                                    <div className="flex items-center gap-2 text-xs">
+                                      <div className="flex items-center gap-1">
+                                        <span className="text-yellow-500">★</span>
+                                        <span className="font-semibold">{urlMetadata.rating}</span>
+                                      </div>
+                                      {urlMetadata.reviewCount && (
+                                        <span className="text-muted-foreground">
+                                          ({parseInt(urlMetadata.reviewCount).toLocaleString()} reseñas)
+                                        </span>
+                                      )}
+                                    </div>
                                   )}
-                                  <p className="text-xs text-muted-foreground truncate">
-                                    {urlMetadata.siteName}
-                                  </p>
-                                  {!urlMetadata.availability && (
-                                    <span className="inline-block mt-1 px-2 py-0.5 rounded-md bg-warning/20 text-warning text-xs">
-                                      Podría no estar disponible
+
+                                  {/* Badges */}
+                                  <div className="flex flex-wrap gap-2">
+                                    <span className="text-xs text-muted-foreground px-2 py-1 rounded-md bg-secondary/50">
+                                      {urlMetadata.siteName}
                                     </span>
-                                  )}
+                                    {urlMetadata.isPrime && (
+                                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-semibold">
+                                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 16 16">
+                                          <path d="M2.5 5.5a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/>
+                                        </svg>
+                                        Prime
+                                      </span>
+                                    )}
+                                    {urlMetadata.inStock ? (
+                                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-success/10 text-success text-xs font-semibold">
+                                        ✓ Disponible
+                                      </span>
+                                    ) : (
+                                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-warning/10 text-warning text-xs font-semibold">
+                                        ⚠ Sin stock
+                                      </span>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
+                              
                               <a 
                                 href={newItem.reference_link} 
                                 target="_blank" 
                                 rel="noopener noreferrer"
-                                className="text-xs text-primary hover:underline flex items-center gap-1"
+                                className="inline-flex items-center gap-1 text-xs text-primary hover:underline font-medium"
                               >
                                 <ExternalLink className="h-3 w-3" />
-                                Ver en tienda
+                                Ver producto completo
                               </a>
                             </div>
                           )}

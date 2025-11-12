@@ -48,19 +48,25 @@ serve(async (req) => {
 
     const html = await response.text();
     
-    // Extract metadata using regex
+    // Extract metadata using multiple strategies for maximum accuracy
     const metadata: any = {
       url: url,
       title: '',
       description: '',
       image: '',
       price: '',
-      currency: '',
+      originalPrice: '',
+      discountPercentage: '',
+      currency: 'USD',
       availability: true,
-      siteName: parsedUrl.hostname.replace('www.', '')
+      siteName: parsedUrl.hostname.replace('www.', ''),
+      rating: '',
+      reviewCount: '',
+      isPrime: false,
+      inStock: true
     };
 
-    // Extract Open Graph / Meta tags
+    // Helper function to extract meta content
     const extractMetaContent = (property: string): string => {
       const ogRegex = new RegExp(`<meta[^>]*property=["']${property}["'][^>]*content=["']([^"']*)["']`, 'i');
       const nameRegex = new RegExp(`<meta[^>]*name=["']${property}["'][^>]*content=["']([^"']*)["']`, 'i');
@@ -69,53 +75,166 @@ serve(async (req) => {
       return ogMatch?.[1] || nameMatch?.[1] || '';
     };
 
-    // Extract title
-    metadata.title = extractMetaContent('og:title') || 
-                     extractMetaContent('twitter:title') ||
-                     html.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1]?.trim() || 
-                     '';
+    // Helper to decode HTML entities
+    const decodeHTML = (text: string): string => {
+      return text
+        .replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/&nbsp;/g, ' ');
+    };
+
+    // Extract title with fallbacks
+    metadata.title = decodeHTML(
+      extractMetaContent('og:title') || 
+      extractMetaContent('twitter:title') ||
+      html.match(/<title[^>]*>([^<]+)<\/title>/i)?.[1]?.trim() || 
+      html.match(/<h1[^>]*id=["']productTitle["'][^>]*>([^<]+)<\/h1>/i)?.[1]?.trim() ||
+      ''
+    );
 
     // Extract description
-    metadata.description = extractMetaContent('og:description') || 
-                          extractMetaContent('twitter:description') ||
-                          extractMetaContent('description') || 
-                          '';
+    metadata.description = decodeHTML(
+      extractMetaContent('og:description') || 
+      extractMetaContent('twitter:description') ||
+      extractMetaContent('description') || 
+      ''
+    );
 
-    // Extract image
+    // Extract main product image (prioritize large images)
     let imageUrl = extractMetaContent('og:image') || 
+                   extractMetaContent('og:image:secure_url') ||
                    extractMetaContent('twitter:image') ||
-                   extractMetaContent('image') || 
+                   html.match(/["']hiRes["']\s*:\s*["']([^"']+)["']/i)?.[1] ||
+                   html.match(/["']large["']\s*:\s*["']([^"']+)["']/i)?.[1] ||
+                   html.match(/<img[^>]*id=["']landingImage["'][^>]*src=["']([^"']+)["']/i)?.[1] ||
                    '';
     
-    // Make image URL absolute if relative
     if (imageUrl && !imageUrl.startsWith('http')) {
       imageUrl = new URL(imageUrl, parsedUrl.origin).toString();
     }
     metadata.image = imageUrl;
 
-    // Extract price information
-    const priceRegex = /["']?price["']?\s*:\s*["']?(\d+\.?\d*)["']?/i;
-    const priceMatch = html.match(priceRegex) || 
-                      html.match(/\$\s*(\d+\.?\d*)/i) ||
-                      html.match(/(\d+\.?\d*)\s*USD/i);
+    // Advanced price extraction for Amazon and e-commerce sites
+    // Try multiple price patterns in order of reliability
     
+    // Pattern 1: Amazon's priceblock
+    let priceMatch = html.match(/class=["']a-price-whole["'][^>]*>(\d+)[\.,]?(\d*)</i);
     if (priceMatch) {
-      metadata.price = priceMatch[1];
-      metadata.currency = 'USD';
+      const dollars = priceMatch[1];
+      const cents = priceMatch[2] || '00';
+      metadata.price = `${dollars}.${cents.padEnd(2, '0')}`;
     }
 
-    // Extract product:price:amount (common in e-commerce)
-    const productPrice = extractMetaContent('product:price:amount');
-    const productCurrency = extractMetaContent('product:price:currency');
-    if (productPrice) {
-      metadata.price = productPrice;
-      metadata.currency = productCurrency || 'USD';
+    // Pattern 2: Amazon deal price
+    if (!metadata.price) {
+      priceMatch = html.match(/class=["']a-price["'][^>]*>.*?<span[^>]*>.*?\$(\d+\.?\d*)/is);
+      if (priceMatch) metadata.price = priceMatch[1];
     }
 
-    // Check availability
-    const unavailableKeywords = ['out of stock', 'agotado', 'no disponible', 'sold out'];
+    // Pattern 3: JSON-LD structured data
+    if (!metadata.price) {
+      const jsonLdMatch = html.match(/<script[^>]*type=["']application\/ld\+json["'][^>]*>(.*?)<\/script>/is);
+      if (jsonLdMatch) {
+        try {
+          const jsonData = JSON.parse(jsonLdMatch[1]);
+          if (jsonData.offers?.price) {
+            metadata.price = jsonData.offers.price.toString();
+            metadata.currency = jsonData.offers.priceCurrency || 'USD';
+          } else if (jsonData.price) {
+            metadata.price = jsonData.price.toString();
+          }
+        } catch (e) {
+          console.log('Failed to parse JSON-LD:', e);
+        }
+      }
+    }
+
+    // Pattern 4: Meta tags
+    if (!metadata.price) {
+      const productPrice = extractMetaContent('product:price:amount');
+      const productCurrency = extractMetaContent('product:price:currency');
+      if (productPrice) {
+        metadata.price = productPrice;
+        metadata.currency = productCurrency || 'USD';
+      }
+    }
+
+    // Pattern 5: Generic patterns
+    if (!metadata.price) {
+      const genericMatch = html.match(/(?:price|precio)["\s:]+.*?\$?\s*(\d+[.,]\d{2})/i) ||
+                          html.match(/\$\s*(\d+\.\d{2})/i) ||
+                          html.match(/USD\s*(\d+\.\d{2})/i);
+      if (genericMatch) {
+        metadata.price = genericMatch[1].replace(',', '.');
+      }
+    }
+
+    // Extract original price (for discounts)
+    const originalPriceMatch = html.match(/class=["']a-price a-text-price["'][^>]*>.*?\$(\d+\.?\d*)/is) ||
+                               html.match(/class=["']a-text-strike["'][^>]*>.*?\$(\d+\.?\d*)/is) ||
+                               html.match(/list-price["\s:]+.*?\$(\d+\.?\d*)/i) ||
+                               html.match(/was[:\s]+\$(\d+\.?\d*)/i);
+    
+    if (originalPriceMatch && originalPriceMatch[1] !== metadata.price) {
+      metadata.originalPrice = originalPriceMatch[1];
+      
+      // Calculate discount percentage
+      if (metadata.price && metadata.originalPrice) {
+        const current = parseFloat(metadata.price);
+        const original = parseFloat(metadata.originalPrice);
+        if (original > current) {
+          const discount = ((original - current) / original * 100).toFixed(0);
+          metadata.discountPercentage = discount;
+        }
+      }
+    }
+
+    // Extract rating
+    const ratingMatch = html.match(/(\d+\.?\d*)\s*(?:out of|de)\s*5\s*stars/i) ||
+                       html.match(/rating["\s:]+(\d+\.?\d*)/i) ||
+                       html.match(/["']ratingValue["']\s*:\s*["']?(\d+\.?\d*)["']?/i);
+    if (ratingMatch) {
+      metadata.rating = ratingMatch[1];
+    }
+
+    // Extract review count
+    const reviewMatch = html.match(/(\d+(?:,\d{3})*)\s*(?:ratings|calificaciones|reviews|reseñas)/i) ||
+                       html.match(/["']reviewCount["']\s*:\s*["']?(\d+(?:,\d{3})*)["']?/i);
+    if (reviewMatch) {
+      metadata.reviewCount = reviewMatch[1].replace(/,/g, '');
+    }
+
+    // Detect Amazon Prime eligibility
+    const primeKeywords = ['amazon prime', 'prime eligible', 'elegible para prime', 'entrega rápida y gratis'];
+    metadata.isPrime = primeKeywords.some(keyword => html.toLowerCase().includes(keyword));
+
+    // Enhanced availability check
+    const unavailableKeywords = [
+      'currently unavailable',
+      'out of stock', 
+      'agotado', 
+      'no disponible',
+      'sold out',
+      'sin stock',
+      'temporarily out of stock'
+    ];
+    const availableKeywords = [
+      'in stock',
+      'disponible',
+      'available now',
+      'add to cart',
+      'agregar al carrito'
+    ];
+    
     const lowerHtml = html.toLowerCase();
-    metadata.availability = !unavailableKeywords.some(keyword => lowerHtml.includes(keyword));
+    const hasUnavailable = unavailableKeywords.some(keyword => lowerHtml.includes(keyword));
+    const hasAvailable = availableKeywords.some(keyword => lowerHtml.includes(keyword));
+    
+    metadata.availability = !hasUnavailable || hasAvailable;
+    metadata.inStock = metadata.availability;
 
     console.log("Extracted metadata:", metadata);
 
