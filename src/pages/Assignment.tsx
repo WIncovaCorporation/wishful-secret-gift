@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Gift, Calendar, DollarSign, List, Lock, ChevronDown, ExternalLink, Tag, Palette, Ruler, Package, FileText } from "lucide-react";
+import { ArrowLeft, Gift, Calendar, DollarSign, List, Lock, ChevronDown, ExternalLink, Tag, Palette, Ruler, Package, FileText, Eye, AlertTriangle } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
@@ -11,16 +11,22 @@ import { Badge } from "@/components/ui/badge";
 import Footer from "@/components/Footer";
 import LanguageSelector from "@/components/LanguageSelector";
 import { AnonymousChat } from "@/components/AnonymousChat";
+import { toast } from "sonner";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface Assignment {
   receiver_id: string;
   group_id: string;
   giver_id?: string;
+  viewed_at: string | null;
+  view_count: number;
   groups?: {
     name: string;
     min_budget: number | null;
     max_budget: number | null;
     exchange_date: string | null;
+    organizer_message: string | null;
+    suggested_budget: number | null;
   };
   receiver_profile?: {
     display_name: string;
@@ -48,6 +54,8 @@ const Assignment = () => {
   const [loading, setLoading] = useState(true);
   const [assignment, setAssignment] = useState<Assignment | null>(null);
   const [wishListItems, setWishListItems] = useState<GiftItem[]>([]);
+  const [showConfirmView, setShowConfirmView] = useState(false);
+  const [isRevealed, setIsRevealed] = useState(false);
 
   useEffect(() => {
     loadAssignment();
@@ -68,11 +76,15 @@ const Assignment = () => {
         .select(`
           receiver_id,
           group_id,
+          viewed_at,
+          view_count,
           groups (
             name,
             min_budget,
             max_budget,
-            exchange_date
+            exchange_date,
+            organizer_message,
+            suggested_budget
           )
         `)
         .eq("group_id", groupId)
@@ -97,9 +109,16 @@ const Assignment = () => {
       };
 
       setAssignment(assignmentWithProfile);
+      
+      // Check if already viewed
+      if (exchangeData.viewed_at) {
+        setIsRevealed(true);
+      } else {
+        // Show confirmation dialog for first-time view
+        setShowConfirmView(true);
+      }
 
-      // Try to get receiver's wish list - improved query
-      // First try from group_members link
+      // Try to get receiver's wish list
       const { data: listData } = await supabase
         .from("group_members")
         .select("list_id")
@@ -137,6 +156,31 @@ const Assignment = () => {
       console.error("Error loading assignment:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRevealAssignment = async () => {
+    if (!assignment || !groupId) return;
+
+    try {
+      // Mark as viewed
+      const { error } = await supabase
+        .from("gift_exchanges")
+        .update({ 
+          viewed_at: new Date().toISOString(),
+          view_count: (assignment.view_count || 0) + 1
+        })
+        .eq("group_id", groupId)
+        .eq("giver_id", assignment.giver_id);
+
+      if (error) throw error;
+
+      setIsRevealed(true);
+      setShowConfirmView(false);
+      toast.success("Asignación revelada. ¡Recuerda mantenerlo en secreto!");
+    } catch (error) {
+      console.error("Error revealing assignment:", error);
+      toast.error("Error al revelar asignación");
     }
   };
 
@@ -181,6 +225,79 @@ const Assignment = () => {
     );
   }
 
+  // Show confirmation dialog before revealing
+  if (showConfirmView && !isRevealed) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-background to-secondary/20 flex flex-col">
+        <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
+          <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate("/groups")}
+              className="gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Volver
+            </Button>
+            <LanguageSelector />
+          </div>
+        </header>
+
+        <main className="flex-1 container mx-auto px-4 py-8 flex items-center justify-center">
+          <Card className="max-w-md">
+            <CardHeader>
+              <div className="flex justify-center mb-4">
+                <div className="w-16 h-16 rounded-full bg-yellow-100 dark:bg-yellow-900/20 flex items-center justify-center">
+                  <AlertTriangle className="w-8 h-8 text-yellow-600" />
+                </div>
+              </div>
+              <CardTitle className="text-center">⚠️ Advertencia Importante</CardTitle>
+              <CardDescription className="text-center">
+                Estás a punto de ver tu asignación
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Alert className="border-yellow-500/50 bg-yellow-500/5">
+                <Eye className="h-4 w-4" />
+                <AlertTitle>Solo podrás ver esto una vez</AlertTitle>
+                <AlertDescription>
+                  Una vez que reveles tu asignación, no podrás volver a ver la confirmación. 
+                  Asegúrate de estar listo y de tomar nota de la persona asignada.
+                </AlertDescription>
+              </Alert>
+
+              <div className="space-y-2 text-sm text-muted-foreground">
+                <p>• Mantén en secreto tu asignación</p>
+                <p>• No compartas esta información con nadie</p>
+                <p>• Toma nota del nombre de tu asignado/a</p>
+              </div>
+
+              <div className="flex gap-2 pt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => navigate("/groups")}
+                  className="flex-1"
+                >
+                  Volver
+                </Button>
+                <Button
+                  onClick={handleRevealAssignment}
+                  className="flex-1 gap-2"
+                >
+                  <Eye className="w-4 h-4" />
+                  Revelar Asignación
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </main>
+
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-secondary/20 flex flex-col">
       <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
@@ -208,6 +325,11 @@ const Assignment = () => {
             </Badge>
             <h1 className="text-3xl font-bold">{t("assignment.title")}</h1>
             <p className="text-muted-foreground">{assignment.groups?.name}</p>
+            {assignment.viewed_at && (
+              <Badge variant="outline" className="text-xs">
+                Vista por primera vez: {new Date(assignment.viewed_at).toLocaleDateString()}
+              </Badge>
+            )}
           </div>
 
           {/* Main Assignment Card */}
@@ -252,6 +374,18 @@ const Assignment = () => {
                   </div>
                 )}
 
+                {assignment.groups?.suggested_budget && (
+                  <div className="flex items-start gap-3 p-4 bg-background rounded-lg border">
+                    <DollarSign className="h-5 w-5 text-primary mt-0.5" />
+                    <div>
+                      <p className="font-semibold">Presupuesto Sugerido</p>
+                      <p className="text-sm text-muted-foreground">
+                        ${assignment.groups.suggested_budget}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 {assignment.groups?.exchange_date && (
                   <div className="flex items-start gap-3 p-4 bg-background rounded-lg border">
                     <Calendar className="h-5 w-5 text-primary mt-0.5" />
@@ -264,6 +398,16 @@ const Assignment = () => {
                   </div>
                 )}
               </div>
+
+              {/* Organizer Message */}
+              {assignment.groups?.organizer_message && (
+                <Alert>
+                  <AlertTitle>Mensaje del Organizador</AlertTitle>
+                  <AlertDescription className="whitespace-pre-wrap">
+                    {assignment.groups.organizer_message}
+                  </AlertDescription>
+                </Alert>
+              )}
             </CardContent>
           </Card>
 

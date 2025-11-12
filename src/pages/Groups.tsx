@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Users, Plus, Copy, Check, Trash2, Sparkles, Gift, Lock, Shield, Scale, AlertCircle, Calendar, DollarSign } from "lucide-react";
+import { Users, Plus, Copy, Check, Trash2, Sparkles, Gift, Lock, Shield, Scale, AlertCircle, Calendar, DollarSign, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import LanguageSelector from "@/components/LanguageSelector";
@@ -32,7 +32,14 @@ interface Group {
   is_drawn: boolean;
   created_by: string;
   notification_mode: string;
+  organizer_message?: string | null;
+  suggested_budget?: number | null;
   members?: GroupMember[];
+  exchanges?: Array<{
+    giver_id: string;
+    receiver_id: string;
+    viewed_at: string | null;
+  }>;
 }
 
 interface GroupMember {
@@ -63,6 +70,8 @@ const Groups = () => {
     max_budget: "",
     exchange_date: "",
     notification_mode: "group",
+    organizer_message: "",
+    suggested_budget: "",
   });
   const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; id: string }>({ 
     open: false, 
@@ -110,7 +119,10 @@ const Groups = () => {
 
       const { data: groupsData, error: groupsError } = await supabase
         .from("groups")
-        .select("*")
+        .select(`
+          *,
+          exchanges:gift_exchanges(giver_id, receiver_id, viewed_at)
+        `)
         .in("id", groupIds)
         .order("created_at", { ascending: false });
 
@@ -176,6 +188,8 @@ const Groups = () => {
           created_by: user.id,
           share_code: shareCode,
           notification_mode: newGroup.notification_mode,
+          organizer_message: newGroup.organizer_message || null,
+          suggested_budget: newGroup.suggested_budget ? parseFloat(newGroup.suggested_budget) : null,
         }])
         .select()
         .single();
@@ -198,6 +212,8 @@ const Groups = () => {
         max_budget: "",
         exchange_date: "",
         notification_mode: "group",
+        organizer_message: "",
+        suggested_budget: "",
       });
       await loadGroups(user.id);
     } catch (error: any) {
@@ -285,7 +301,22 @@ const Groups = () => {
     setTimeout(() => setCopiedCode(null), 2000);
   };
 
+  const handleShareWhatsApp = (group: Group) => {
+    const message = `🎁 ¡Te invito a participar en el intercambio de regalos "${group.name}"!\n\n` +
+      `Código de acceso: ${group.share_code}\n\n` +
+      `Únete aquí: ${window.location.origin}/groups`;
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+  };
+
   const showDrawConfirmation = (group: Group) => {
+    const memberCount = group.members?.length || 0;
+    
+    if (memberCount < 3) {
+      toast.error('Se necesitan al menos 3 participantes para realizar el sorteo');
+      return;
+    }
+    
     setDrawConfirm({ open: true, groupId: group.id, group });
   };
 
@@ -528,6 +559,27 @@ const Groups = () => {
                     />
                   </div>
                   <div>
+                    <Label htmlFor="suggested-budget">Presupuesto Sugerido</Label>
+                    <Input
+                      id="suggested-budget"
+                      type="number"
+                      step="0.01"
+                      value={newGroup.suggested_budget}
+                      onChange={(e) => setNewGroup({ ...newGroup, suggested_budget: e.target.value })}
+                      placeholder="Ej: 500"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="organizer-message">Mensaje del Organizador</Label>
+                    <Textarea
+                      id="organizer-message"
+                      value={newGroup.organizer_message}
+                      onChange={(e) => setNewGroup({ ...newGroup, organizer_message: e.target.value })}
+                      placeholder="Instrucciones, reglas o información adicional para los participantes..."
+                      rows={3}
+                    />
+                  </div>
+                  <div>
                     <Label htmlFor="notification-mode">Modo de Notificaciones 🔔</Label>
                     <select
                       id="notification-mode"
@@ -718,6 +770,22 @@ const Groups = () => {
                       </Card>
                     )}
 
+                    {group.suggested_budget && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <DollarSign className="w-4 h-4" />
+                        <span>Presupuesto sugerido: ${group.suggested_budget}</span>
+                      </div>
+                    )}
+                    
+                    {group.organizer_message && (
+                      <div className="p-3 bg-muted/50 rounded-lg">
+                        <h4 className="font-semibold mb-1 text-sm">Mensaje del Organizador:</h4>
+                        <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                          {group.organizer_message}
+                        </p>
+                      </div>
+                    )}
+                    
                     <div>
                       <h4 className="font-semibold mb-2">Código de Invitación</h4>
                       <div className="flex gap-2">
@@ -732,21 +800,40 @@ const Groups = () => {
                             <Copy className="w-4 h-4" />
                           )}
                         </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => handleShareWhatsApp(group)}
+                          className="gap-2"
+                        >
+                          <Share2 className="w-4 h-4" />
+                          WhatsApp
+                        </Button>
                       </div>
                     </div>
                     <div>
                       <h4 className="font-semibold mb-2">
                         Miembros ({group.members?.length || 0})
+                        {(group.members?.length || 0) < 3 && !group.is_drawn && (
+                          <span className="text-xs text-yellow-600 ml-2">(mínimo 3 requeridos)</span>
+                        )}
                       </h4>
                       <div className="flex flex-wrap gap-2">
-                        {group.members?.map((member) => (
-                          <span
-                            key={member.id}
-                            className="px-3 py-1 bg-gradient-mint text-secondary-foreground rounded-full text-sm"
-                          >
-                            {member.profiles?.display_name || "Usuario"}
-                          </span>
-                        ))}
+                        {group.members?.map((member) => {
+                          const hasViewed = group.exchanges?.some(
+                            ex => ex.giver_id === member.user_id && ex.viewed_at
+                          );
+                          return (
+                            <span
+                              key={member.id}
+                              className="px-3 py-1 bg-gradient-mint text-secondary-foreground rounded-full text-sm flex items-center gap-1"
+                            >
+                              {member.profiles?.display_name || "Usuario"}
+                              {group.is_drawn && hasViewed && (
+                                <span className="text-green-700 font-bold">✓</span>
+                              )}
+                            </span>
+                          );
+                        })}
                       </div>
                     </div>
                   </div>
