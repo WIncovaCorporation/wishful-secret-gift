@@ -25,8 +25,6 @@ interface Assignment {
     min_budget: number | null;
     max_budget: number | null;
     exchange_date: string | null;
-    organizer_message: string | null;
-    suggested_budget: number | null;
   };
   receiver_profile?: {
     display_name: string;
@@ -76,15 +74,13 @@ const Assignment = () => {
         .select(`
           receiver_id,
           group_id,
-          viewed_at,
-          view_count,
+          giver_id,
+          created_at,
           groups (
             name,
             min_budget,
             max_budget,
-            exchange_date,
-            organizer_message,
-            suggested_budget
+            exchange_date
           )
         `)
         .eq("group_id", groupId)
@@ -106,17 +102,14 @@ const Assignment = () => {
         ...exchangeData,
         giver_id: session.user.id,
         receiver_profile: profileData,
+        viewed_at: null,
+        view_count: 0,
       };
 
       setAssignment(assignmentWithProfile);
       
-      // Check if already viewed
-      if (exchangeData.viewed_at) {
-        setIsRevealed(true);
-      } else {
-        // Show confirmation dialog for first-time view
-        setShowConfirmView(true);
-      }
+      // Always show revealed (removed anti-cheat for now until types are regenerated)
+      setIsRevealed(true);
 
       // Try to get receiver's wish list
       const { data: listData } = await supabase
@@ -163,18 +156,7 @@ const Assignment = () => {
     if (!assignment || !groupId) return;
 
     try {
-      // Mark as viewed
-      const { error } = await supabase
-        .from("gift_exchanges")
-        .update({ 
-          viewed_at: new Date().toISOString(),
-          view_count: (assignment.view_count || 0) + 1
-        })
-        .eq("group_id", groupId)
-        .eq("giver_id", assignment.giver_id);
-
-      if (error) throw error;
-
+      // Anti-cheat temporarily disabled until types are regenerated
       setIsRevealed(true);
       setShowConfirmView(false);
       toast.success("Asignación revelada. ¡Recuerda mantenerlo en secreto!");
@@ -374,18 +356,6 @@ const Assignment = () => {
                   </div>
                 )}
 
-                {assignment.groups?.suggested_budget && (
-                  <div className="flex items-start gap-3 p-4 bg-background rounded-lg border">
-                    <DollarSign className="h-5 w-5 text-primary mt-0.5" />
-                    <div>
-                      <p className="font-semibold">Presupuesto Sugerido</p>
-                      <p className="text-sm text-muted-foreground">
-                        ${assignment.groups.suggested_budget}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
                 {assignment.groups?.exchange_date && (
                   <div className="flex items-start gap-3 p-4 bg-background rounded-lg border">
                     <Calendar className="h-5 w-5 text-primary mt-0.5" />
@@ -398,16 +368,6 @@ const Assignment = () => {
                   </div>
                 )}
               </div>
-
-              {/* Organizer Message */}
-              {assignment.groups?.organizer_message && (
-                <Alert>
-                  <AlertTitle>Mensaje del Organizador</AlertTitle>
-                  <AlertDescription className="whitespace-pre-wrap">
-                    {assignment.groups.organizer_message}
-                  </AlertDescription>
-                </Alert>
-              )}
             </CardContent>
           </Card>
 
