@@ -6,6 +6,21 @@
 
 ---
 
+## 🔴 CRÍTICO - P0 (BLOQUEADORES - Resolver AHORA)
+
+### Bugs Críticos (1 item)
+
+- [x] **P0-BUG-001**: ✅ Error UUID en Assignment.tsx (RESUELTO)
+  - **Dónde**: `src/pages/Assignment.tsx` línea 62
+  - **Problema**: `groupId` undefined causaba query con literal ":groupId"
+  - **Acción**: Agregada validación de `groupId` antes de queries
+  - **Impacto**: Previene error 400 al cargar asignaciones
+  - **Tiempo**: 15 minutos
+  - **Responsable**: Dev
+  - **Status**: ✅ CORREGIDO
+
+---
+
 ## 🔴 CRÍTICO - P1 (Resolver antes de Producción Completa)
 
 ### Seguridad (3 items)
@@ -320,11 +335,11 @@
 
 | Prioridad | Total | Completados | Pendientes | % Completado |
 |---|---|---|---|---|
-| **P0 - Críticos** | 4 | 4 | 0 | **100%** ✅ |
+| **P0 - Bloqueadores** | 1 | 1 | 0 | **100%** ✅ |
 | **P1 - Altos** | 8 | 0 | 8 | **0%** 🔴 |
 | **P2 - Medios** | 12 | 0 | 12 | **0%** 🟡 |
 | **P3 - Bajos** | 6 | 0 | 6 | **0%** 🟢 |
-| **TOTAL** | **30** | **4** | **26** | **13%** |
+| **TOTAL** | **27** | **1** | **26** | **4%** |
 
 ### Por Categoría
 

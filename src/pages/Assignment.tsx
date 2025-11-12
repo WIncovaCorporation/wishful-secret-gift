@@ -61,6 +61,13 @@ const Assignment = () => {
 
   const loadAssignment = async () => {
     try {
+      // Critical validation: ensure groupId exists before making queries
+      if (!groupId) {
+        console.error("No groupId provided");
+        setLoading(false);
+        return;
+      }
+
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
