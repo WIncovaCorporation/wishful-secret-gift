@@ -45,6 +45,7 @@ const App = () => (
                 <Route path="/lists" element={<Lists />} />
                 <Route path="/groups" element={<Groups />} />
                 <Route path="/groups/:groupId/assignment" element={<Assignment />} />
+                <Route path="/assignment/:groupId" element={<Assignment />} />
                 <Route path="/groups/:groupId/admin" element={<GroupAssignments />} />
                 <Route path="/messages" element={<Messages />} />
                 <Route path="/events" element={<Events />} />
