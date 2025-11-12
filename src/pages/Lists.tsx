@@ -82,6 +82,8 @@ const Lists = () => {
   const [showProducts, setShowProducts] = useState(false);
   const [urlMetadata, setUrlMetadata] = useState<any>(null);
   const [isExtractingUrl, setIsExtractingUrl] = useState(false);
+  const [inputMode, setInputMode] = useState<'simple' | 'link' | 'search' | null>(null);
+  const [selectedStore, setSelectedStore] = useState<string>("");
   const formScrollRef = useRef<HTMLDivElement>(null);
   const categoryRef = useRef<HTMLDivElement>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; id: string; type: "list" | "item" }>({ 
@@ -367,8 +369,8 @@ const Lists = () => {
   };
 
   const handleSearchProducts = async () => {
-    if (!selectedCategory) {
-      toast.error("Primero selecciona una categoría");
+    if (!aiContext.trim()) {
+      toast.error("Por favor describe qué producto buscas");
       return;
     }
 
@@ -376,19 +378,20 @@ const Lists = () => {
     try {
       const { data, error } = await supabase.functions.invoke('search-products', {
         body: { 
-          category: selectedCategory,
-          color: newItem.color || undefined,
-          size: newItem.size || undefined,
-          brand: newItem.brand || undefined,
+          query: aiContext,
+          store: selectedStore || undefined,
           budget: budget ? parseFloat(budget) : undefined
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Search error:', error);
+        throw error;
+      }
 
       setFoundProducts(data.products || []);
       setShowProducts(true);
-      toast.success(`¡Encontré ${data.products.length} opciones reales!`);
+      toast.success(`¡Encontré ${data.products.length} productos reales!`);
     } catch (error: any) {
       toast.error(error.message || "Error al buscar productos");
       console.error(error);
@@ -686,6 +689,8 @@ const Lists = () => {
           setUrlMetadata(null);
           setIsExtractingUrl(false);
           setSelectedCategory("");
+          setInputMode(null);
+          setSelectedStore("");
           setNewItem({
             name: "",
             category: "",
@@ -701,145 +706,545 @@ const Lists = () => {
           <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
             <DialogHeader>
               <DialogTitle>Agregar Regalo a Mi Lista</DialogTitle>
-              <DialogDescription>Busca con IA, selecciona por categoría o completa manualmente</DialogDescription>
+              <DialogDescription>Elige cómo quieres agregar tu regalo</DialogDescription>
             </DialogHeader>
 
             <div ref={formScrollRef} className="space-y-6 py-4 overflow-y-auto flex-1">
-              {/* AI-Powered Smart Search Section */}
-              {!showSuggestions && (
-                <div className="space-y-4 p-4 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent rounded-xl border-2 border-primary/20">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-primary/20 rounded-lg">
-                      <Sparkles className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-base">¿Qué te gustaría recibir?</h3>
-                      <p className="text-xs text-muted-foreground">Describe el regalo y la IA te dará opciones personalizadas</p>
-                    </div>
-                  </div>
+              
+              {/* Step 1: Choose Input Mode - Always visible */}
+              {!inputMode && (
+                <div className="space-y-4">
+                  <Label className="text-base font-semibold flex items-center gap-2">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/20 text-primary text-xs font-bold">1</span>
+                    ¿Cómo quieres agregar tu regalo?
+                  </Label>
                   
-                  <Textarea
-                    placeholder="Ej: unos auriculares inalámbricos para el gym, una camisa casual azul, un libro de cocina italiana..."
-                    value={aiContext}
-                    onChange={(e) => setAiContext(e.target.value)}
-                    className="min-h-[80px] resize-none"
-                  />
-                  
-                  <div className="space-y-2">
-                    <Label className="text-sm">Presupuesto (opcional)</Label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-medium">$</span>
-                      <Input
-                        type="number"
-                        placeholder="50"
-                        value={budget}
-                        onChange={(e) => setBudget(e.target.value)}
-                        className="pl-8 pr-16"
-                        min="0"
-                        step="1"
-                      />
-                      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-medium">USD</span>
-                    </div>
-                    {budget && (
-                      <p className="text-xs text-primary/80 flex items-center gap-1">
-                        <Sparkles className="h-3 w-3" />
-                        La IA buscará opciones de hasta ${budget}
-                      </p>
-                    )}
-                  </div>
+                  <div className="grid gap-3">
+                    {/* Option 1: Simple Manual Entry */}
+                    <button
+                      type="button"
+                      onClick={() => setInputMode('simple')}
+                      className="group p-4 rounded-xl border-2 border-border hover:border-primary hover:bg-primary/5 transition-all text-left space-y-2"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500/20 to-blue-600/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                          <svg className="w-5 h-5 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                          </svg>
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-base group-hover:text-primary transition-colors">✍️ Entrada Manual Simple</h3>
+                          <p className="text-sm text-muted-foreground mt-1">Escribe rápido: "Camisa azul Nike" y listo. Agrega detalles opcionales después si quieres.</p>
+                        </div>
+                      </div>
+                    </button>
 
-                  <Button
-                    type="button"
-                    onClick={handleAISuggestions}
-                    disabled={aiLoading || !aiContext.trim()}
-                    className="w-full shadow-lg"
-                    size="lg"
-                  >
-                    {aiLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                        Buscando opciones perfectas...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="mr-2 h-5 w-5" />
-                        Generar Ideas con IA
-                      </>
-                    )}
-                  </Button>
+                    {/* Option 2: Link from Store */}
+                    <button
+                      type="button"
+                      onClick={() => setInputMode('link')}
+                      className="group p-4 rounded-xl border-2 border-border hover:border-primary hover:bg-primary/5 transition-all text-left space-y-2"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gradient-to-br from-green-500/20 to-green-600/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                          <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                          </svg>
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-base group-hover:text-primary transition-colors">🔗 Pegar Link de Tienda</h3>
+                          <p className="text-sm text-muted-foreground mt-1">Copia el enlace de Amazon, Target, o cualquier tienda. Extraemos precio, foto e info automáticamente.</p>
+                        </div>
+                      </div>
+                    </button>
+
+                    {/* Option 3: Search in Stores */}
+                    <button
+                      type="button"
+                      onClick={() => setInputMode('search')}
+                      className="group p-4 rounded-xl border-2 border-border hover:border-primary hover:bg-primary/5 transition-all text-left space-y-2"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500/20 to-purple-600/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                          <svg className="w-5 h-5 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                          </svg>
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-base group-hover:text-primary transition-colors">🛍️ Buscar en Tiendas con IA</h3>
+                          <p className="text-sm text-muted-foreground mt-1">Busca productos reales con enlaces directos. Elige tienda específica o busca en todas (Amazon, Target, Walmart, etc.).</p>
+                        </div>
+                      </div>
+                    </button>
+                  </div>
                 </div>
               )}
 
-              {/* AI Suggestions Display */}
-              {showSuggestions && aiSuggestions.length > 0 && (
-                <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Sparkles className="h-5 w-5 text-primary" />
-                      <h4 className="font-semibold text-lg">Ideas personalizadas para ti</h4>
-                    </div>
-                    <Button variant="ghost" size="sm" onClick={() => setShowSuggestions(false)}>
-                      Buscar de nuevo
+              {/* SIMPLE MODE: Quick manual entry */}
+              {inputMode === 'simple' && (
+                <form onSubmit={handleAddItem} className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => setInputMode(null)}
+                      className="gap-2"
+                    >
+                      ← Cambiar método
                     </Button>
                   </div>
-                  <p className="text-sm text-muted-foreground">Toca una opción para auto-completar el formulario</p>
-                  <div className="space-y-3 max-h-[420px] overflow-y-auto pr-2">
-                    {aiSuggestions.map((suggestion, index) => (
-                      <button
-                        key={index}
-                        type="button"
-                        onClick={() => handleSelectSuggestion(suggestion)}
-                        className="w-full text-left p-4 rounded-xl border-2 border-border hover:border-primary hover:bg-accent/50 transition-all duration-200 group"
+
+                  <div className="space-y-4 p-4 bg-gradient-to-br from-blue-500/10 to-blue-600/5 rounded-xl border-2 border-blue-500/20">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                        <svg className="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                      </div>
+                      <h3 className="font-semibold text-sm">Modo Rápido Activado</h3>
+                    </div>
+                    <p className="text-sm text-muted-foreground">Escribe solo el nombre y guarda. Todos los demás campos son opcionales.</p>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="simple-name" className="text-base font-semibold flex items-center gap-2">
+                        Describe tu regalo *
+                      </Label>
+                      <Input
+                        id="simple-name"
+                        placeholder="Ej: Camisa azul Nike, Laptop gaming, Perfume Chanel..."
+                        value={newItem.name}
+                        onChange={(e) => {
+                          const value = e.target.value.slice(0, 200); // Security: limit length
+                          setNewItem({ ...newItem, name: value });
+                        }}
+                        className="h-12 text-base"
+                        required
+                        maxLength={200}
+                      />
+                      <p className="text-xs text-muted-foreground">Escribe libremente. Puedes agregar color, marca, modelo, lo que quieras.</p>
+                    </div>
+
+                    <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
+                      <input
+                        type="checkbox"
+                        id="add-details"
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setSelectedCategory("Otros");
+                          } else {
+                            setSelectedCategory("");
+                          }
+                        }}
+                        className="rounded"
+                      />
+                      <Label htmlFor="add-details" className="text-sm cursor-pointer">
+                        Quiero agregar más detalles (opcional)
+                      </Label>
+                    </div>
+
+                    {selectedCategory && (
+                      <div className="space-y-4 p-4 border-2 border-dashed border-border rounded-xl animate-in fade-in slide-in-from-top-2">
+                        <Label className="text-sm font-semibold text-muted-foreground">Detalles opcionales</Label>
+                        
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="simple-color" className="text-sm">Color</Label>
+                            <Input
+                              id="simple-color"
+                              placeholder="Ej: Azul"
+                              value={newItem.color}
+                              onChange={(e) => setNewItem({ ...newItem, color: e.target.value.slice(0, 50) })}
+                              maxLength={50}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="simple-size" className="text-sm">Talla/Tamaño</Label>
+                            <Input
+                              id="simple-size"
+                              placeholder="Ej: M, 42"
+                              value={newItem.size}
+                              onChange={(e) => setNewItem({ ...newItem, size: e.target.value.slice(0, 20) })}
+                              maxLength={20}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="simple-brand" className="text-sm">Marca</Label>
+                          <Input
+                            id="simple-brand"
+                            placeholder="Ej: Nike, Samsung, Zara..."
+                            value={newItem.brand}
+                            onChange={(e) => setNewItem({ ...newItem, brand: e.target.value.slice(0, 50) })}
+                            maxLength={50}
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="simple-link" className="text-sm">Link de referencia</Label>
+                          <Input
+                            id="simple-link"
+                            type="url"
+                            placeholder="https://..."
+                            value={newItem.reference_link}
+                            onChange={(e) => setNewItem({ ...newItem, reference_link: e.target.value.slice(0, 500) })}
+                            maxLength={500}
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="simple-notes" className="text-sm">Notas adicionales</Label>
+                          <Textarea
+                            id="simple-notes"
+                            placeholder="Cualquier detalle adicional..."
+                            value={newItem.notes}
+                            onChange={(e) => setNewItem({ ...newItem, notes: e.target.value.slice(0, 500) })}
+                            className="min-h-[80px] resize-none"
+                            maxLength={500}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <Button type="submit" className="w-full h-12 text-base" size="lg">
+                    <Plus className="mr-2 h-5 w-5" />
+                    Agregar a Mi Lista
+                  </Button>
+                </form>
+              )}
+
+              {/* LINK MODE: Paste URL */}
+              {inputMode === 'link' && (
+                <form onSubmit={handleAddItem} className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => setInputMode(null)}
+                      className="gap-2"
+                    >
+                      ← Cambiar método
+                    </Button>
+                  </div>
+
+                  <div className="space-y-4 p-4 bg-gradient-to-br from-green-500/10 to-green-600/5 rounded-xl border-2 border-green-500/20">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-green-500/20 flex items-center justify-center">
+                        <svg className="w-4 h-4 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                        </svg>
+                      </div>
+                      <h3 className="font-semibold text-sm">Extracción Automática Activada</h3>
+                    </div>
+                    <p className="text-sm text-muted-foreground">Pega el enlace de cualquier tienda global: Amazon, Target, AliExpress, MercadoLibre, etc.</p>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="link-url" className="text-base font-semibold flex items-center gap-2">
+                        Enlace del producto *
+                        {isExtractingUrl && (
+                          <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                        )}
+                      </Label>
+                      <div className="flex gap-2">
+                        <Input
+                          id="link-url"
+                          type="url"
+                          placeholder="https://www.amazon.com/producto..."
+                          value={newItem.reference_link}
+                          onChange={(e) => {
+                            const value = e.target.value.slice(0, 1000);
+                            handleLinkChange(value);
+                          }}
+                          className="flex-1 h-12"
+                          required
+                          maxLength={1000}
+                        />
+                        {newItem.reference_link && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => extractUrlMetadata(newItem.reference_link)}
+                            disabled={isExtractingUrl}
+                          >
+                            <RefreshCw className={cn("h-4 w-4", isExtractingUrl && "animate-spin")} />
+                          </Button>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        ✓ Soportamos tiendas de todo el mundo: Amazon (.com, .es, .mx, etc), Target, Walmart, MercadoLibre, AliExpress, y más
+                      </p>
+                    </div>
+
+                    {urlMetadata && (
+                      <a 
+                        href={newItem.reference_link} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="mt-4 p-4 border-2 rounded-xl bg-gradient-to-br from-muted/30 to-background space-y-3 block hover:border-primary hover:shadow-lg transition-all duration-200 cursor-pointer group"
                       >
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex-1 space-y-2">
-                            <div className="flex items-start justify-between gap-2">
-                              <p className="font-semibold text-base group-hover:text-primary transition-colors">{suggestion.name}</p>
-                              <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium whitespace-nowrap ${
-                                suggestion.priority === "high" ? "bg-destructive/15 text-destructive" :
-                                suggestion.priority === "medium" ? "bg-primary/15 text-primary" :
-                                "bg-muted text-muted-foreground"
-                              }`}>
-                                {suggestion.priority === "high" ? "Alta" : suggestion.priority === "medium" ? "Media" : "Baja"}
-                              </span>
+                        <div className="flex gap-4">
+                          {urlMetadata.image && (
+                            <div className="relative flex-shrink-0">
+                              <img 
+                                src={urlMetadata.image} 
+                                alt={urlMetadata.title}
+                                className="w-28 h-28 object-contain rounded-lg border bg-white group-hover:scale-105 transition-transform duration-200"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = 'none';
+                                }}
+                              />
                             </div>
-                            <p className="text-sm text-muted-foreground leading-relaxed">{suggestion.notes}</p>
+                          )}
+                          <div className="flex-1 min-w-0 space-y-2">
+                            <h4 className="text-sm font-semibold line-clamp-2 leading-tight group-hover:text-primary transition-colors">{urlMetadata.title}</h4>
+                            
+                            {urlMetadata.price && (
+                              <div className="flex items-baseline gap-2 flex-wrap">
+                                <p className="text-xl font-bold text-primary">
+                                  ${urlMetadata.price} {urlMetadata.currency}
+                                </p>
+                                {urlMetadata.originalPrice && urlMetadata.originalPrice !== urlMetadata.price && (
+                                  <>
+                                    <p className="text-sm text-muted-foreground line-through">
+                                      ${urlMetadata.originalPrice}
+                                    </p>
+                                    {urlMetadata.discountPercentage && (
+                                      <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-destructive/15 text-destructive text-xs font-bold">
+                                        -{urlMetadata.discountPercentage}%
+                                      </span>
+                                    )}
+                                  </>
+                                )}
+                              </div>
+                            )}
+
+                            {urlMetadata.rating && (
+                              <div className="flex items-center gap-2 text-xs">
+                                <div className="flex items-center gap-1">
+                                  <span className="text-yellow-500">★</span>
+                                  <span className="font-semibold">{urlMetadata.rating}</span>
+                                </div>
+                                {urlMetadata.reviewCount && (
+                                  <span className="text-muted-foreground">
+                                    ({parseInt(urlMetadata.reviewCount).toLocaleString()} reseñas)
+                                  </span>
+                                )}
+                              </div>
+                            )}
+
                             <div className="flex flex-wrap gap-2">
-                              <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-secondary/80 text-xs font-medium">
-                                {suggestion.category}
+                              <span className="text-xs px-2 py-1 rounded-md bg-secondary">
+                                {urlMetadata.siteName}
                               </span>
-                              {suggestion.brand && (
-                                <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-primary/10 text-primary text-xs font-medium">
-                                  {suggestion.brand}
+                              {urlMetadata.isPrime && (
+                                <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-semibold">
+                                  Prime
                                 </span>
                               )}
-                              {suggestion.color && (
-                                <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-accent/30 text-xs font-medium">
-                                  {suggestion.color}
+                              {urlMetadata.inStock ? (
+                                <span className="inline-flex items-center px-2 py-1 rounded-md bg-success/10 text-success text-xs font-semibold">
+                                  ✓ Disponible
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center px-2 py-1 rounded-md bg-warning/10 text-warning text-xs font-semibold">
+                                  ⚠ Sin stock
                                 </span>
                               )}
                             </div>
                           </div>
                         </div>
-                      </button>
-                    ))}
+                        
+                        <div className="inline-flex items-center gap-1 text-xs text-primary group-hover:underline font-medium">
+                          <ExternalLink className="h-3 w-3" />
+                          Clic para ver producto completo en tienda
+                        </div>
+                      </a>
+                    )}
+
+                    {urlMetadata && (
+                      <div className="space-y-2">
+                        <Label htmlFor="link-name" className="text-base font-semibold">
+                          Nombre del producto *
+                        </Label>
+                        <Input
+                          id="link-name"
+                          value={newItem.name}
+                          onChange={(e) => setNewItem({ ...newItem, name: e.target.value.slice(0, 200) })}
+                          className="h-11"
+                          required
+                          maxLength={200}
+                        />
+                        <p className="text-xs text-muted-foreground">Puedes editar el nombre si lo deseas</p>
+                      </div>
+                    )}
+                  </div>
+
+                  <Button 
+                    type="submit" 
+                    className="w-full h-12 text-base" 
+                    size="lg"
+                    disabled={!newItem.reference_link || !newItem.name}
+                  >
+                    <Plus className="mr-2 h-5 w-5" />
+                    Agregar a Mi Lista
+                  </Button>
+                </form>
+              )}
+
+              {/* SEARCH MODE: Search in stores with AI */}
+              {inputMode === 'search' && !showProducts && (
+                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => setInputMode(null)}
+                      className="gap-2"
+                    >
+                      ← Cambiar método
+                    </Button>
+                  </div>
+
+                  <div className="space-y-4 p-4 bg-gradient-to-br from-purple-500/10 to-purple-600/5 rounded-xl border-2 border-purple-500/20">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-lg bg-purple-500/20 flex items-center justify-center">
+                        <Sparkles className="w-4 h-4 text-purple-600 dark:text-purple-400" />
+                      </div>
+                      <h3 className="font-semibold text-sm">Búsqueda Inteligente con IA</h3>
+                    </div>
+                    <p className="text-sm text-muted-foreground">Busca productos reales con precios y enlaces directos a tiendas globales.</p>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="store-select" className="text-base font-semibold">
+                        Tienda (opcional)
+                      </Label>
+                      <Select value={selectedStore} onValueChange={setSelectedStore}>
+                        <SelectTrigger id="store-select" className="h-11">
+                          <SelectValue placeholder="Todas las tiendas" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">🌍 Todas las tiendas (Global)</SelectItem>
+                          <SelectGroup>
+                            <SelectLabel>🇺🇸 Estados Unidos</SelectLabel>
+                            <SelectItem value="amazon-us">Amazon.com</SelectItem>
+                            <SelectItem value="target">Target</SelectItem>
+                            <SelectItem value="walmart">Walmart</SelectItem>
+                            <SelectItem value="bestbuy">Best Buy</SelectItem>
+                          </SelectGroup>
+                          <SelectGroup>
+                            <SelectLabel>🇲🇽 México</SelectLabel>
+                            <SelectItem value="amazon-mx">Amazon.com.mx</SelectItem>
+                            <SelectItem value="mercadolibre-mx">MercadoLibre México</SelectItem>
+                            <SelectItem value="liverpool">Liverpool</SelectItem>
+                          </SelectGroup>
+                          <SelectGroup>
+                            <SelectLabel>🇪🇸 España</SelectLabel>
+                            <SelectItem value="amazon-es">Amazon.es</SelectItem>
+                            <SelectItem value="elcorteingles">El Corte Inglés</SelectItem>
+                          </SelectGroup>
+                          <SelectGroup>
+                            <SelectLabel>🌐 Internacional</SelectLabel>
+                            <SelectItem value="aliexpress">AliExpress</SelectItem>
+                            <SelectItem value="ebay">eBay</SelectItem>
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground">
+                        Deja en "Todas las tiendas" para buscar en múltiples marketplaces
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="search-query" className="text-base font-semibold">
+                        ¿Qué estás buscando? *
+                      </Label>
+                      <Textarea
+                        id="search-query"
+                        placeholder="Ej: Laptop gaming 16GB RAM, Zapatillas Nike running talla 42, Perfume Chanel mujer..."
+                        value={aiContext}
+                        onChange={(e) => setAiContext(e.target.value.slice(0, 300))}
+                        className="min-h-[100px] resize-none"
+                        maxLength={300}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Sé específico: incluye marca, modelo, color, talla si los conoces
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="budget-search" className="text-sm">
+                        Presupuesto máximo (opcional)
+                      </Label>
+                      <Input
+                        id="budget-search"
+                        type="number"
+                        placeholder="USD"
+                        value={budget}
+                        onChange={(e) => setBudget(e.target.value)}
+                        min="0"
+                        max="999999"
+                      />
+                    </div>
+
+                    <Button
+                      type="button"
+                      onClick={handleSearchProducts}
+                      disabled={!aiContext.trim() || productSearchLoading}
+                      className="w-full h-12 text-base"
+                      size="lg"
+                    >
+                      {productSearchLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                          Buscando productos reales...
+                        </>
+                      ) : (
+                        <>
+                          <Search className="mr-2 h-5 w-5" />
+                          Buscar Productos con IA
+                        </>
+                      )}
+                    </Button>
                   </div>
                 </div>
               )}
-
-              {/* Product Search Results */}
+              {/* Product Search Results - works for all modes */}
               {showProducts && foundProducts.length > 0 && (
                 <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <ShoppingBag className="h-5 w-5 text-primary" />
-                      <h4 className="font-semibold text-lg">Productos reales encontrados</h4>
-                    </div>
-                    <Button variant="ghost" size="sm" onClick={() => setShowProducts(false)}>
-                      Volver al formulario
+                  <div className="flex items-center gap-2 mb-4">
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => {
+                        setShowProducts(false);
+                        setFoundProducts([]);
+                      }}
+                      className="gap-2"
+                    >
+                      ← Nueva búsqueda
                     </Button>
                   </div>
-                  <p className="text-sm text-muted-foreground">Toca un producto para agregarlo a tu lista</p>
+
+                  <div className="p-4 bg-gradient-to-br from-success/10 to-success/5 rounded-xl border-2 border-success/20">
+                    <div className="flex items-center gap-2">
+                      <ShoppingBag className="h-5 w-5 text-success" />
+                      <h4 className="font-semibold text-base">Encontramos {foundProducts.length} productos reales</h4>
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-1">Toca un producto para agregarlo a tu lista automáticamente</p>
+                  </div>
+
                   <div className="space-y-3 max-h-[420px] overflow-y-auto pr-2">
                     {foundProducts.map((product, index) => (
                       <button
@@ -860,7 +1265,7 @@ const Lists = () => {
                             </div>
                             <div className="text-right">
                               <p className="text-lg font-bold text-primary">${product.price}</p>
-                              <p className="text-xs text-muted-foreground">USD</p>
+                              <p className="text-xs text-muted-foreground">{product.currency || 'USD'}</p>
                             </div>
                           </div>
                           <div className="flex items-center justify-between">
@@ -885,446 +1290,6 @@ const Lists = () => {
                 </div>
               )}
 
-              {/* Manual Form - Progressive Disclosure */}
-              {!showSuggestions && !showProducts && (
-                <form onSubmit={handleAddItem} className="space-y-6">
-                  <div className="flex items-center gap-2 pb-2">
-                    <div className="h-px flex-1 bg-border" />
-                    <span className="text-sm text-muted-foreground font-medium">o completa manualmente</span>
-                    <div className="h-px flex-1 bg-border" />
-                  </div>
-
-                  {/* Step 1: Smart Category Selection */}
-                  <div className="space-y-4">
-                    <Label className="text-base font-semibold flex items-center gap-2">
-                      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/20 text-primary text-xs font-bold">1</span>
-                      ¿Qué tipo de regalo buscas? *
-                    </Label>
-
-                    {/* Search Input */}
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                      <Input
-                        placeholder="Busca directamente: camisa, laptop, juego..."
-                        value={searchQuery}
-                        onChange={(e) => {
-                          setSearchQuery(e.target.value);
-                          // Auto-scroll when user types to show results
-                          if (e.target.value.trim()) {
-                            setTimeout(() => {
-                              formScrollRef.current?.scrollTo({ top: formScrollRef.current.scrollHeight, behavior: 'smooth' });
-                            }, 100);
-                          }
-                        }}
-                        className="pl-10 pr-10 h-11"
-                      />
-                      {searchQuery && (
-                        <button
-                          type="button"
-                          onClick={() => setSearchQuery("")}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      )}
-                    </div>
-
-                    {/* Search Results */}
-                    {searchQuery.trim() && getSearchResults().length > 0 && (
-                      <div className="space-y-2 max-h-[280px] overflow-y-auto p-4 bg-gradient-to-br from-primary/10 to-accent/10 rounded-xl border-2 border-primary/30 shadow-lg">
-                        <div className="flex items-center gap-2 mb-3">
-                          <Search className="h-4 w-4 text-primary" />
-                          <p className="text-sm font-semibold text-primary">Resultados para "{searchQuery}":</p>
-                        </div>
-                        {getSearchResults().slice(0, 10).map((result, idx) => (
-                          <button
-                            key={idx}
-                            type="button"
-                            onClick={() => {
-                              handleCategoryChange(result.sub);
-                              setMainCategory(result.main);
-                              setSearchQuery("");
-                            }}
-                            className="w-full text-left px-4 py-3 rounded-lg hover:bg-primary/15 transition-all border-2 border-transparent hover:border-primary/40 bg-card"
-                          >
-                            <p className="font-semibold text-base">{result.sub}</p>
-                            <p className="text-xs text-muted-foreground mt-1">Categoría: {result.main}</p>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* No results message */}
-                    {searchQuery.trim() && getSearchResults().length === 0 && (
-                      <div className="p-4 bg-muted/50 rounded-lg border text-center">
-                        <p className="text-sm text-muted-foreground">
-                          No se encontraron resultados para "{searchQuery}"
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Intenta con otro término o elige una categoría abajo
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Main Categories (only show if no search) */}
-                    {!searchQuery.trim() && !mainCategory && (
-                      <div className="space-y-2">
-                        <p className="text-sm text-muted-foreground">O elige una categoría principal:</p>
-                        <div className="grid grid-cols-2 gap-2">
-                          {Object.keys(GIFT_CATEGORIES).map((cat) => (
-                            <button
-                              key={cat}
-                              type="button"
-                              onClick={() => handleMainCategoryChange(cat)}
-                              className="p-3 rounded-lg border-2 border-border hover:border-primary hover:bg-primary/5 transition-all text-left font-medium"
-                            >
-                              {cat}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Subcategories (when main category is selected) */}
-                    {mainCategory && !searchQuery.trim() && (
-                      <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
-                        <div className="flex items-center justify-between">
-                          <p className="text-sm font-medium">Elige en {mainCategory}:</p>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setMainCategory("")}
-                          >
-                            ← Cambiar categoría
-                          </Button>
-                        </div>
-                        <div className="grid grid-cols-2 gap-2 max-h-[240px] overflow-y-auto">
-                          {getFilteredSubcategories().map((subCat) => (
-                            <button
-                              key={subCat}
-                              type="button"
-                              onClick={() => handleCategoryChange(subCat)}
-                              className={`p-3 rounded-lg border-2 transition-all text-left ${
-                                selectedCategory === subCat
-                                  ? "border-primary bg-primary/10 font-semibold"
-                                  : "border-border hover:border-primary/50 hover:bg-accent/50"
-                              }`}
-                            >
-                              {subCat}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Selected Category Display */}
-                    {selectedCategory && (
-                      <div className="p-3 bg-primary/10 border border-primary/30 rounded-lg flex items-center justify-between">
-                        <div>
-                          <p className="text-xs text-muted-foreground">Categoría seleccionada:</p>
-                          <p className="font-semibold text-primary">{selectedCategory}</p>
-                        </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setSelectedCategory("");
-                            setMainCategory("");
-                          }}
-                        >
-                          Cambiar
-                        </Button>
-                      </div>
-                    )}
-
-                    {/* AI Product Search Button */}
-                    {selectedCategory && (
-                      <div className="p-4 bg-gradient-to-r from-primary/10 to-accent/10 rounded-xl border-2 border-primary/20 animate-in fade-in slide-in-from-top-2 duration-300">
-                        <div className="space-y-3">
-                          <div className="flex items-start gap-3">
-                            <div className="p-2 bg-primary/20 rounded-lg">
-                              <ShoppingBag className="h-5 w-5 text-primary" />
-                            </div>
-                            <div className="flex-1">
-                              <h4 className="font-semibold text-sm">¿Quieres ver opciones reales en tiendas?</h4>
-                              <p className="text-xs text-muted-foreground mt-1">
-                                La IA buscará productos reales con enlaces directos
-                              </p>
-                            </div>
-                          </div>
-                          <Button
-                            type="button"
-                            onClick={handleSearchProducts}
-                            disabled={productSearchLoading}
-                            variant="default"
-                            className="w-full shadow-lg"
-                            size="default"
-                          >
-                            {productSearchLoading ? (
-                              <>
-                                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                                Buscando en tiendas online...
-                              </>
-                            ) : (
-                              <>
-                                <ShoppingBag className="mr-2 h-5 w-5" />
-                                Buscar Productos Reales con IA
-                              </>
-                            )}
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Step 2: Name and details appear after category */}
-                  {selectedCategory && (
-                    <div ref={categoryRef} className="space-y-5 animate-in fade-in slide-in-from-top-2 duration-300">
-                      <div className="space-y-3">
-                        <Label htmlFor="name" className="text-base font-semibold flex items-center gap-2">
-                          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/20 text-primary text-xs font-bold">2</span>
-                          Especifica el regalo *
-                        </Label>
-                        <Input
-                          id="name"
-                          placeholder={`Ej: ${
-                            selectedCategory === "Smartphone" ? "iPhone 15 Pro 256GB" :
-                            selectedCategory === "Camisa" ? "Camisa de vestir slim fit" :
-                            selectedCategory === "Laptop" ? "MacBook Air M2 13 pulgadas" :
-                            selectedCategory === "Zapatos" ? "Nike Air Max 90" :
-                            "Modelo o descripción específica"
-                          }`}
-                          value={newItem.name}
-                          onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
-                          className="h-11"
-                        />
-                      </div>
-
-                      {/* Link field - Show BEFORE category details for better UX */}
-                      <div className="space-y-2">
-                        <Label htmlFor="url" className="text-sm font-medium flex items-center gap-2">
-                          Enlace de referencia
-                          {isExtractingUrl && (
-                            <Loader2 className="h-3 w-3 animate-spin" />
-                          )}
-                        </Label>
-                        <div className="flex gap-2">
-                          <Input
-                            id="url"
-                            type="url"
-                            placeholder="https://amazon.com/producto..."
-                            value={newItem.reference_link}
-                            onChange={(e) => handleLinkChange(e.target.value)}
-                            className="flex-1"
-                          />
-                          {newItem.reference_link && (
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              onClick={() => extractUrlMetadata(newItem.reference_link)}
-                              disabled={isExtractingUrl}
-                            >
-                              <RefreshCw className={cn("h-4 w-4", isExtractingUrl && "animate-spin")} />
-                            </Button>
-                          )}
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          Pega el enlace del producto y extraeremos la información automáticamente
-                        </p>
-                        
-                        {urlMetadata && (
-                          <a 
-                            href={newItem.reference_link} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="mt-3 p-4 border rounded-lg bg-gradient-to-br from-muted/30 to-background space-y-3 block hover:border-primary hover:shadow-md transition-all duration-200 cursor-pointer group"
-                          >
-                            <div className="flex gap-4">
-                              {urlMetadata.image && (
-                                <div className="relative flex-shrink-0">
-                                  <img 
-                                    src={urlMetadata.image} 
-                                    alt={urlMetadata.title}
-                                    className="w-24 h-24 object-contain rounded border bg-white group-hover:scale-105 transition-transform duration-200"
-                                    onError={(e) => {
-                                      e.currentTarget.style.display = 'none';
-                                    }}
-                                  />
-                                </div>
-                              )}
-                              <div className="flex-1 min-w-0 space-y-2">
-                                <h4 className="text-sm font-semibold line-clamp-2 leading-tight group-hover:text-primary transition-colors">{urlMetadata.title}</h4>
-                                
-                                {urlMetadata.price && (
-                                  <div className="flex items-baseline gap-2 flex-wrap">
-                                    <p className="text-lg font-bold text-primary">
-                                      ${urlMetadata.price} {urlMetadata.currency}
-                                    </p>
-                                    {urlMetadata.originalPrice && urlMetadata.originalPrice !== urlMetadata.price && (
-                                      <>
-                                        <p className="text-sm text-muted-foreground line-through">
-                                          ${urlMetadata.originalPrice}
-                                        </p>
-                                        {urlMetadata.discountPercentage && (
-                                          <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-destructive/15 text-destructive text-xs font-bold">
-                                            -{urlMetadata.discountPercentage}%
-                                          </span>
-                                        )}
-                                      </>
-                                    )}
-                                  </div>
-                                )}
-
-                                {urlMetadata.rating && (
-                                  <div className="flex items-center gap-2 text-xs">
-                                    <div className="flex items-center gap-1">
-                                      <span className="text-yellow-500">★</span>
-                                      <span className="font-semibold">{urlMetadata.rating}</span>
-                                    </div>
-                                    {urlMetadata.reviewCount && (
-                                      <span className="text-muted-foreground">
-                                        ({parseInt(urlMetadata.reviewCount).toLocaleString()} reseñas)
-                                      </span>
-                                    )}
-                                  </div>
-                                )}
-
-                                <div className="flex flex-wrap gap-2">
-                                  <span className="text-xs text-muted-foreground px-2 py-1 rounded-md bg-secondary/50">
-                                    {urlMetadata.siteName}
-                                  </span>
-                                  {urlMetadata.isPrime && (
-                                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-semibold">
-                                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 16 16">
-                                        <path d="M2.5 5.5a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/>
-                                      </svg>
-                                      Prime
-                                    </span>
-                                  )}
-                                  {urlMetadata.inStock ? (
-                                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-success/10 text-success text-xs font-semibold">
-                                      ✓ Disponible
-                                    </span>
-                                  ) : (
-                                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-warning/10 text-warning text-xs font-semibold">
-                                      ⚠ Sin stock
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                            
-                            <div className="inline-flex items-center gap-1 text-xs text-primary group-hover:underline font-medium">
-                              <ExternalLink className="h-3 w-3" />
-                              Ver producto completo en tienda
-                            </div>
-                          </a>
-                        )}
-                      </div>
-
-                      {/* Smart fields - Color, Size, Brand */}
-                      <div className="space-y-4">
-                        <Label className="text-sm font-semibold text-muted-foreground">Detalles adicionales (opcional)</Label>
-                      
-                        <div className="grid grid-cols-2 gap-4">
-                          {smartOptions.needsColor && (
-                            <div className="space-y-2">
-                              <Label htmlFor="color" className="text-sm font-medium">Color</Label>
-                              <Select value={newItem.color} onValueChange={(value) => setNewItem({ ...newItem, color: value })}>
-                                <SelectTrigger id="color">
-                                  <SelectValue placeholder="Elige color" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {COMMON_COLORS.map((color) => (
-                                    <SelectItem key={color} value={color}>
-                                      {color}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          )}
-
-                          {smartOptions.needsSize && (
-                            <div className="space-y-2">
-                              <Label htmlFor="size" className="text-sm font-medium">Talla/Medida</Label>
-                              <Select value={newItem.size} onValueChange={(value) => setNewItem({ ...newItem, size: value })}>
-                                <SelectTrigger id="size">
-                                  <SelectValue placeholder="Elige talla" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {(smartOptions.sizeType === "shoe" ? SHOE_SIZES : CLOTHING_SIZES).map((size) => (
-                                    <SelectItem key={size} value={size}>
-                                      {size}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          )}
-                        </div>
-
-                        {smartOptions.suggestedBrands.length > 0 && (
-                          <div className="space-y-2">
-                            <Label htmlFor="brand" className="text-sm font-medium">Marca preferida</Label>
-                            <Select value={newItem.brand} onValueChange={(value) => setNewItem({ ...newItem, brand: value })}>
-                              <SelectTrigger id="brand">
-                                <SelectValue placeholder="Selecciona una marca" />
-                              </SelectTrigger>
-                              <SelectContent className="max-h-[200px]">
-                                {smartOptions.suggestedBrands.map((brand) => (
-                                  <SelectItem key={brand} value={brand}>
-                                    {brand}
-                                  </SelectItem>
-                                ))}
-                                <SelectItem value="Otra">Otra marca</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        )}
-
-                        <div className="space-y-2">
-                          <Label htmlFor="priority" className="text-sm font-medium">Prioridad</Label>
-                          <Select value={newItem.priority} onValueChange={(value: any) => setNewItem({ ...newItem, priority: value })}>
-                            <SelectTrigger id="priority">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="high">🔥 Alta prioridad</SelectItem>
-                              <SelectItem value="medium">⭐ Prioridad media</SelectItem>
-                              <SelectItem value="low">💭 Baja prioridad</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="notes" className="text-sm font-medium">Notas adicionales</Label>
-                          <Textarea
-                            id="notes"
-                            placeholder="Ej: Prefiero el modelo más reciente, necesito que sea compatible con iPhone..."
-                            value={newItem.notes}
-                            onChange={(e) => setNewItem({ ...newItem, notes: e.target.value })}
-                            className="min-h-[80px] resize-none"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  <Button 
-                    type="submit" 
-                    className="w-full h-11 shadow-lg" 
-                    size="lg"
-                    disabled={!selectedCategory || !newItem.name.trim()}
-                  >
-                    <Plus className="mr-2 h-5 w-5" />
-                    Agregar a Mi Lista
-                  </Button>
-                </form>
-              )}
             </div>
           </DialogContent>
         </Dialog>
