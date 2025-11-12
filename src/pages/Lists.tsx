@@ -268,9 +268,24 @@ const Lists = () => {
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Function invocation error:', error);
+        throw new Error("Error al conectar con el servicio de IA");
+      }
 
-      setAiSuggestions(data.suggestions || []);
+      if (!data) {
+        throw new Error("No se recibió respuesta del servicio");
+      }
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      if (!data.suggestions || data.suggestions.length === 0) {
+        throw new Error("No se generaron sugerencias. Intenta con una descripción más detallada.");
+      }
+
+      setAiSuggestions(data.suggestions);
       setShowSuggestions(true);
       toast.success("¡Sugerencias generadas!");
     } catch (error: any) {

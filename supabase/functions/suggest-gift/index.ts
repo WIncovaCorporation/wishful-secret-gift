@@ -12,10 +12,16 @@ serve(async (req) => {
 
   try {
     const { context, existingItems, budget } = await req.json();
+    console.log("Request received:", { context, existingItems, budget });
+    
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     
     if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
+      console.error("LOVABLE_API_KEY is not configured");
+      return new Response(
+        JSON.stringify({ error: "Configuración de IA no disponible" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     const systemPrompt = `Eres un asistente experto en sugerencias de regalos. Tu tarea es generar 5 sugerencias creativas, prácticas y variadas de regalos basándote en el contexto proporcionado.
@@ -34,6 +40,8 @@ ${existingItems && existingItems.length > 0 ? `\nRegalos ya en la lista: ${exist
 
 Genera 5 sugerencias de regalos variadas y creativas ${budget ? `que se ajusten al presupuesto de $${budget} USD` : ''}.`;
 
+    console.log("Calling Lovable AI with budget:", budget);
+    
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -82,8 +90,13 @@ Genera 5 sugerencias de regalos variadas y creativas ${budget ? `que se ajusten 
         tool_choice: { type: "function", function: { name: "suggest_gifts" } }
       }),
     });
+    
+    console.log("AI API Response status:", response.status);
 
     if (!response.ok) {
+      const errorText = await response.text();
+      console.error("AI gateway error:", response.status, errorText);
+      
       if (response.status === 429) {
         return new Response(
           JSON.stringify({ error: "Límite de solicitudes excedido. Intenta de nuevo en unos momentos." }),
@@ -96,22 +109,27 @@ Genera 5 sugerencias de regalos variadas y creativas ${budget ? `que se ajusten 
           { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      const errorText = await response.text();
-      console.error("AI gateway error:", response.status, errorText);
       return new Response(
-        JSON.stringify({ error: "Error en la IA. Intenta de nuevo." }),
+        JSON.stringify({ error: `Error en la IA (${response.status}): ${errorText}` }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     const data = await response.json();
-    const toolCall = data.choices[0].message.tool_calls?.[0];
+    console.log("AI Response data:", JSON.stringify(data, null, 2));
+    
+    const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
     
     if (!toolCall) {
-      throw new Error("No se recibieron sugerencias de la IA");
+      console.error("No tool call in response:", data);
+      return new Response(
+        JSON.stringify({ error: "No se recibieron sugerencias de la IA" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     const suggestions = JSON.parse(toolCall.function.arguments).suggestions;
+    console.log("Generated suggestions:", suggestions.length);
 
     return new Response(JSON.stringify({ suggestions }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
