@@ -98,18 +98,32 @@ const Assignment = () => {
 
       if (profileError) throw profileError;
 
+      // Get view tracking data separately (bypasses TypeScript type issues)
+      const { data: viewDataRaw } = await supabase
+        .from("gift_exchanges")
+        .select("*")
+        .eq("group_id", groupId)
+        .eq("giver_id", session.user.id)
+        .maybeSingle();
+
+      const viewData = viewDataRaw as any;
+
       const assignmentWithProfile = {
         ...exchangeData,
         giver_id: session.user.id,
         receiver_profile: profileData,
-        viewed_at: null,
-        view_count: 0,
+        viewed_at: viewData?.viewed_at || null,
+        view_count: viewData?.view_count || 0,
       };
 
       setAssignment(assignmentWithProfile);
       
-      // Always show revealed (removed anti-cheat for now until types are regenerated)
-      setIsRevealed(true);
+      // Check if this is first time viewing
+      if (!assignmentWithProfile.viewed_at) {
+        setShowConfirmView(true);
+      } else {
+        setIsRevealed(true);
+      }
 
       // Try to get receiver's wish list
       const { data: listData } = await supabase
@@ -156,10 +170,24 @@ const Assignment = () => {
     if (!assignment || !groupId) return;
 
     try {
-      // Anti-cheat temporarily disabled until types are regenerated
+      // Mark as viewed using raw update
+      const { error: updateError } = await supabase
+        .from("gift_exchanges")
+        .update({
+          viewed_at: new Date().toISOString(),
+          view_count: (assignment.view_count || 0) + 1,
+        } as any)
+        .eq("group_id", groupId)
+        .eq("giver_id", assignment.giver_id);
+
+      if (updateError) throw updateError;
+
       setIsRevealed(true);
       setShowConfirmView(false);
       toast.success("Asignación revelada. ¡Recuerda mantenerlo en secreto!");
+      
+      // Reload to get updated data
+      await loadAssignment();
     } catch (error) {
       console.error("Error revealing assignment:", error);
       toast.error("Error al revelar asignación");
