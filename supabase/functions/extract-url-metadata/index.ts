@@ -268,6 +268,18 @@ serve(async (req) => {
 
     console.log("Extracted metadata:", metadata);
 
+    // Validate if we got useful information
+    const hasUsefulData = metadata.title && metadata.title !== parsedUrl.hostname.replace('www.', '') && metadata.title !== 'Amazon.com';
+    
+    if (!hasUsefulData) {
+      return new Response(
+        JSON.stringify({ 
+          error: "No se pudo extraer información del producto. Algunos sitios (como Amazon) bloquean la extracción automática. Puedes agregar el producto manualmente con los detalles que conozcas." 
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     return new Response(JSON.stringify({ metadata }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

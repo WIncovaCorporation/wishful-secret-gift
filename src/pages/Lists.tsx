@@ -539,7 +539,14 @@ const Lists = () => {
       }
     } catch (error: any) {
       console.error('Error extracting URL metadata:', error);
-      toast.error("No se pudo extraer información del enlace");
+      const errorMessage = error?.message || "No se pudo extraer información del enlace";
+      
+      // Check if it's a blocked site issue
+      if (errorMessage.includes("bloquean")) {
+        toast.error(errorMessage, { duration: 5000 });
+      } else {
+        toast.error("No se pudo extraer información del enlace. Puedes agregar los detalles manualmente.");
+      }
       setUrlMetadata(null);
     } finally {
       setIsExtractingUrl(false);
