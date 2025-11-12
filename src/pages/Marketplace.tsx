@@ -276,17 +276,17 @@ export default function Marketplace() {
                       </span>
                     </div>
 
-                    <div className="flex gap-2">
+                    <div className="flex flex-col gap-2">
                       <Button
-                        variant="outline"
-                        size="icon"
+                        variant={isAdded ? "secondary" : "outline"}
                         onClick={() => handleAddToWishlist(product)}
-                        className={isAdded ? 'border-primary text-primary' : ''}
+                        className="w-full gap-2"
                       >
                         <Heart className={`w-4 h-4 ${isAdded ? 'fill-current' : ''}`} />
+                        {isAdded ? 'En tu Lista' : 'Agregar a Lista'}
                       </Button>
                       <Button 
-                        className="flex-1 gap-2" 
+                        className="w-full gap-2" 
                         onClick={() => handleProductClick(product)}
                       >
                         <ExternalLink className="w-4 h-4" />
