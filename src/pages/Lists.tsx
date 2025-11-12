@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from "@/components/ui/select";
-import { Gift, Plus, Trash2, ExternalLink, Sparkles, Loader2, Search, X, ShoppingBag, Store, RefreshCw } from "lucide-react";
+import { Gift, Plus, Trash2, ExternalLink, Sparkles, Loader2, Search, X, ShoppingBag, Store, RefreshCw, Edit } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -92,6 +92,8 @@ const Lists = () => {
     id: "", 
     type: "list" 
   });
+  const [editingItem, setEditingItem] = useState<any>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -258,6 +260,53 @@ const Lists = () => {
 
       toast.success(currentStatus ? "Marcado como pendiente" : "Marcado como comprado");
       await loadLists(user.id);
+    } catch (error: any) {
+      toast.error(error.message);
+    }
+  };
+
+  const handleEditItem = (item: any) => {
+    setEditingItem({
+      id: item.id,
+      name: item.name,
+      category: item.category || "",
+      color: item.color || "",
+      size: item.size || "",
+      brand: item.brand || "",
+      notes: item.notes || "",
+      reference_link: item.reference_link || "",
+      priority: item.priority || "medium",
+      image_url: item.image_url || "",
+    });
+    setEditDialogOpen(true);
+  };
+
+  const handleUpdateItem = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingItem) return;
+
+    try {
+      const { error } = await supabase
+        .from("gift_items")
+        .update({
+          name: editingItem.name,
+          category: editingItem.category,
+          color: editingItem.color,
+          size: editingItem.size,
+          brand: editingItem.brand,
+          notes: editingItem.notes,
+          reference_link: editingItem.reference_link,
+          priority: editingItem.priority,
+          image_url: editingItem.image_url,
+        })
+        .eq("id", editingItem.id);
+
+      if (error) throw error;
+
+      toast.success("Regalo actualizado!");
+      setEditDialogOpen(false);
+      setEditingItem(null);
+      if (user) await loadLists(user.id);
     } catch (error: any) {
       toast.error(error.message);
     }
@@ -718,8 +767,17 @@ const Lists = () => {
                             </span>
                             <Button
                               size="sm"
+                              variant="outline"
+                              onClick={() => handleEditItem(item)}
+                              title="Editar regalo"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
                               variant="ghost"
                               onClick={() => handleDeleteItem(item.id)}
+                              title="Eliminar regalo"
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>
@@ -1422,6 +1480,139 @@ const Lists = () => {
           </DialogContent>
         </Dialog>
       </main>
+
+      {/* Edit Item Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Editar Regalo</DialogTitle>
+            <DialogDescription>Actualiza los detalles de tu regalo</DialogDescription>
+          </DialogHeader>
+          {editingItem && (
+            <form onSubmit={handleUpdateItem} className="space-y-4">
+              {editingItem.image_url && (
+                <div className="flex justify-center">
+                  <img 
+                    src={editingItem.image_url} 
+                    alt={editingItem.name}
+                    className="w-32 h-32 object-cover rounded-lg border-2 border-border"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                </div>
+              )}
+              <div>
+                <Label htmlFor="edit-name">Nombre del Regalo *</Label>
+                <Input
+                  id="edit-name"
+                  value={editingItem.name}
+                  onChange={(e) => setEditingItem({ ...editingItem, name: e.target.value })}
+                  placeholder="Ej: Zapatillas Nike Air Max"
+                  required
+                  maxLength={200}
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-category">Categoría</Label>
+                <Select
+                  value={editingItem.category}
+                  onValueChange={(value) => setEditingItem({ ...editingItem, category: value })}
+                >
+                  <SelectTrigger id="edit-category">
+                    <SelectValue placeholder="Selecciona una categoría" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(GIFT_CATEGORIES).flatMap(([mainCat, subCats]) =>
+                      [mainCat, ...subCats].map((cat) => (
+                        <SelectItem key={cat} value={cat}>
+                          {cat}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="edit-color">Color</Label>
+                  <Input
+                    id="edit-color"
+                    value={editingItem.color}
+                    onChange={(e) => setEditingItem({ ...editingItem, color: e.target.value })}
+                    placeholder="Ej: Rojo"
+                    maxLength={50}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-size">Talla</Label>
+                  <Input
+                    id="edit-size"
+                    value={editingItem.size}
+                    onChange={(e) => setEditingItem({ ...editingItem, size: e.target.value })}
+                    placeholder="Ej: M, 42"
+                    maxLength={20}
+                  />
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="edit-brand">Marca</Label>
+                <Input
+                  id="edit-brand"
+                  value={editingItem.brand}
+                  onChange={(e) => setEditingItem({ ...editingItem, brand: e.target.value })}
+                  placeholder="Ej: Nike, Samsung"
+                  maxLength={100}
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-reference-link">Link del Producto</Label>
+                <Input
+                  id="edit-reference-link"
+                  value={editingItem.reference_link}
+                  onChange={(e) => setEditingItem({ ...editingItem, reference_link: e.target.value })}
+                  placeholder="https://..."
+                  type="url"
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-priority">Prioridad</Label>
+                <Select
+                  value={editingItem.priority}
+                  onValueChange={(value) => setEditingItem({ ...editingItem, priority: value })}
+                >
+                  <SelectTrigger id="edit-priority">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="low">Baja</SelectItem>
+                    <SelectItem value="medium">Media</SelectItem>
+                    <SelectItem value="high">Alta</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="edit-notes">Notas adicionales</Label>
+                <Textarea
+                  id="edit-notes"
+                  value={editingItem.notes}
+                  onChange={(e) => setEditingItem({ ...editingItem, notes: e.target.value })}
+                  placeholder="Cualquier detalle adicional..."
+                  maxLength={500}
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" onClick={() => setEditDialogOpen(false)} className="flex-1">
+                  Cancelar
+                </Button>
+                <Button type="submit" className="flex-1">
+                  Guardar Cambios
+                </Button>
+              </div>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
 
       <ConfirmDialog
         open={deleteConfirm.open}
