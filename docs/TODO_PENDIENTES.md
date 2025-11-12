@@ -91,6 +91,27 @@
   - **Status**: ✅ IMPLEMENTADO
   - **Fecha**: 2025-01-12
 
+- [x] **P0-UX-003**: ✅ Clarificación de Estado "Comprado" en Listas (IMPLEMENTADO)
+  - **Dónde**: `src/pages/Lists.tsx` - Visualización de items en listas
+  - **Problema**: Checkbox sin label causaba confusión - usuarios no entendían que marcarlo significa "comprado"
+  - **Acción**: Rediseño completo de UI de items:
+    - Agregado label "Pendiente/Comprado" bajo checkbox
+    - Badge verde "✓ Comprado" visible cuando está marcado
+    - Fondo verde suave (success/5) y borde verde (success/30) para items comprados
+    - Eliminado line-through (tachado) confuso
+    - Texto en gris suave para items comprados (no tachado)
+    - Title attribute en checkbox con tooltip explicativo
+    - Agregado color success al design system (index.css + tailwind.config.ts)
+  - **Impacto**: 
+    - UX más clara e intuitiva
+    - Usuarios entienden inmediatamente qué hace el checkbox
+    - Estados visuales diferenciados sin confusión
+    - Sistema de diseño más robusto con color success
+  - **Tiempo**: 20 minutos
+  - **Responsable**: Dev
+  - **Status**: ✅ IMPLEMENTADO
+  - **Fecha**: 2025-01-12
+
 ---
 
 ## 🔴 CRÍTICO - P1 (Resolver antes de Producción Completa)

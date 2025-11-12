@@ -514,18 +514,37 @@ const Lists = () => {
                       {list.items.map((item) => (
                         <div
                           key={item.id}
-                          className="flex items-start gap-3 p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
+                          className={`flex items-start gap-3 p-4 rounded-lg border transition-all duration-300 ${
+                            item.is_purchased 
+                              ? "bg-success/5 border-success/30" 
+                              : "bg-card hover:bg-muted/50 hover:shadow-sm"
+                          }`}
                         >
-                          <input
-                            type="checkbox"
-                            checked={item.is_purchased}
-                            onChange={() => handleTogglePurchased(item.id, item.is_purchased)}
-                            className="mt-1 w-5 h-5 rounded border-border"
-                          />
+                          <div className="flex flex-col items-center gap-1 pt-1">
+                            <input
+                              type="checkbox"
+                              checked={item.is_purchased}
+                              onChange={() => handleTogglePurchased(item.id, item.is_purchased)}
+                              className="w-5 h-5 rounded border-border cursor-pointer accent-success"
+                              title={item.is_purchased ? "Marcar como pendiente" : "Marcar como comprado"}
+                            />
+                            <span className="text-[10px] text-muted-foreground/70 whitespace-nowrap">
+                              {item.is_purchased ? "Comprado" : "Pendiente"}
+                            </span>
+                          </div>
                           <div className="flex-1">
-                            <h4 className={`font-semibold ${item.is_purchased ? "line-through text-muted-foreground" : ""}`}>
-                              {item.name}
-                            </h4>
+                            <div className="flex items-start gap-2 mb-1">
+                              <h4 className={`font-semibold flex-1 ${
+                                item.is_purchased ? "text-muted-foreground" : ""
+                              }`}>
+                                {item.name}
+                              </h4>
+                              {item.is_purchased && (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-success/20 text-success text-xs font-medium whitespace-nowrap">
+                                  ✓ Comprado
+                                </span>
+                              )}
+                            </div>
                             <p className="text-sm text-muted-foreground">{item.category}</p>
                             {item.color && <p className="text-sm">Color: {item.color}</p>}
                             {item.size && <p className="text-sm">Talla: {item.size}</p>}
@@ -542,8 +561,8 @@ const Lists = () => {
                               </a>
                             )}
                           </div>
-                          <div className="flex gap-2">
-                            <span className={`px-2 py-1 rounded text-xs ${
+                          <div className="flex flex-col gap-2">
+                            <span className={`px-2 py-1 rounded text-xs text-center ${
                               item.priority === "high" ? "bg-destructive/20 text-destructive" :
                               item.priority === "medium" ? "bg-accent/20 text-accent-foreground" :
                               "bg-muted text-muted-foreground"
