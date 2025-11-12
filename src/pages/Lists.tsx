@@ -22,6 +22,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import Footer from "@/components/Footer";
 import { HelpTooltip } from "@/components/HelpTooltip";
 import { EmptyStateCard } from "@/components/EmptyStateCard";
+import { AIProductExtractor } from "@/components/AIProductExtractor";
 import type { User } from "@supabase/supabase-js";
 
 interface GiftList {
@@ -83,7 +84,7 @@ const Lists = () => {
   const [showProducts, setShowProducts] = useState(false);
   const [urlMetadata, setUrlMetadata] = useState<any>(null);
   const [isExtractingUrl, setIsExtractingUrl] = useState(false);
-  const [inputMode, setInputMode] = useState<'simple' | 'link' | 'search' | null>(null);
+  const [inputMode, setInputMode] = useState<'simple' | 'link' | 'search' | 'ai' | null>(null);
   const [selectedStore, setSelectedStore] = useState<string>("");
   const formScrollRef = useRef<HTMLDivElement>(null);
   const categoryRef = useRef<HTMLDivElement>(null);
@@ -905,6 +906,26 @@ const Lists = () => {
                         </div>
                       </div>
                     </button>
+
+                    {/* Option 4: AI Assistant - Screenshot Extraction */}
+                    <button
+                      type="button"
+                      onClick={() => setInputMode('ai')}
+                      className="group p-4 rounded-xl border-2 border-primary/30 hover:border-primary hover:bg-gradient-to-br hover:from-primary/10 hover:to-primary/5 transition-all text-left space-y-2 relative overflow-hidden"
+                    >
+                      <div className="absolute top-2 right-2 px-2 py-1 bg-gradient-to-r from-primary to-primary/80 text-white text-[10px] font-bold rounded-full uppercase tracking-wide">
+                        ✨ Nuevo
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-gradient-to-br from-amber-500/20 to-amber-600/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                          <Sparkles className="w-5 h-5 text-amber-600 dark:text-amber-400" />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-base group-hover:text-primary transition-colors">🤖 AI Assistant - Extrae desde Imagen</h3>
+                          <p className="text-sm text-muted-foreground mt-1">Sube captura o foto del producto. La IA extrae nombre, precio, descripción automáticamente. ¡Magia! ✨</p>
+                        </div>
+                      </div>
+                    </button>
                   </div>
                 </div>
               )}
@@ -1282,6 +1303,69 @@ const Lists = () => {
                     Agregar a Mi Lista
                   </Button>
                 </form>
+              )}
+
+              {/* AI MODE: Extract from screenshot with AI */}
+              {inputMode === 'ai' && (
+                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => setInputMode(null)}
+                      className="gap-2"
+                    >
+                      ← Cambiar método
+                    </Button>
+                  </div>
+
+                  <AIProductExtractor
+                    onProductExtracted={(product) => {
+                      // Map category from AI to our categories
+                      const categoryMap: Record<string, string> = {
+                        'electronics': 'Electrónica',
+                        'fashion': 'Ropa y Moda',
+                        'home': 'Hogar y Decoración',
+                        'books': 'Libros y Medios',
+                        'sports': 'Deportes y Aire Libre',
+                        'other': 'Otros'
+                      };
+
+                      // Pre-fill form with extracted data
+                      setNewItem({
+                        name: product.title || '',
+                        category: categoryMap[product.category] || 'Otros',
+                        color: '',
+                        size: '',
+                        brand: '',
+                        notes: product.description || '',
+                        reference_link: product.url || '',
+                        priority: 'medium'
+                      });
+
+                      // Set metadata if we have image
+                      if (product.image_url || product.price) {
+                        setUrlMetadata({
+                          title: product.title,
+                          image: product.image_url,
+                          price: product.price,
+                          currency: 'USD'
+                        });
+                      }
+
+                      // Switch to simple mode so user can review and add
+                      setInputMode('simple');
+                      setSelectedCategory("Otros"); // Expand optional fields
+                      
+                      // Scroll to form
+                      setTimeout(() => {
+                        formScrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' });
+                      }, 100);
+                    }}
+                    onCancel={() => setInputMode(null)}
+                  />
+                </div>
               )}
 
               {/* SEARCH MODE: Search in stores with AI */}

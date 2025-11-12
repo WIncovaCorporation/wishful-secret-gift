@@ -14,3 +14,6 @@ verify_jwt = false
 
 [functions.search-amazon-products]
 verify_jwt = true
+
+[functions.extract-product-from-image]
+verify_jwt = true
