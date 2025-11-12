@@ -107,14 +107,42 @@ serve(async (req) => {
     let imageUrl = extractMetaContent('og:image') || 
                    extractMetaContent('og:image:secure_url') ||
                    extractMetaContent('twitter:image') ||
+                   extractMetaContent('twitter:image:src') ||
+                   html.match(/["']primary_image["']\s*:\s*["']([^"']+)["']/i)?.[1] ||
                    html.match(/["']hiRes["']\s*:\s*["']([^"']+)["']/i)?.[1] ||
                    html.match(/["']large["']\s*:\s*["']([^"']+)["']/i)?.[1] ||
                    html.match(/<img[^>]*id=["']landingImage["'][^>]*src=["']([^"']+)["']/i)?.[1] ||
+                   html.match(/<img[^>]*class=["'][^"']*product[^"']*["'][^>]*src=["']([^"']+)["']/i)?.[1] ||
+                   html.match(/<img[^>]*data-src=["']([^"']+)["'][^>]*class=["'][^"']*product/i)?.[1] ||
                    '';
+    
+    console.log("Raw image URL extracted:", imageUrl);
     
     if (imageUrl && !imageUrl.startsWith('http')) {
       imageUrl = new URL(imageUrl, parsedUrl.origin).toString();
+      console.log("Converted relative URL to absolute:", imageUrl);
     }
+    
+    // Clean query parameters that might prevent loading
+    if (imageUrl) {
+      try {
+        const imgUrl = new URL(imageUrl);
+        // Keep essential params only
+        const essentialParams = ['width', 'height', 'w', 'h', 'fit', 'fmt', 'q'];
+        const newParams = new URLSearchParams();
+        essentialParams.forEach(param => {
+          if (imgUrl.searchParams.has(param)) {
+            newParams.set(param, imgUrl.searchParams.get(param)!);
+          }
+        });
+        imgUrl.search = newParams.toString();
+        imageUrl = imgUrl.toString();
+        console.log("Cleaned image URL:", imageUrl);
+      } catch (e) {
+        console.log("Failed to clean image URL, using original:", e);
+      }
+    }
+    
     metadata.image = imageUrl;
 
     // Advanced price extraction for Amazon and e-commerce sites

@@ -1102,6 +1102,129 @@ const Lists = () => {
                         />
                       </div>
 
+                      {/* Link field - Show BEFORE category details for better UX */}
+                      <div className="space-y-2">
+                        <Label htmlFor="url" className="text-sm font-medium flex items-center gap-2">
+                          Enlace de referencia
+                          {isExtractingUrl && (
+                            <Loader2 className="h-3 w-3 animate-spin" />
+                          )}
+                        </Label>
+                        <div className="flex gap-2">
+                          <Input
+                            id="url"
+                            type="url"
+                            placeholder="https://amazon.com/producto..."
+                            value={newItem.reference_link}
+                            onChange={(e) => handleLinkChange(e.target.value)}
+                            className="flex-1"
+                          />
+                          {newItem.reference_link && (
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              onClick={() => extractUrlMetadata(newItem.reference_link)}
+                              disabled={isExtractingUrl}
+                            >
+                              <RefreshCw className={cn("h-4 w-4", isExtractingUrl && "animate-spin")} />
+                            </Button>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Pega el enlace del producto y extraeremos la información automáticamente
+                        </p>
+                        
+                        {urlMetadata && (
+                          <a 
+                            href={newItem.reference_link} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="mt-3 p-4 border rounded-lg bg-gradient-to-br from-muted/30 to-background space-y-3 block hover:border-primary hover:shadow-md transition-all duration-200 cursor-pointer group"
+                          >
+                            <div className="flex gap-4">
+                              {urlMetadata.image && (
+                                <div className="relative flex-shrink-0">
+                                  <img 
+                                    src={urlMetadata.image} 
+                                    alt={urlMetadata.title}
+                                    className="w-24 h-24 object-contain rounded border bg-white group-hover:scale-105 transition-transform duration-200"
+                                    onError={(e) => {
+                                      e.currentTarget.style.display = 'none';
+                                    }}
+                                  />
+                                </div>
+                              )}
+                              <div className="flex-1 min-w-0 space-y-2">
+                                <h4 className="text-sm font-semibold line-clamp-2 leading-tight group-hover:text-primary transition-colors">{urlMetadata.title}</h4>
+                                
+                                {urlMetadata.price && (
+                                  <div className="flex items-baseline gap-2 flex-wrap">
+                                    <p className="text-lg font-bold text-primary">
+                                      ${urlMetadata.price} {urlMetadata.currency}
+                                    </p>
+                                    {urlMetadata.originalPrice && urlMetadata.originalPrice !== urlMetadata.price && (
+                                      <>
+                                        <p className="text-sm text-muted-foreground line-through">
+                                          ${urlMetadata.originalPrice}
+                                        </p>
+                                        {urlMetadata.discountPercentage && (
+                                          <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-destructive/15 text-destructive text-xs font-bold">
+                                            -{urlMetadata.discountPercentage}%
+                                          </span>
+                                        )}
+                                      </>
+                                    )}
+                                  </div>
+                                )}
+
+                                {urlMetadata.rating && (
+                                  <div className="flex items-center gap-2 text-xs">
+                                    <div className="flex items-center gap-1">
+                                      <span className="text-yellow-500">★</span>
+                                      <span className="font-semibold">{urlMetadata.rating}</span>
+                                    </div>
+                                    {urlMetadata.reviewCount && (
+                                      <span className="text-muted-foreground">
+                                        ({parseInt(urlMetadata.reviewCount).toLocaleString()} reseñas)
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+
+                                <div className="flex flex-wrap gap-2">
+                                  <span className="text-xs text-muted-foreground px-2 py-1 rounded-md bg-secondary/50">
+                                    {urlMetadata.siteName}
+                                  </span>
+                                  {urlMetadata.isPrime && (
+                                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-semibold">
+                                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 16 16">
+                                        <path d="M2.5 5.5a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/>
+                                      </svg>
+                                      Prime
+                                    </span>
+                                  )}
+                                  {urlMetadata.inStock ? (
+                                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-success/10 text-success text-xs font-semibold">
+                                      ✓ Disponible
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-warning/10 text-warning text-xs font-semibold">
+                                      ⚠ Sin stock
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                            
+                            <div className="inline-flex items-center gap-1 text-xs text-primary group-hover:underline font-medium">
+                              <ExternalLink className="h-3 w-3" />
+                              Ver producto completo en tienda
+                            </div>
+                          </a>
+                        )}
+                      </div>
+
                       {/* Smart fields - Color, Size, Brand */}
                       <div className="space-y-4">
                         <Label className="text-sm font-semibold text-muted-foreground">Detalles adicionales (opcional)</Label>
@@ -1175,131 +1298,6 @@ const Lists = () => {
                               <SelectItem value="low">💭 Baja prioridad</SelectItem>
                             </SelectContent>
                           </Select>
-                        </div>
-
-                        <div className="space-y-2">
-                          <Label htmlFor="url" className="text-sm font-medium flex items-center gap-2">
-                            Enlace de referencia
-                            {isExtractingUrl && (
-                              <Loader2 className="h-3 w-3 animate-spin" />
-                            )}
-                          </Label>
-                          <div className="flex gap-2">
-                            <Input
-                              id="url"
-                              type="url"
-                              placeholder="https://amazon.com/producto..."
-                              value={newItem.reference_link}
-                              onChange={(e) => handleLinkChange(e.target.value)}
-                              className="flex-1"
-                            />
-                            {newItem.reference_link && (
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => extractUrlMetadata(newItem.reference_link)}
-                                disabled={isExtractingUrl}
-                              >
-                                <RefreshCw className={cn("h-4 w-4", isExtractingUrl && "animate-spin")} />
-                              </Button>
-                            )}
-                          </div>
-                          <p className="text-xs text-muted-foreground">
-                            Pega el enlace del producto y extraeremos la información automáticamente
-                          </p>
-                          
-                          {urlMetadata && (
-                            <a 
-                              href={newItem.reference_link} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="mt-3 p-4 border rounded-lg bg-gradient-to-br from-muted/30 to-background space-y-3 block hover:border-primary hover:shadow-md transition-all duration-200 cursor-pointer group"
-                            >
-                              <div className="flex gap-4">
-                                {urlMetadata.image && (
-                                  <div className="relative flex-shrink-0">
-                                    <img 
-                                      src={urlMetadata.image} 
-                                      alt={urlMetadata.title}
-                                      className="w-24 h-24 object-contain rounded border bg-white group-hover:scale-105 transition-transform duration-200"
-                                      onError={(e) => {
-                                        e.currentTarget.style.display = 'none';
-                                      }}
-                                    />
-                                  </div>
-                                )}
-                                <div className="flex-1 min-w-0 space-y-2">
-                                  <h4 className="text-sm font-semibold line-clamp-2 leading-tight group-hover:text-primary transition-colors">{urlMetadata.title}</h4>
-                                  
-                                  {/* Price Information */}
-                                  <div className="flex items-baseline gap-2 flex-wrap">
-                                    {urlMetadata.price && (
-                                      <p className="text-lg font-bold text-primary">
-                                        ${urlMetadata.price} {urlMetadata.currency}
-                                      </p>
-                                    )}
-                                    {urlMetadata.originalPrice && urlMetadata.originalPrice !== urlMetadata.price && (
-                                      <>
-                                        <p className="text-sm text-muted-foreground line-through">
-                                          ${urlMetadata.originalPrice}
-                                        </p>
-                                        {urlMetadata.discountPercentage && (
-                                          <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-destructive/15 text-destructive text-xs font-bold">
-                                            -{urlMetadata.discountPercentage}%
-                                          </span>
-                                        )}
-                                      </>
-                                    )}
-                                  </div>
-
-                                  {/* Rating and Reviews */}
-                                  {urlMetadata.rating && (
-                                    <div className="flex items-center gap-2 text-xs">
-                                      <div className="flex items-center gap-1">
-                                        <span className="text-yellow-500">★</span>
-                                        <span className="font-semibold">{urlMetadata.rating}</span>
-                                      </div>
-                                      {urlMetadata.reviewCount && (
-                                        <span className="text-muted-foreground">
-                                          ({parseInt(urlMetadata.reviewCount).toLocaleString()} reseñas)
-                                        </span>
-                                      )}
-                                    </div>
-                                  )}
-
-                                  {/* Badges */}
-                                  <div className="flex flex-wrap gap-2">
-                                    <span className="text-xs text-muted-foreground px-2 py-1 rounded-md bg-secondary/50">
-                                      {urlMetadata.siteName}
-                                    </span>
-                                    {urlMetadata.isPrime && (
-                                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 text-xs font-semibold">
-                                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 16 16">
-                                          <path d="M2.5 5.5a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5zm0 2a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5z"/>
-                                        </svg>
-                                        Prime
-                                      </span>
-                                    )}
-                                    {urlMetadata.inStock ? (
-                                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-success/10 text-success text-xs font-semibold">
-                                        ✓ Disponible
-                                      </span>
-                                    ) : (
-                                      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-warning/10 text-warning text-xs font-semibold">
-                                        ⚠ Sin stock
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                              
-                              <div className="inline-flex items-center gap-1 text-xs text-primary group-hover:underline font-medium">
-                                <ExternalLink className="h-3 w-3" />
-                                Ver producto completo en tienda
-                              </div>
-                            </a>
-                          )}
                         </div>
 
                         <div className="space-y-2">
