@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Users, Plus, Copy, Check, Trash2, Sparkles, Gift, Lock, Shield, Scale, AlertCircle, Calendar, DollarSign, Share2 } from "lucide-react";
+import { Users, Plus, Copy, Check, Trash2, Sparkles, Gift, Lock, Shield, Scale, AlertCircle, Calendar, DollarSign, Share2, Mail, MessageSquare } from "lucide-react";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import LanguageSelector from "@/components/LanguageSelector";
@@ -307,6 +307,30 @@ const Groups = () => {
       `Únete aquí: ${window.location.origin}/groups`;
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
+  };
+
+  const handleShareEmail = (group: Group) => {
+    const subject = `Invitación: ${group.name} - Intercambio de Regalos`;
+    const body = `🎁 ¡Hola!\n\n` +
+      `Te invito a participar en el intercambio de regalos "${group.name}".\n\n` +
+      `Para unirte, sigue estos pasos:\n` +
+      `1. Visita: ${window.location.origin}/groups\n` +
+      `2. Haz clic en "Unirse con Código"\n` +
+      `3. Ingresa este código: ${group.share_code}\n\n` +
+      `¡Nos vemos en el intercambio!`;
+    
+    const mailtoUrl = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    window.location.href = mailtoUrl;
+  };
+
+  const handleShareSMS = (group: Group) => {
+    const message = `🎁 ¡Únete a "${group.name}"!\n` +
+      `Código: ${group.share_code}\n` +
+      `Enlace: ${window.location.origin}/groups`;
+    
+    // iOS usa 'sms:&body=', Android usa 'sms:?body='
+    const smsUrl = `sms:${navigator.userAgent.match(/iPhone|iPad|iPod/) ? '&' : '?'}body=${encodeURIComponent(message)}`;
+    window.location.href = smsUrl;
   };
 
   const showDrawConfirmation = (group: Group) => {
@@ -788,26 +812,51 @@ const Groups = () => {
                     
                     <div>
                       <h4 className="font-semibold mb-2">Código de Invitación</h4>
-                      <div className="flex gap-2">
-                        <Input value={group.share_code} readOnly className="font-mono" />
-                        <Button
-                          variant="outline"
-                          onClick={() => handleCopyCode(group.share_code)}
-                        >
-                          {copiedCode === group.share_code ? (
-                            <Check className="w-4 h-4" />
-                          ) : (
-                            <Copy className="w-4 h-4" />
-                          )}
-                        </Button>
-                        <Button
-                          variant="outline"
-                          onClick={() => handleShareWhatsApp(group)}
-                          className="gap-2"
-                        >
-                          <Share2 className="w-4 h-4" />
-                          WhatsApp
-                        </Button>
+                      <div className="flex gap-2 flex-wrap">
+                        <div className="flex gap-2 flex-1 min-w-[200px]">
+                          <Input value={group.share_code} readOnly className="font-mono" />
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => handleCopyCode(group.share_code)}
+                            title="Copiar código"
+                          >
+                            {copiedCode === group.share_code ? (
+                              <Check className="w-4 h-4" />
+                            ) : (
+                              <Copy className="w-4 h-4" />
+                            )}
+                          </Button>
+                        </div>
+                        <div className="flex gap-2 flex-wrap">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleShareWhatsApp(group)}
+                            className="gap-2"
+                          >
+                            <Share2 className="w-4 h-4" />
+                            WhatsApp
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleShareEmail(group)}
+                            className="gap-2"
+                          >
+                            <Mail className="w-4 h-4" />
+                            Email
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleShareSMS(group)}
+                            className="gap-2"
+                          >
+                            <MessageSquare className="w-4 h-4" />
+                            SMS
+                          </Button>
+                        </div>
                       </div>
                     </div>
                     <div>
