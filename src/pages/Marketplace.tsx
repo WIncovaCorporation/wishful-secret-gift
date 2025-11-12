@@ -5,9 +5,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, ExternalLink, Star, ShoppingCart, ArrowLeft, Sparkles } from 'lucide-react';
+import { Search, ExternalLink, Star, ShoppingCart, ArrowLeft, Sparkles, Heart } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { AddToWishlistDialog } from '@/components/AddToWishlistDialog';
 
 interface Product {
   id: string;
@@ -26,6 +27,9 @@ export default function Marketplace() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [loading, setLoading] = useState(true);
+  const [wishlistDialogOpen, setWishlistDialogOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [addedProductIds, setAddedProductIds] = useState<Set<string>>(new Set());
   const navigate = useNavigate();
 
   const categories = [
@@ -39,7 +43,46 @@ export default function Marketplace() {
 
   useEffect(() => {
     loadProducts();
+    loadAddedProducts();
   }, [selectedCategory]);
+
+  const loadAddedProducts = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: lists } = await supabase
+        .from('gift_lists')
+        .select('id')
+        .eq('user_id', user.id);
+
+      if (!lists || lists.length === 0) return;
+
+      const { data: items } = await supabase
+        .from('gift_items')
+        .select('reference_link')
+        .in('list_id', lists.map(l => l.id));
+
+      if (!items) return;
+
+      // Extract product IDs from affiliate links
+      const productIds = new Set(
+        items
+          .map(item => item.reference_link)
+          .filter(link => link)
+          .map(link => {
+            // Match product ID pattern from affiliate_products table
+            const match = products.find(p => p.affiliate_link === link);
+            return match?.id;
+          })
+          .filter(Boolean) as string[]
+      );
+
+      setAddedProductIds(productIds);
+    } catch (error) {
+      console.error('Error loading added products:', error);
+    }
+  };
 
   const loadProducts = async () => {
     setLoading(true);
@@ -81,6 +124,16 @@ export default function Marketplace() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleAddToWishlist = (product: Product) => {
+    setSelectedProduct(product);
+    setWishlistDialogOpen(true);
+  };
+
+  const handleWishlistSuccess = () => {
+    setAddedProductIds(prev => new Set([...prev, selectedProduct?.id].filter(Boolean) as string[]));
+    loadAddedProducts(); // Reload to ensure sync
   };
 
   const handleProductClick = async (product: Product) => {
@@ -181,49 +234,69 @@ export default function Marketplace() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {products.map((product) => (
-              <Card key={product.id} className="group hover:shadow-lg transition-shadow">
-                <CardHeader className="p-0">
-                  <div className="aspect-square relative overflow-hidden rounded-t-lg bg-muted">
-                    <img
-                      src={product.image_url}
-                      alt={product.name}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      loading="lazy"
-                    />
-                    <Badge className="absolute top-2 right-2 bg-background/90">
-                      ${product.price}
-                    </Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="p-4">
-                  <CardTitle className="text-base mb-2 line-clamp-2">
-                    {product.name}
-                  </CardTitle>
-                  <CardDescription className="line-clamp-2 mb-3">
-                    {product.description}
-                  </CardDescription>
-                  
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="flex items-center gap-1">
-                      <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                      <span className="text-sm font-medium">{product.rating}</span>
+            {products.map((product) => {
+              const isAdded = addedProductIds.has(product.id);
+              
+              return (
+                <Card key={product.id} className="group hover:shadow-lg transition-shadow">
+                  <CardHeader className="p-0">
+                    <div className="aspect-square relative overflow-hidden rounded-t-lg bg-muted">
+                      <img
+                        src={product.image_url}
+                        alt={product.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        loading="lazy"
+                      />
+                      <Badge className="absolute top-2 right-2 bg-background/90">
+                        ${product.price}
+                      </Badge>
+                      {isAdded && (
+                        <Badge className="absolute top-2 left-2 bg-primary/90 gap-1">
+                          <Heart className="w-3 h-3 fill-current" />
+                          En tu lista
+                        </Badge>
+                      )}
                     </div>
-                    <span className="text-xs text-muted-foreground">
-                      ({product.reviews_count.toLocaleString()} reseñas)
-                    </span>
-                  </div>
+                  </CardHeader>
+                  <CardContent className="p-4">
+                    <CardTitle className="text-base mb-2 line-clamp-2">
+                      {product.name}
+                    </CardTitle>
+                    <CardDescription className="line-clamp-2 mb-3">
+                      {product.description}
+                    </CardDescription>
+                    
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="flex items-center gap-1">
+                        <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                        <span className="text-sm font-medium">{product.rating}</span>
+                      </div>
+                      <span className="text-xs text-muted-foreground">
+                        ({product.reviews_count.toLocaleString()} reseñas)
+                      </span>
+                    </div>
 
-                  <Button 
-                    className="w-full gap-2" 
-                    onClick={() => handleProductClick(product)}
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                    Ver Producto
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => handleAddToWishlist(product)}
+                        className={isAdded ? 'border-primary text-primary' : ''}
+                      >
+                        <Heart className={`w-4 h-4 ${isAdded ? 'fill-current' : ''}`} />
+                      </Button>
+                      <Button 
+                        className="flex-1 gap-2" 
+                        onClick={() => handleProductClick(product)}
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                        Ver Producto
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         )}
 
@@ -241,6 +314,14 @@ export default function Marketplace() {
           </div>
         </div>
       </div>
+
+      {/* Add to Wishlist Dialog */}
+      <AddToWishlistDialog
+        open={wishlistDialogOpen}
+        onOpenChange={setWishlistDialogOpen}
+        product={selectedProduct}
+        onSuccess={handleWishlistSuccess}
+      />
     </div>
   );
 }
