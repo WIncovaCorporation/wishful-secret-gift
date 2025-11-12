@@ -233,6 +233,8 @@ const Lists = () => {
         reference_link: "",
         priority: "medium",
       });
+      setUrlMetadata(null); // Clear metadata after adding item
+      setInputMode(null); // Reset input mode
       if (user) await loadLists(user.id);
     } catch (error: any) {
       toast.error(error.message);
@@ -431,6 +433,17 @@ const Lists = () => {
   };
 
   const handleSelectProduct = (product: any) => {
+    // Extract image from product and set metadata for image preview
+    if (product.url) {
+      setUrlMetadata({
+        image: product.image_url || null,
+        title: product.name,
+        price: product.price,
+        currency: product.currency || 'USD',
+        siteName: product.store
+      });
+    }
+    
     setNewItem({
       ...newItem,
       name: product.name,
@@ -935,15 +948,58 @@ const Lists = () => {
                         </div>
 
                         <div className="space-y-2">
-                          <Label htmlFor="simple-link" className="text-sm">Link de referencia</Label>
-                          <Input
-                            id="simple-link"
-                            type="url"
-                            placeholder="https://..."
-                            value={newItem.reference_link}
-                            onChange={(e) => setNewItem({ ...newItem, reference_link: e.target.value.slice(0, 500) })}
-                            maxLength={500}
-                          />
+                          <Label htmlFor="simple-link" className="text-sm flex items-center gap-2">
+                            Link de referencia
+                            {isExtractingUrl && (
+                              <Loader2 className="h-3 w-3 animate-spin text-primary" />
+                            )}
+                          </Label>
+                          <div className="flex gap-2">
+                            <Input
+                              id="simple-link"
+                              type="url"
+                              placeholder="https://amazon.com/producto..."
+                              value={newItem.reference_link}
+                              onChange={(e) => {
+                                const value = e.target.value.slice(0, 500);
+                                handleLinkChange(value);
+                              }}
+                              maxLength={500}
+                            />
+                            {newItem.reference_link && (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => extractUrlMetadata(newItem.reference_link)}
+                                disabled={isExtractingUrl}
+                              >
+                                <RefreshCw className={cn("h-3 w-3", isExtractingUrl && "animate-spin")} />
+                              </Button>
+                            )}
+                          </div>
+                          {urlMetadata && urlMetadata.image && (
+                            <div className="mt-2 p-2 border rounded-lg bg-muted/30">
+                              <div className="flex items-center gap-3">
+                                <img 
+                                  src={urlMetadata.image} 
+                                  alt={urlMetadata.title || 'Producto'}
+                                  className="w-16 h-16 object-cover rounded border"
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                  }}
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs font-medium line-clamp-2">{urlMetadata.title}</p>
+                                  {urlMetadata.price && (
+                                    <p className="text-xs text-primary font-semibold">
+                                      ${urlMetadata.price} {urlMetadata.currency}
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          )}
                         </div>
 
                         <div className="space-y-2">
@@ -976,7 +1032,20 @@ const Lists = () => {
                       type="button" 
                       variant="ghost" 
                       size="sm"
-                      onClick={() => setInputMode(null)}
+                      onClick={() => {
+                        setInputMode(null);
+                        setUrlMetadata(null);
+                        setNewItem({
+                          name: "",
+                          category: "",
+                          color: "",
+                          size: "",
+                          brand: "",
+                          notes: "",
+                          reference_link: "",
+                          priority: "medium",
+                        });
+                      }}
                       className="gap-2"
                     >
                       ← Cambiar método
@@ -1158,7 +1227,15 @@ const Lists = () => {
                       type="button" 
                       variant="ghost" 
                       size="sm"
-                      onClick={() => setInputMode(null)}
+                      onClick={() => {
+                        setInputMode(null);
+                        setUrlMetadata(null);
+                        setShowProducts(false);
+                        setFoundProducts([]);
+                        setAiContext("");
+                        setBudget("");
+                        setSelectedStore("");
+                      }}
                       className="gap-2"
                     >
                       ← Cambiar método
