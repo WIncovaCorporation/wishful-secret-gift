@@ -1,0 +1,89 @@
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { ShoppingCart, Heart, ExternalLink } from "lucide-react";
+import { AddToListDropdown } from "./AddToListDropdown";
+import { useState } from "react";
+
+export interface RecommendedProduct {
+  name: string;
+  price: string;
+  store: string;
+  link: string;
+  reason: string;
+}
+
+interface ProductRecommendationProps {
+  product: RecommendedProduct;
+}
+
+export const ProductRecommendation = ({ product }: ProductRecommendationProps) => {
+  const [isAdded, setIsAdded] = useState(false);
+
+  // Convert to format compatible with AddToListDropdown
+  const productForList = {
+    id: `rec-${Date.now()}-${Math.random()}`,
+    name: product.name,
+    description: product.reason,
+    category: "gift",
+    price: parseFloat(product.price.split("-")[0]) || 0,
+    image_url: "",
+    affiliate_link: product.link,
+  };
+
+  const handleAddSuccess = () => {
+    setIsAdded(true);
+  };
+
+  const storeColors: Record<string, string> = {
+    Amazon: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300",
+    Walmart: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
+    Target: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300",
+    Etsy: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300",
+    eBay: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300",
+  };
+
+  return (
+    <Card className="p-4 space-y-3 border-2 hover:border-primary/50 transition-colors">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex-1 space-y-2">
+          <div className="flex items-center gap-2">
+            <h4 className="font-semibold text-base leading-tight">{product.name}</h4>
+          </div>
+          
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className={`text-xs px-2 py-1 rounded-full font-medium ${storeColors[product.store] || "bg-gray-100 text-gray-800"}`}>
+              {product.store}
+            </span>
+            <span className="text-sm font-bold text-primary">
+              ${product.price} USD
+            </span>
+          </div>
+          
+          <p className="text-sm text-muted-foreground leading-snug">
+            {product.reason}
+          </p>
+        </div>
+      </div>
+
+      <div className="flex gap-2 pt-2">
+        <div className="flex-1">
+          <AddToListDropdown
+            product={productForList}
+            isAdded={isAdded}
+            onSuccess={handleAddSuccess}
+          />
+        </div>
+        
+        <Button
+          variant="outline"
+          size="default"
+          onClick={() => window.open(product.link, "_blank")}
+          className="gap-2 whitespace-nowrap"
+        >
+          <ShoppingCart className="w-4 h-4" />
+          Comprar
+        </Button>
+      </div>
+    </Card>
+  );
+};

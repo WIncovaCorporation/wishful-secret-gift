@@ -7,6 +7,40 @@ import { MessageCircle, X, Send, Bot } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { ProductRecommendation, RecommendedProduct } from "./ProductRecommendation";
+
+// Parse products from AI message
+const parseProducts = (text: string): RecommendedProduct[] => {
+  const products: RecommendedProduct[] = [];
+  const productRegex = /\[PRODUCT\]([\s\S]*?)\[\/PRODUCT\]/g;
+  let match;
+
+  while ((match = productRegex.exec(text)) !== null) {
+    const productText = match[1];
+    const nameMatch = productText.match(/name:\s*(.+)/i) || productText.match(/nombre:\s*(.+)/i);
+    const priceMatch = productText.match(/price:\s*(.+)/i) || productText.match(/precio:\s*(.+)/i);
+    const storeMatch = productText.match(/store:\s*(.+)/i) || productText.match(/tienda:\s*(.+)/i);
+    const linkMatch = productText.match(/link:\s*(.+)/i);
+    const reasonMatch = productText.match(/reason:\s*(.+)/i) || productText.match(/razon:\s*(.+)/i);
+
+    if (nameMatch && priceMatch && storeMatch && linkMatch) {
+      products.push({
+        name: nameMatch[1].trim(),
+        price: priceMatch[1].trim(),
+        store: storeMatch[1].trim(),
+        link: linkMatch[1].trim(),
+        reason: reasonMatch ? reasonMatch[1].trim() : "",
+      });
+    }
+  }
+
+  return products;
+};
+
+// Remove product tags from text for display
+const removeProductTags = (text: string): string => {
+  return text.replace(/\[PRODUCT\][\s\S]*?\[\/PRODUCT\]/g, "").trim();
+};
 
 // Function to render text with clickable links
 const renderMessageWithLinks = (text: string) => {
@@ -34,6 +68,7 @@ const renderMessageWithLinks = (text: string) => {
 type Message = {
   role: "user" | "assistant";
   content: string;
+  products?: RecommendedProduct[];
 };
 
 export const AIShoppingAssistant = () => {
@@ -136,9 +171,16 @@ export const AIShoppingAssistant = () => {
               
               if (text) {
                 assistantMessage += text;
+                const products = parseProducts(assistantMessage);
+                const cleanContent = removeProductTags(assistantMessage);
+                
                 setMessages([
                   ...newMessages,
-                  { role: "assistant", content: assistantMessage },
+                  { 
+                    role: "assistant", 
+                    content: cleanContent || assistantMessage,
+                    products: products.length > 0 ? products : undefined,
+                  },
                 ]);
               }
             } catch (e) {
@@ -215,24 +257,37 @@ export const AIShoppingAssistant = () => {
               {messages.map((msg, idx) => (
                 <div
                   key={idx}
-                  className={`flex ${
+                  className={`flex gap-3 ${
                     msg.role === "user" ? "justify-end" : "justify-start"
                   }`}
                 >
-                  <div
-                    className={`max-w-[80%] rounded-lg px-4 py-2 ${
-                      msg.role === "user"
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted"
-                    }`}
-                  >
-                    {msg.role === "assistant" && (
-                      <div className="flex items-center gap-1 mb-1">
-                        <Bot className="h-3 w-3 opacity-70" />
-                        <span className="text-xs opacity-70">{t("aiAssistant.giftBot")}</span>
+                  {msg.role === "assistant" && (
+                    <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+                      <Bot className="w-5 h-5 text-primary-foreground" />
+                    </div>
+                  )}
+                  <div className="flex-1 max-w-[85%] space-y-3">
+                    {msg.content && (
+                      <div
+                        className={`rounded-2xl px-4 py-3 ${
+                          msg.role === "user"
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-muted"
+                        }`}
+                      >
+                        <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">
+                          {renderMessageWithLinks(msg.content)}
+                        </p>
                       </div>
                     )}
-                    <p className="text-sm whitespace-pre-wrap">{renderMessageWithLinks(msg.content)}</p>
+                    
+                    {msg.products && msg.products.length > 0 && (
+                      <div className="space-y-2">
+                        {msg.products.map((product, pidx) => (
+                          <ProductRecommendation key={pidx} product={product} />
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
