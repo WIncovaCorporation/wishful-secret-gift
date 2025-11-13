@@ -8,6 +8,29 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 
+// Function to render text with clickable links
+const renderMessageWithLinks = (text: string) => {
+  const urlRegex = /(https?:\/\/[^\s\)]+)/g;
+  const parts = text.split(urlRegex);
+  
+  return parts.map((part, index) => {
+    if (part.match(urlRegex)) {
+      return (
+        <a
+          key={index}
+          href={part}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-500 hover:text-blue-700 underline break-all"
+        >
+          {part}
+        </a>
+      );
+    }
+    return <span key={index}>{part}</span>;
+  });
+};
+
 type Message = {
   role: "user" | "assistant";
   content: string;
@@ -19,6 +42,7 @@ export const AIShoppingAssistant = () => {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   
   // Initialize messages with current language
   const [messages, setMessages] = useState<Message[]>([
@@ -38,10 +62,9 @@ export const AIShoppingAssistant = () => {
     ]);
   }, [language, t]);
 
+  // Auto-scroll to bottom when messages change
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
   const streamChat = async (userMessage: string) => {
@@ -187,7 +210,7 @@ export const AIShoppingAssistant = () => {
           </div>
 
           {/* Messages */}
-          <ScrollArea ref={scrollRef} className="flex-1 p-4">
+          <ScrollArea className="flex-1 p-4">
             <div className="space-y-4">
               {messages.map((msg, idx) => (
                 <div
@@ -209,7 +232,7 @@ export const AIShoppingAssistant = () => {
                         <span className="text-xs opacity-70">{t("aiAssistant.giftBot")}</span>
                       </div>
                     )}
-                    <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                    <p className="text-sm whitespace-pre-wrap">{renderMessageWithLinks(msg.content)}</p>
                   </div>
                 </div>
               ))}
@@ -224,6 +247,7 @@ export const AIShoppingAssistant = () => {
                   </div>
                 </div>
               )}
+              <div ref={messagesEndRef} />
             </div>
           </ScrollArea>
 
