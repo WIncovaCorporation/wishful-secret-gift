@@ -167,7 +167,8 @@ export const AIShoppingAssistant = () => {
 
             try {
               const parsed = JSON.parse(jsonStr);
-              const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
+              // OpenAI format: choices[0].delta.content
+              const text = parsed.content;
               
               if (text) {
                 assistantMessage += text;
@@ -184,7 +185,7 @@ export const AIShoppingAssistant = () => {
                 ]);
               }
             } catch (e) {
-              console.error("Parse error:", e);
+              console.error("Parse error:", e, "Line:", line);
             }
           }
         }
