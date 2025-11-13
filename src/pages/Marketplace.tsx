@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Search, ExternalLink, Star, ShoppingCart, ArrowLeft, Sparkles, Heart } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { AddToWishlistDialog } from '@/components/AddToWishlistDialog';
+import { AddToListDropdown } from '@/components/AddToListDropdown';
 
 interface Product {
   id: string;
@@ -27,8 +27,6 @@ export default function Marketplace() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [loading, setLoading] = useState(true);
-  const [wishlistDialogOpen, setWishlistDialogOpen] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [addedProductIds, setAddedProductIds] = useState<Set<string>>(new Set());
   const [productListMap, setProductListMap] = useState<Map<string, string>>(new Map());
   const navigate = useNavigate();
@@ -129,21 +127,7 @@ export default function Marketplace() {
     }
   };
 
-  const handleAddToWishlist = (product: Product, isAlreadyAdded: boolean) => {
-    if (isAlreadyAdded) {
-      // Si ya está agregado, navegar a la lista donde está
-      const listId = productListMap.get(product.id);
-      if (listId) {
-        navigate(`/lists`);
-        return;
-      }
-    }
-    setSelectedProduct(product);
-    setWishlistDialogOpen(true);
-  };
-
   const handleWishlistSuccess = () => {
-    setAddedProductIds(prev => new Set([...prev, selectedProduct?.id].filter(Boolean) as string[]));
     loadAddedProducts(); // Reload to ensure sync
   };
 
@@ -288,14 +272,12 @@ export default function Marketplace() {
                     </div>
 
                     <div className="flex flex-col gap-2">
-                      <Button
-                        variant={isAdded ? "secondary" : "outline"}
-                        onClick={() => handleAddToWishlist(product, isAdded)}
-                        className="w-full gap-2"
-                      >
-                        <Heart className={`w-4 h-4 ${isAdded ? 'fill-current' : ''}`} />
-                        {isAdded ? 'Ver en tu Lista' : 'Agregar a Lista'}
-                      </Button>
+                      <AddToListDropdown 
+                        product={product}
+                        isAdded={isAdded}
+                        currentListId={productListMap.get(product.id)}
+                        onSuccess={handleWishlistSuccess}
+                      />
                       <Button 
                         className="w-full gap-2" 
                         onClick={() => handleProductClick(product)}
@@ -326,14 +308,6 @@ export default function Marketplace() {
         </div>
       </div>
 
-      {/* Add to Wishlist Dialog */}
-      <AddToWishlistDialog
-        open={wishlistDialogOpen}
-        onOpenChange={setWishlistDialogOpen}
-        product={selectedProduct}
-        onSuccess={handleWishlistSuccess}
-        currentListId={selectedProduct ? productListMap.get(selectedProduct.id) : undefined}
-      />
     </div>
   );
 }
