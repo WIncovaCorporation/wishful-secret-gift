@@ -185,6 +185,13 @@ const translations = {
     "dashboard.viewAssignment": "View Assignment",
     "dashboard.noAssignments": "No active assignments yet",
     "dashboard.newMessage": "New message",
+    
+    // AI Assistant
+    "aiAssistant.title": "Gift Assistant",
+    "aiAssistant.subtitle": "Powered by Gemini AI",
+    "aiAssistant.initialMessage": "Hey! 👋 Ready to find the perfect gift? Tell me who it's for!",
+    "aiAssistant.placeholder": "Tell me about the gift you're looking for...",
+    "aiAssistant.giftBot": "GiftBot"
   },
   es: {
     // Landing Page
@@ -360,13 +367,24 @@ const translations = {
     "dashboard.viewAssignment": "Ver Asignación",
     "dashboard.noAssignments": "Aún no tienes asignaciones activas",
     "dashboard.newMessage": "Mensaje nuevo",
+    
+    // AI Assistant
+    "aiAssistant.title": "Asistente de Regalos",
+    "aiAssistant.subtitle": "Powered by Gemini AI",
+    "aiAssistant.initialMessage": "¡Hola! 👋 ¿Listo para encontrar el regalo perfecto? ¡Cuéntame para quién es!",
+    "aiAssistant.placeholder": "Cuéntame sobre el regalo que buscas...",
+    "aiAssistant.giftBot": "GiftBot"
   },
 };
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [language, setLanguageState] = useState<Language>(() => {
     const saved = localStorage.getItem("language");
-    return (saved === "en" || saved === "es") ? saved : "en";
+    if (saved === "en" || saved === "es") return saved;
+    
+    // Auto-detect browser language
+    const browserLang = navigator.language.toLowerCase();
+    return browserLang.startsWith('es') ? 'es' : 'en';
   });
 
   useEffect(() => {

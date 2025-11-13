@@ -3,9 +3,10 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { MessageCircle, X, Send, Sparkles } from "lucide-react";
+import { MessageCircle, X, Send, Bot } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 type Message = {
   role: "user" | "assistant";
@@ -13,11 +14,12 @@ type Message = {
 };
 
 export const AIShoppingAssistant = () => {
+  const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: "¡Hola! 👋 Soy tu asistente de regalos. ¿En qué puedo ayudarte hoy?",
+      content: t("aiAssistant.initialMessage"),
     },
   ]);
   const [input, setInput] = useState("");
@@ -39,6 +41,7 @@ export const AIShoppingAssistant = () => {
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
+      const browserLang = navigator.language.toLowerCase().startsWith('es') ? 'es' : 'en';
       
       const response = await fetch(
         `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-shopping-assistant`,
@@ -51,12 +54,16 @@ export const AIShoppingAssistant = () => {
           body: JSON.stringify({
             messages: newMessages,
             userId: user?.id,
+            language: browserLang,
           }),
         }
       );
 
       if (!response.ok) {
-        throw new Error("Error al conectar con el asistente");
+        const errorMsg = t("aiAssistant.initialMessage").includes("Hey") 
+          ? "Could not connect to the assistant. Please try again."
+          : "No pude conectar con el asistente. Intenta de nuevo.";
+        throw new Error(errorMsg);
       }
 
       const reader = response.body?.getReader();
@@ -98,7 +105,12 @@ export const AIShoppingAssistant = () => {
       }
     } catch (error) {
       console.error("Chat error:", error);
-      toast.error("No pude conectar con el asistente. Intenta de nuevo.");
+      const errorMsg = error instanceof Error ? error.message : (
+        t("aiAssistant.initialMessage").includes("Hey") 
+          ? "Could not connect to the assistant. Please try again."
+          : "No pude conectar con el asistente. Intenta de nuevo."
+      );
+      toast.error(errorMsg);
       setMessages(newMessages);
     } finally {
       setIsLoading(false);
@@ -125,8 +137,9 @@ export const AIShoppingAssistant = () => {
           onClick={() => setIsOpen(true)}
           className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg z-50 bg-gradient-to-r from-primary to-primary/80 hover:scale-110 transition-all"
           size="icon"
+          aria-label={t("aiAssistant.title")}
         >
-          <Sparkles className="h-6 w-6" />
+          <Bot className="h-7 w-7" />
         </Button>
       )}
 
@@ -136,10 +149,10 @@ export const AIShoppingAssistant = () => {
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-primary to-primary/80 text-primary-foreground rounded-t-lg">
             <div className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5" />
+              <Bot className="h-5 w-5" />
               <div>
-                <h3 className="font-semibold">Asistente de Regalos</h3>
-                <p className="text-xs opacity-90">Powered by Gemini AI</p>
+                <h3 className="font-semibold">{t("aiAssistant.title")}</h3>
+                <p className="text-xs opacity-90">{t("aiAssistant.subtitle")}</p>
               </div>
             </div>
             <Button
@@ -171,8 +184,8 @@ export const AIShoppingAssistant = () => {
                   >
                     {msg.role === "assistant" && (
                       <div className="flex items-center gap-1 mb-1">
-                        <MessageCircle className="h-3 w-3 opacity-70" />
-                        <span className="text-xs opacity-70">GiftBot</span>
+                        <Bot className="h-3 w-3 opacity-70" />
+                        <span className="text-xs opacity-70">{t("aiAssistant.giftBot")}</span>
                       </div>
                     )}
                     <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
@@ -200,7 +213,7 @@ export const AIShoppingAssistant = () => {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Escribe tu mensaje..."
+                placeholder={t("aiAssistant.placeholder")}
                 disabled={isLoading}
                 className="flex-1"
               />
