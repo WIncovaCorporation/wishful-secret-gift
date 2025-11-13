@@ -49,11 +49,13 @@ export const ProductRecommendation = ({ product }: ProductRecommendationProps) =
   };
 
   return (
-    <Card className="p-4 space-y-3 border-2 hover:border-primary/50 transition-colors">
+    <Card className="p-4 space-y-3 border-2 hover:border-primary/50 transition-colors bg-gradient-to-br from-background to-muted/20">
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 space-y-2">
           <div className="flex items-center gap-2">
-            <h4 className="font-semibold text-base leading-tight">{product.name}</h4>
+            <h4 className="font-semibold text-base leading-tight cursor-pointer hover:text-primary transition-colors" onClick={handleViewDetails}>
+              {product.name}
+            </h4>
           </div>
           
           <div className="flex items-center gap-2 flex-wrap">
@@ -71,8 +73,15 @@ export const ProductRecommendation = ({ product }: ProductRecommendationProps) =
         </div>
       </div>
 
-      <div className="flex gap-2 pt-2">
-        <div className="flex-1">
+      {/* Helper text */}
+      <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg px-3 py-2 border border-border/50">
+        <span className="font-medium">💡 Tip:</span>
+        <span>Guárdalo primero y luego ve a la tienda</span>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 pt-1">
+        {/* Botón principal: Agregar a lista */}
+        <div className="col-span-2">
           <AddToListDropdown
             product={productForList}
             isAdded={isAdded}
@@ -80,14 +89,15 @@ export const ProductRecommendation = ({ product }: ProductRecommendationProps) =
           />
         </div>
         
+        {/* Botón secundario: Ver más info y comprar */}
         <Button
-          variant="default"
+          variant="outline"
           size="default"
           onClick={handleViewDetails}
-          className="gap-2 whitespace-nowrap"
+          className="gap-2 col-span-2 border-2 hover:border-primary/50"
         >
-          Ver Detalles
           <ExternalLink className="w-4 h-4" />
+          Ver detalles y comprar
         </Button>
       </div>
 
