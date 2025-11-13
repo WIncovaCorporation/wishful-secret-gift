@@ -35,21 +35,46 @@ interface AddToWishlistDialogProps {
   onOpenChange: (open: boolean) => void;
   product: Product | null;
   onSuccess?: () => void;
+  currentListId?: string;
 }
 
-export function AddToWishlistDialog({ open, onOpenChange, product, onSuccess }: AddToWishlistDialogProps) {
+export function AddToWishlistDialog({ open, onOpenChange, product, onSuccess, currentListId }: AddToWishlistDialogProps) {
   const [lists, setLists] = useState<GiftList[]>([]);
   const [selectedListId, setSelectedListId] = useState<string>('');
   const [showNewListInput, setShowNewListInput] = useState(false);
   const [newListName, setNewListName] = useState('');
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [currentItemId, setCurrentItemId] = useState<string | null>(null);
+  const isMovingToAnotherList = !!currentListId;
 
   useEffect(() => {
     if (open) {
       loadLists();
+      if (currentListId && product) {
+        loadCurrentItem();
+      }
     }
-  }, [open]);
+  }, [open, currentListId, product]);
+
+  const loadCurrentItem = async () => {
+    if (!currentListId || !product) return;
+    
+    try {
+      const { data } = await supabase
+        .from('gift_items')
+        .select('id')
+        .eq('list_id', currentListId)
+        .eq('reference_link', product.affiliate_link)
+        .single();
+      
+      if (data) {
+        setCurrentItemId(data.id);
+      }
+    } catch (error) {
+      console.error('Error loading current item:', error);
+    }
+  };
 
   const loadLists = async () => {
     setLoading(true);
@@ -71,7 +96,8 @@ export function AddToWishlistDialog({ open, onOpenChange, product, onSuccess }: 
       
       setLists(data || []);
       if (data && data.length > 0) {
-        setSelectedListId(data[0].id);
+        // Si estamos moviendo, preseleccionar la lista actual
+        setSelectedListId(currentListId || data[0].id);
       } else {
         setShowNewListInput(true);
       }
@@ -142,32 +168,55 @@ export function AddToWishlistDialog({ open, onOpenChange, product, onSuccess }: 
 
     if (!product) return;
 
+    // Si ya está en la misma lista, no hacer nada
+    if (currentListId === selectedListId) {
+      toast.info('El producto ya está en esa lista');
+      onOpenChange(false);
+      return;
+    }
+
     setSaving(true);
     try {
-      const { error } = await supabase
-        .from('gift_items')
-        .insert([{
-          list_id: selectedListId,
-          name: product.name,
-          category: product.category,
-          notes: product.description,
-          reference_link: product.affiliate_link,
-          image_url: product.image_url,
-          priority: 'medium',
-        }]);
+      if (isMovingToAnotherList && currentItemId) {
+        // Mover: actualizar el list_id del item existente
+        const { error } = await supabase
+          .from('gift_items')
+          .update({ list_id: selectedListId })
+          .eq('id', currentItemId);
 
-      if (error) throw error;
+        if (error) throw error;
 
-      const selectedList = lists.find(l => l.id === selectedListId);
-      toast.success('¡Agregado a tu lista!', {
-        description: `"${product.name}" en "${selectedList?.name}"`
-      });
+        const selectedList = lists.find(l => l.id === selectedListId);
+        toast.success('¡Producto movido!', {
+          description: `"${product.name}" ahora en "${selectedList?.name}"`
+        });
+      } else {
+        // Agregar nuevo
+        const { error } = await supabase
+          .from('gift_items')
+          .insert([{
+            list_id: selectedListId,
+            name: product.name,
+            category: product.category,
+            notes: product.description,
+            reference_link: product.affiliate_link,
+            image_url: product.image_url,
+            priority: 'medium',
+          }]);
+
+        if (error) throw error;
+
+        const selectedList = lists.find(l => l.id === selectedListId);
+        toast.success('¡Agregado a tu lista!', {
+          description: `"${product.name}" en "${selectedList?.name}"`
+        });
+      }
       
       onSuccess?.();
       onOpenChange(false);
     } catch (error: any) {
-      console.error('Error adding to list:', error);
-      toast.error('Error al agregar a lista');
+      console.error('Error managing list item:', error);
+      toast.error(isMovingToAnotherList ? 'Error al mover producto' : 'Error al agregar a lista');
     } finally {
       setSaving(false);
     }
@@ -181,7 +230,7 @@ export function AddToWishlistDialog({ open, onOpenChange, product, onSuccess }: 
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Heart className="w-5 h-5 text-primary" />
-            Agregar a Lista
+            {isMovingToAnotherList ? 'Cambiar de Lista' : 'Agregar a Lista'}
           </DialogTitle>
           <DialogDescription>
             {product.name}
@@ -197,21 +246,31 @@ export function AddToWishlistDialog({ open, onOpenChange, product, onSuccess }: 
             {lists.length > 0 && !showNewListInput ? (
               <>
                 <div className="space-y-2">
-                  <Label className="text-base font-semibold">Selecciona una lista existente:</Label>
+                  <Label className="text-base font-semibold">
+                    {isMovingToAnotherList ? 'Selecciona la nueva lista:' : 'Selecciona una lista existente:'}
+                  </Label>
                   <p className="text-sm text-muted-foreground">
-                    Elige dónde guardar este producto
+                    {isMovingToAnotherList 
+                      ? 'Mueve este producto a otra lista' 
+                      : 'Elige dónde guardar este producto'}
                   </p>
                 </div>
                 <ScrollArea className="h-48 rounded-md border p-4 bg-muted/20">
                   <RadioGroup value={selectedListId} onValueChange={setSelectedListId}>
-                    {lists.map((list) => (
-                      <div key={list.id} className="flex items-center space-x-3 py-3 px-2 rounded-md hover:bg-accent transition-colors">
-                        <RadioGroupItem value={list.id} id={list.id} />
-                        <Label htmlFor={list.id} className="flex-1 cursor-pointer font-medium">
-                          {list.name}
-                        </Label>
-                      </div>
-                    ))}
+                    {lists.map((list) => {
+                      const isCurrent = list.id === currentListId;
+                      return (
+                        <div key={list.id} className="flex items-center space-x-3 py-3 px-2 rounded-md hover:bg-accent transition-colors">
+                          <RadioGroupItem value={list.id} id={list.id} />
+                          <Label htmlFor={list.id} className="flex-1 cursor-pointer font-medium">
+                            {list.name}
+                            {isCurrent && (
+                              <span className="ml-2 text-xs text-primary">(actual)</span>
+                            )}
+                          </Label>
+                        </div>
+                      );
+                    })}
                   </RadioGroup>
                 </ScrollArea>
 
@@ -236,18 +295,18 @@ export function AddToWishlistDialog({ open, onOpenChange, product, onSuccess }: 
                 <Button 
                   className="w-full" 
                   onClick={handleAddToList}
-                  disabled={saving || !selectedListId}
+                  disabled={saving || !selectedListId || (currentListId === selectedListId)}
                   size="lg"
                 >
                   {saving ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Agregando...
+                      {isMovingToAnotherList ? 'Moviendo...' : 'Agregando...'}
                     </>
                   ) : (
                     <>
                       <Heart className="w-4 h-4 mr-2" />
-                      Agregar a Lista Seleccionada
+                      {isMovingToAnotherList ? 'Mover a Lista Seleccionada' : 'Agregar a Lista Seleccionada'}
                     </>
                   )}
                 </Button>

@@ -30,6 +30,7 @@ export default function Marketplace() {
   const [wishlistDialogOpen, setWishlistDialogOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [addedProductIds, setAddedProductIds] = useState<Set<string>>(new Set());
+  const [productListMap, setProductListMap] = useState<Map<string, string>>(new Map());
   const navigate = useNavigate();
 
   const categories = [
@@ -60,25 +61,27 @@ export default function Marketplace() {
 
       const { data: items } = await supabase
         .from('gift_items')
-        .select('reference_link')
+        .select('id, reference_link, list_id')
         .in('list_id', lists.map(l => l.id));
 
       if (!items) return;
 
-      // Extract product IDs from affiliate links
-      const productIds = new Set(
-        items
-          .map(item => item.reference_link)
-          .filter(link => link)
-          .map(link => {
-            // Match product ID pattern from affiliate_products table
-            const match = products.find(p => p.affiliate_link === link);
-            return match?.id;
-          })
-          .filter(Boolean) as string[]
-      );
+      // Create map of product ID to list ID and set of added product IDs
+      const productIds = new Set<string>();
+      const listMap = new Map<string, string>();
+      
+      items.forEach(item => {
+        if (item.reference_link) {
+          const match = products.find(p => p.affiliate_link === item.reference_link);
+          if (match?.id) {
+            productIds.add(match.id);
+            listMap.set(match.id, item.list_id);
+          }
+        }
+      });
 
       setAddedProductIds(productIds);
+      setProductListMap(listMap);
     } catch (error) {
       console.error('Error loading added products:', error);
     }
@@ -126,7 +129,15 @@ export default function Marketplace() {
     }
   };
 
-  const handleAddToWishlist = (product: Product) => {
+  const handleAddToWishlist = (product: Product, isAlreadyAdded: boolean) => {
+    if (isAlreadyAdded) {
+      // Si ya está agregado, navegar a la lista donde está
+      const listId = productListMap.get(product.id);
+      if (listId) {
+        navigate(`/lists`);
+        return;
+      }
+    }
     setSelectedProduct(product);
     setWishlistDialogOpen(true);
   };
@@ -279,11 +290,11 @@ export default function Marketplace() {
                     <div className="flex flex-col gap-2">
                       <Button
                         variant={isAdded ? "secondary" : "outline"}
-                        onClick={() => handleAddToWishlist(product)}
+                        onClick={() => handleAddToWishlist(product, isAdded)}
                         className="w-full gap-2"
                       >
                         <Heart className={`w-4 h-4 ${isAdded ? 'fill-current' : ''}`} />
-                        {isAdded ? 'En tu Lista' : 'Agregar a Lista'}
+                        {isAdded ? 'Ver en tu Lista' : 'Agregar a Lista'}
                       </Button>
                       <Button 
                         className="w-full gap-2" 
@@ -321,6 +332,7 @@ export default function Marketplace() {
         onOpenChange={setWishlistDialogOpen}
         product={selectedProduct}
         onSuccess={handleWishlistSuccess}
+        currentListId={selectedProduct ? productListMap.get(selectedProduct.id) : undefined}
       />
     </div>
   );
