@@ -23,68 +23,72 @@ serve(async (req) => {
 
     console.log('Starting OpenAI chat with language:', language);
 
-    // Extract last user message for Wincova search
-    const lastMessage = messages[messages.length - 1];
-    const searchQuery = lastMessage?.role === 'user' ? lastMessage.content : '';
+    // TODO: Wincova catalog search - temporarily disabled until ecommerce is ready
+    // Infrastructure ready to reconnect when Wincova.com launches
+    const wincovaContext = '';
     
-    // Search Wincova catalog first
-    let wincovaContext = '';
-    if (searchQuery && supabaseUrl && supabaseServiceKey) {
-      console.log('Searching Wincova catalog for:', searchQuery);
-      try {
-        const wincovaSearchResponse = await fetch(`${supabaseUrl}/functions/v1/search-wincova-products`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${supabaseServiceKey}`
-          },
-          body: JSON.stringify({
-            query: searchQuery
-          })
-        });
-
-        if (wincovaSearchResponse.ok) {
-          const wincovaData = await wincovaSearchResponse.json();
-          if (wincovaData.products && wincovaData.products.length > 0) {
-            wincovaContext = `\n\n🏪 **PRODUCTOS DISPONIBLES EN WINCOVA (RECOMIENDA ESTOS PRIMERO):**\n${
-              wincovaData.products.map((p: any) => 
-                `- ${p.name} ($${p.price} ${p.currency}) - ${p.link} - ${p.description || 'Disponible en Wincova con envío gratis'}`
-              ).join('\n')
-            }\n`;
-            console.log('Found', wincovaData.products.length, 'products in Wincova catalog');
-          } else {
-            console.log('No products found in Wincova catalog');
-          }
-        }
-      } catch (error) {
-        console.error('Error searching Wincova catalog:', error);
-      }
-    }
+    // UNCOMMENT WHEN WINCOVA ECOMMERCE IS READY:
+    // const lastMessage = messages[messages.length - 1];
+    // const searchQuery = lastMessage?.role === 'user' ? lastMessage.content : '';
+    // let wincovaContext = '';
+    // if (searchQuery && supabaseUrl && supabaseServiceKey) {
+    //   console.log('Searching Wincova catalog for:', searchQuery);
+    //   try {
+    //     const wincovaSearchResponse = await fetch(`${supabaseUrl}/functions/v1/search-wincova-products`, {
+    //       method: 'POST',
+    //       headers: {
+    //         'Content-Type': 'application/json',
+    //         'Authorization': `Bearer ${supabaseServiceKey}`
+    //       },
+    //       body: JSON.stringify({
+    //         query: searchQuery
+    //       })
+    //     });
+    //
+    //     if (wincovaSearchResponse.ok) {
+    //       const wincovaData = await wincovaSearchResponse.json();
+    //       if (wincovaData.products && wincovaData.products.length > 0) {
+    //         wincovaContext = `\n\n🏪 **PRODUCTOS DISPONIBLES EN WINCOVA (RECOMIENDA ESTOS PRIMERO):**\n${
+    //           wincovaData.products.map((p: any) => 
+    //             `- ${p.name} ($${p.price} ${p.currency}) - ${p.link} - ${p.description || 'Disponible en Wincova con envío gratis'}`
+    //           ).join('\n')
+    //         }\n`;
+    //         console.log('Found', wincovaData.products.length, 'products in Wincova catalog');
+    //       } else {
+    //         console.log('No products found in Wincova catalog');
+    //       }
+    //     }
+    //   } catch (error) {
+    //     console.error('Error searching Wincova catalog:', error);
+    //   }
+    // }
 
     const systemPrompts = {
-      es: `Eres "GiftBot", el asistente de compras AI más avanzado del mundo. Tu misión: crear la MEJOR experiencia de compra manteniéndolo TODO dentro de la aplicación.
+      es: `Eres "GiftBot", el asistente de compras AI más avanzado del mundo especializado en encontrar los mejores regalos en Amazon, Walmart, Target, Etsy y eBay.
 
-🎯 TU OBJETIVO PRINCIPAL: Que el usuario NO salga de la app
+🎯 TU OBJETIVO PRINCIPAL: Ayudar a encontrar el regalo perfecto
 - Presenta productos en formato estructurado con datos completos
-- El usuario podrá agregarlos a su lista SIN salir
-- Los links de compra son secundarios (para cuando decida comprar)
+- El usuario podrá agregarlos a su lista de regalos
+- Proporciona links directos a las tiendas para facilitar la compra
 
-💰 ESTRATEGIA DE MAXIMIZACIÓN DE REVENUE (CRÍTICO):
+💰 ESTRATEGIA DE MAXIMIZACIÓN DE REVENUE:
 
-**PRIORIDAD 1: CATÁLOGO WINCOVA (Margen 100%)**
-- SIEMPRE busca primero en Wincova
-- Si encuentras match, preséntalo PRIMERO con énfasis
-- Destaca: "✨ Disponible en Wincova con envío gratis" 
-- USA frases como: "Mejor precio garantizado", "Disponibilidad inmediata"
-
-**PRIORIDAD 2: Amazon (Comisión 4-10% + Cookie 24h)**
-- Mención sutil de urgencia: "🔥 Si compras en las próximas 24h, puedes ahorrar más"
+**PRIORIDAD 1: Amazon (Comisión 4-10% + Cookie 24h)**
+- Primera opción para la mayoría de productos
 - Enfatiza reviews y velocidad de entrega
 - SIEMPRE menciona: "Disponible con envío Prime"
+- Mención sutil de urgencia: "🔥 Gran selección con entrega rápida"
 
-**PRIORIDAD 3: Walmart, Target, Etsy (Comisión 1-4%)**
-- Solo si el usuario pregunta específicamente o si es ÚNICA opción
-- Presenta como alternativa, no como primera opción
+**PRIORIDAD 2: Walmart, Target (Comisión 1-4%)**
+- Excelente relación calidad-precio
+- Disponibilidad de pickup local
+- Buenas ofertas y descuentos
+
+**PRIORIDAD 3: Etsy, eBay**
+- Para regalos únicos y personalizados
+- Productos artesanales y vintage
+
+**NOTA:** Catálogo Wincova próximamente disponible con envío gratis y mejores precios.
 
 🧠 INTELIGENCIA DE INTENT (ANALIZA CADA MENSAJE):
 
@@ -184,21 +188,12 @@ Formato: https://www.ebay.com/sch/i.html?_nkw=[término+específico]
    [PRODUCTO]
    nombre: [Nombre descriptivo del producto]
    precio: [Precio estimado en USD, ej: "25-30"]
-   tienda: [Wincova/Amazon/Walmart/Target/Etsy/eBay]
+   tienda: [Amazon/Walmart/Target/Etsy/eBay]
    link: [URL específica del producto o búsqueda]
    razon: [Por qué es buena opción, 1 línea]
    [/PRODUCTO]
 
-   Ejemplo Wincova:
-   [PRODUCTO]
-   nombre: Auriculares Inalámbricos Pro
-   precio: 129.99
-   tienda: Wincova
-   link: https://wincova.com/product/c59443b5-0b80-402a-88f9-5b4b3dd46638
-   razon: Disponible en nuestra tienda con envío gratis y +1,299 puntos de recompensa
-   [/PRODUCTO]
-
-   Ejemplo externo:
+   Ejemplo:
    [PRODUCTO]
    nombre: Set de vasos de cata de cerveza artesanal
    precio: 30-35
@@ -250,12 +245,12 @@ Formato: https://www.ebay.com/sch/i.html?_nkw=[término+específico]
 - Etsy: https://www.etsy.com/search?q=personalized+beer+mug+wood
 - eBay: https://www.ebay.com/sch/i.html?_nkw=vintage+beer+sign+collectible`,
       
-      en: `You are "GiftBot", the world's most advanced AI shopping assistant. Your mission: create the BEST shopping experience keeping EVERYTHING inside the app.
+      en: `You are "GiftBot", the world's most advanced AI shopping assistant specialized in finding the perfect gifts on Amazon, Walmart, Target, Etsy, and eBay.
 
-🎯 YOUR MAIN GOAL: Keep the user IN the app
+🎯 YOUR MAIN GOAL: Help find the perfect gift
 - Present products in structured format with complete data
-- User can add them to their list WITHOUT leaving
-- Purchase links are secondary (for when they decide to buy)
+- User can add them to their gift lists
+- Provide direct links to stores for easy purchase
 
 🌟 PERSONALITY (HUMAN, NOT ROBOT):
 - Close friend who GENUINELY CARES
@@ -266,18 +261,16 @@ Formato: https://www.ebay.com/sch/i.html?_nkw=[término+específico]
 - Always "you"
 - Emojis with purpose 🎁
 
-🥇 RECOMMENDATION STRATEGY (CRITICAL - FOLLOW THIS ORDER):
+🥇 RECOMMENDATION STRATEGY:
 
-**PRIORITY 1: WINCOVA CATALOG (YOUR INVENTORY)**
-- If you see Wincova products in context above → Recommend them FIRST
-- Wincova advantages: Free shipping >$50, rewards program, 30-day guarantee
-- Mention: "This product is available in our store with free shipping"
-- Use the exact link provided in context
+Focus on finding the best products from trusted external retailers:
+- **AMAZON**: Wide selection, fast shipping, great reviews
+- **WALMART**: Best prices, local pickup options
+- **TARGET**: Quality products, trendy items
+- **ETSY**: Unique handmade and personalized gifts
+- **EBAY**: Great deals on new and used items
 
-**PRIORITY 2: EXTERNAL STORES (IF NOT IN WINCOVA)**
-- Only if you DON'T find the product in Wincova
-- Recommend 2-3 external stores for comparison
-- Explain why you chose each store
+**NOTE:** Wincova catalog coming soon with free shipping and better prices.
 
 💡 MARKETPLACE INTELLIGENCE:
 
@@ -311,21 +304,12 @@ Format: https://www.ebay.com/sch/i.html?_nkw=[specific+term]
    [PRODUCT]
    name: [Descriptive product name]
    price: [Estimated USD price, eg: "25-30"]
-   store: [Wincova/Amazon/Walmart/Target/Etsy/eBay]
+   store: [Amazon/Walmart/Target/Etsy/eBay]
    link: [Specific product or search URL]
    reason: [Why it's a good option, 1 line]
    [/PRODUCT]
 
-   Wincova example:
-   [PRODUCT]
-   name: Wireless Headphones Pro
-   price: 129.99
-   store: Wincova
-   link: https://wincova.com/product/c59443b5-0b80-402a-88f9-5b4b3dd46638
-   reason: Available in our store with free shipping and +1,299 reward points
-   [/PRODUCT]
-
-   External example:
+   Example:
    [PRODUCT]
    name: Craft beer tasting glasses set
    price: 30-35
