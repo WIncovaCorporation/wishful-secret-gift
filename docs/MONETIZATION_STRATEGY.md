@@ -6,10 +6,10 @@ GiftApp es una plataforma de gestión de intercambio de regalos con alto potenci
 
 ---
 
-## 📊 Modelo 1: Freemium con Premium Groups
+## 📊 Modelo 1: Freemium con Premium Groups + Sistema de Puntos
 
 ### Concepto
-Ofrecer funcionalidades básicas gratuitas y cobrar por características premium para grupos grandes o corporativos.
+Ofrecer funcionalidades básicas gratuitas y cobrar por características premium para grupos grandes o corporativos. Sistema de recompensas basado en puntos que **NO otorga descuentos en productos** para proteger márgenes de dropshipping.
 
 ### Estructura de Precios
 
@@ -19,8 +19,9 @@ Ofrecer funcionalidades básicas gratuitas y cobrar por características premium
 - 1 lista de deseos por usuario
 - Mensajería anónima básica
 - Sin sugerencias de IA
+- 0 puntos de recompensa al inicio
 
-**Plan Premium Individual - $4.99/mes o $49.99/año**
+**Plan Premium Individual - $9.99/mes o $99.99/año**
 - Grupos ilimitados
 - Hasta 50 participantes por grupo
 - 5 listas de deseos
@@ -29,37 +30,158 @@ Ofrecer funcionalidades básicas gratuitas y cobrar por características premium
 - Estadísticas y analytics del grupo
 - Recordatorios personalizados por email/SMS
 - Sin marca de agua "Powered by GiftApp"
+- 500 puntos de bienvenida
+- Envío prioritario gratis en todas las compras
+- 100 puntos/mes de bonificación
 
-**Plan Premium Business - $19.99/mes o $199.99/año**
+**Plan Premium Plus - $12.99/mes o $129.99/año** ⭐ NUEVO
 - Todo lo del Plan Premium Individual
+- Envío GRATIS en todas las compras (ahorro estimado $5-10/envío)
+- Gift wrapping premium GRATIS (valor $3-5/regalo)
+- Gift Concierge AI ilimitado (servicio personalizado con IA)
+- Acceso temprano a nuevos productos (48h antes)
+- Contenido exclusivo: webinars de tendencias de regalos
+- Comunidad VIP con eventos privados
+- Soporte prioritario 24/7
+- 1000 puntos de bienvenida
+- 200 puntos/mes de bonificación
+
+**Plan Premium Business - $29.99/mes o $299.99/año**
+- Todo lo del Plan Premium Plus
 - Participantes ilimitados por grupo
 - Listas de deseos ilimitadas
 - Sugerencias de IA ilimitadas
 - Personalización de marca (logo, colores)
 - Gestión de múltiples organizaciones
-- Soporte prioritario
 - Integración con sistemas HR/corporativos
 - Reportes de presupuesto y gastos
-
-### Estrategia de Conversión
-1. **Onboarding inteligente**: Mostrar valor inmediato en primeros 5 minutos
-2. **Friction point timing**: Bloquear funciones premium cuando el usuario ya está comprometido (ej: al intentar crear 4to grupo)
-3. **Seasonal campaigns**: Promociones en temporadas altas (Navidad, Día de Reyes, Secret Santa corporativo)
-4. **Free trial**: 14 días de Premium gratis para nuevos usuarios
-
-### Proyección Financiera (Año 1)
-- Meta: 10,000 usuarios activos mensuales
-- Conversión a Premium Individual: 3% = 300 usuarios × $4.99 = $1,497/mes
-- Conversión a Premium Business: 0.5% = 50 organizaciones × $19.99 = $999.50/mes
-- **MRR Total**: ~$2,500/mes
-- **ARR proyectado**: $30,000
+- Servicio de Gift Concierge para equipos completos
+- 2000 puntos de bienvenida
+- 500 puntos/mes de bonificación
 
 ---
 
-## 🛍️ Modelo 2: Affiliate & Marketplace Comissions
+## 🎁 Sistema de Puntos Wincova (SIN Descuentos Directos)
+
+### ⚠️ REGLA CRÍTICA: Protección de Márgenes
+**NUNCA** ofrecer descuentos directos en productos de dropshipping. Los puntos solo se canjean por **servicios de valor agregado** con costo marginal cero o muy bajo para la empresa.
+
+### Cómo Ganar Puntos
+- **Registro inicial**: 100 puntos
+- **Primera compra**: 200 puntos
+- **Completar perfil**: 50 puntos
+- **Compartir lista de deseos**: 25 puntos
+- **Por cada compra**: 1 punto por cada $1 USD gastado
+- **Referir un amigo**: 500 puntos (cuando el referido hace su primera compra)
+- **Referido**: 200 puntos de bienvenida
+- **Crear grupo de regalo**: 50 puntos
+- **Participar en evento**: 30 puntos
+- **Reseñar producto comprado**: 75 puntos
+- **Cumpleaños del usuario**: 100 puntos
+
+### Cómo Canjear Puntos (SOLO Servicios Premium)
+
+#### Servicios de Envío y Empaque
+- **500 puntos** = Envío prioritario en próxima compra (entrega en 2-3 días)
+- **300 puntos** = Gift wrapping premium personalizado
+- **200 puntos** = Tarjeta de regalo personalizada con mensaje AI-generado
+- **150 puntos** = Seguimiento en tiempo real del envío
+- **100 puntos** = Notificación de entrega con foto
+
+#### Servicios Premium de GiftApp
+- **1000 puntos** = 1 mes de GiftApp Premium Individual
+- **1500 puntos** = 1 mes de GiftApp Premium Plus
+- **800 puntos** = 5 consultas de Gift Concierge AI
+- **500 puntos** = Acceso anticipado 7 días a colección nueva
+- **400 puntos** = Reporte personalizado de tendencias de regalos
+- **300 puntos** = Consulta 1-on-1 con estilista de regalos (15 min videollamada)
+
+#### Experiencias y Contenido Exclusivo
+- **2000 puntos** = Entrada a webinar exclusivo sobre tendencias
+- **1500 puntos** = Acceso a comunidad VIP por 3 meses
+- **1000 puntos** = Guía descargable: "50 Ideas de Regalos 2025"
+- **750 puntos** = Badge exclusivo de "Regalo Experto" en perfil
+- **500 puntos** = Early access a ofertas flash (24h antes)
+
+#### Bundles de Conveniencia
+- **600 puntos** = Bundle básico: envío prioritario + gift wrap + tarjeta
+- **1200 puntos** = Bundle VIP: todo lo anterior + seguimiento real-time + consulta AI
+- **2500 puntos** = Bundle Premium: 2 meses GiftApp Premium Plus + todos los servicios de envío premium por 3 meses
+
+### ❌ LO QUE NO SE PUEDE CANJEAR
+- Descuentos directos en precio de productos
+- Cashback en dinero
+- Cupones de descuento porcentual
+- Reducción de precio de productos de dropshipping
+
+### Gamificación y Niveles
+
+#### Niveles de Usuario (Badges Visuales)
+1. **Bronce** (0-999 puntos)
+   - Badge básico
+   - Sin beneficios extra
+
+2. **Plata** (1,000-4,999 puntos)
+   - Badge plateado
+   - 10% más puntos en compras
+   - Acceso a comunidad general
+
+3. **Oro** (5,000-14,999 puntos)
+   - Badge dorado
+   - 25% más puntos en compras
+   - Acceso anticipado 48h a productos nuevos
+   - Invitaciones a eventos online exclusivos
+
+4. **Platino** (15,000+ puntos)
+   - Badge platino animado
+   - 50% más puntos en compras
+   - Acceso VIP a colecciones limitadas 1 semana antes
+   - Soporte prioritario exclusivo
+   - Regalo sorpresa en cumpleaños
+   - Invitación a eventos presenciales VIP
+
+#### Logros Desbloqueables (Achievement System)
+- 🎯 **"Primer Regalo"**: Comprar primer regalo en Wincova (100 puntos)
+- 🌟 **"Organizador Pro"**: Crear 5 grupos de regalo (200 puntos)
+- 🔥 **"Racha de 30 días"**: Interactuar con app 30 días seguidos (500 puntos)
+- 👥 **"Influencer de Regalos"**: Referir 10 amigos (2000 puntos + badge especial)
+- 💎 **"Coleccionista"**: Comprar en 5 categorías diferentes (300 puntos)
+- 🏆 **"Regalo Perfecto"**: Recibir 10 reseñas 5 estrellas en regalos dados (1000 puntos)
+
+### Estrategia de Conversión
+1. **Onboarding inteligente**: Mostrar valor inmediato en primeros 5 minutos + regalo de 100 puntos
+2. **Friction point timing**: Bloquear funciones premium cuando el usuario ya está comprometido (ej: al intentar crear 4to grupo)
+3. **Seasonal campaigns**: Promociones en temporadas altas (Navidad, Día de Reyes, Secret Santa corporativo)
+4. **Free trial**: 14 días de Premium Plus gratis para nuevos usuarios (incluye todos los beneficios)
+5. **Gamificación adictiva**: Mostrar progreso hacia siguiente nivel de badge
+6. **FOMO con puntos**: "¡Solo te faltan 200 puntos para desbloquear envío gratis!"
+7. **Programa de referidos agresivo**: "Regala 200 puntos, recibe 500"
+8. **Bundle timing**: Ofrecer canje de puntos justo antes del checkout
+
+### Proyección Financiera (Año 1) - ACTUALIZADO
+- Meta: 10,000 usuarios activos mensuales
+- Conversión a Premium Individual: 4% = 400 usuarios × $9.99 = $3,996/mes
+- Conversión a Premium Plus: 2% = 200 usuarios × $12.99 = $2,598/mes
+- Conversión a Premium Business: 0.8% = 80 organizaciones × $29.99 = $2,399/mes
+- **MRR Total (Suscripciones)**: ~$9,000/mes
+- **ARR proyectado (Suscripciones)**: $108,000
+
+### Valor Agregado del Sistema de Puntos (No Revenue Directo)
+- **Engagement**: +35% retención usuarios con sistema de puntos vs sin sistema
+- **Frecuencia de compra**: +28% compras mensuales por usuario gamificado
+- **Lifetime Value**: +45% LTV en usuarios nivel Oro/Platino
+- **Referral rate**: +60% nuevos usuarios vienen de referidos con incentivos de puntos
+- **Costo marginal**: Casi $0 (servicios digitales, envíos ya contemplados en pricing)
+
+---
+
+## 🛍️ Modelo 2: Wincova Dropshipping + Affiliate & Marketplace Comissions
 
 ### Concepto
-Monetizar el tráfico de compras mediante comisiones de afiliados y marketplace integrado.
+**PRIORIDAD 1: Catálogo Wincova (Dropshipping)** - Maximizar ventas directas con márgenes completos.  
+**PRIORIDAD 2: Affiliate Links** - Monetizar tráfico externo cuando producto no existe en Wincova.
+
+### Estrategia de Monetización Híbrida
 
 ### Implementación Técnica
 
