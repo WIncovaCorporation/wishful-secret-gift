@@ -89,25 +89,48 @@ export function AddToWishlistDialog({ open, onOpenChange, product, onSuccess }: 
       return;
     }
 
+    if (!product) return;
+
+    setSaving(true);
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data, error } = await supabase
+      // Crear la lista
+      const { data: listData, error: listError } = await supabase
         .from('gift_lists')
         .insert([{ name: newListName, user_id: user.id }])
         .select()
         .single();
 
-      if (error) throw error;
+      if (listError) throw listError;
 
-      toast.success('Lista creada!');
-      setLists([...lists, { id: data.id, name: data.name }]);
-      setSelectedListId(data.id);
-      setShowNewListInput(false);
-      setNewListName('');
+      // Agregar el producto automáticamente a la nueva lista
+      const { error: itemError } = await supabase
+        .from('gift_items')
+        .insert([{
+          list_id: listData.id,
+          name: product.name,
+          category: product.category,
+          notes: product.description,
+          reference_link: product.affiliate_link,
+          image_url: product.image_url,
+          priority: 'medium',
+        }]);
+
+      if (itemError) throw itemError;
+
+      toast.success('¡Lista creada y producto agregado!', {
+        description: `"${product.name}" en "${newListName}"`
+      });
+      
+      onSuccess?.();
+      onOpenChange(false);
     } catch (error: any) {
+      console.error('Error creating list:', error);
       toast.error('Error al crear lista');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -173,13 +196,18 @@ export function AddToWishlistDialog({ open, onOpenChange, product, onSuccess }: 
           <div className="space-y-4 py-4">
             {lists.length > 0 && !showNewListInput ? (
               <>
-                <Label>Selecciona una lista:</Label>
-                <ScrollArea className="h-48 rounded-md border p-4">
+                <div className="space-y-2">
+                  <Label className="text-base font-semibold">Selecciona una lista existente:</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Elige dónde guardar este producto
+                  </p>
+                </div>
+                <ScrollArea className="h-48 rounded-md border p-4 bg-muted/20">
                   <RadioGroup value={selectedListId} onValueChange={setSelectedListId}>
                     {lists.map((list) => (
-                      <div key={list.id} className="flex items-center space-x-2 py-2">
+                      <div key={list.id} className="flex items-center space-x-3 py-3 px-2 rounded-md hover:bg-accent transition-colors">
                         <RadioGroupItem value={list.id} id={list.id} />
-                        <Label htmlFor={list.id} className="flex-1 cursor-pointer">
+                        <Label htmlFor={list.id} className="flex-1 cursor-pointer font-medium">
                           {list.name}
                         </Label>
                       </div>
@@ -187,30 +215,82 @@ export function AddToWishlistDialog({ open, onOpenChange, product, onSuccess }: 
                   </RadioGroup>
                 </ScrollArea>
 
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">o</span>
+                  </div>
+                </div>
+
                 <Button
                   variant="outline"
-                  className="w-full"
+                  className="w-full gap-2"
                   onClick={() => setShowNewListInput(true)}
                 >
-                  <Plus className="w-4 h-4 mr-2" />
+                  <Plus className="w-4 h-4" />
                   Crear Nueva Lista
+                </Button>
+
+                <Button 
+                  className="w-full" 
+                  onClick={handleAddToList}
+                  disabled={saving || !selectedListId}
+                  size="lg"
+                >
+                  {saving ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Agregando...
+                    </>
+                  ) : (
+                    <>
+                      <Heart className="w-4 h-4 mr-2" />
+                      Agregar a Lista Seleccionada
+                    </>
+                  )}
                 </Button>
               </>
             ) : (
-              <div className="space-y-3">
-                <Label htmlFor="newListName">
-                  {lists.length === 0 ? 'Crea tu primera lista:' : 'Nombre de la nueva lista:'}
-                </Label>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="newListName" className="text-base font-semibold">
+                    {lists.length === 0 ? 'Crea tu primera lista de deseos:' : 'Crear nueva lista:'}
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    {lists.length === 0 
+                      ? 'El producto se agregará automáticamente' 
+                      : 'El producto se agregará automáticamente a esta nueva lista'}
+                  </p>
+                </div>
                 <Input
                   id="newListName"
-                  placeholder="Ej: Regalos de Navidad"
+                  placeholder="Ej: Regalos de Navidad 2025"
                   value={newListName}
                   onChange={(e) => setNewListName(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleCreateList()}
+                  onKeyDown={(e) => e.key === 'Enter' && !saving && handleCreateList()}
+                  disabled={saving}
+                  className="text-base"
                 />
                 <div className="flex gap-2">
-                  <Button onClick={handleCreateList} className="flex-1">
-                    Crear Lista
+                  <Button 
+                    onClick={handleCreateList} 
+                    className="flex-1"
+                    disabled={saving || !newListName.trim()}
+                    size="lg"
+                  >
+                    {saving ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Creando...
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="w-4 h-4 mr-2" />
+                        Crear y Agregar Producto
+                      </>
+                    )}
                   </Button>
                   {lists.length > 0 && (
                     <Button
@@ -219,32 +299,13 @@ export function AddToWishlistDialog({ open, onOpenChange, product, onSuccess }: 
                         setShowNewListInput(false);
                         setNewListName('');
                       }}
+                      disabled={saving}
                     >
                       Cancelar
                     </Button>
                   )}
                 </div>
               </div>
-            )}
-
-            {lists.length > 0 && !showNewListInput && (
-              <Button 
-                className="w-full" 
-                onClick={handleAddToList}
-                disabled={saving || !selectedListId}
-              >
-                {saving ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Agregando...
-                  </>
-                ) : (
-                  <>
-                    <Heart className="w-4 h-4 mr-2" />
-                    Agregar a Lista
-                  </>
-                )}
-              </Button>
             )}
           </div>
         )}
