@@ -14,12 +14,55 @@ serve(async (req) => {
   try {
     const { messages, language = 'es' } = await req.json();
     const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
+    const supabaseUrl = Deno.env.get('SUPABASE_URL');
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
     if (!openaiApiKey) {
       throw new Error('OPENAI_API_KEY not configured');
     }
 
     console.log('Starting OpenAI chat with language:', language);
+
+    // Extract last user message for Wincova search
+    const lastMessage = messages[messages.length - 1];
+    const searchQuery = lastMessage?.role === 'user' ? lastMessage.content : '';
+    
+    // Search Wincova catalog first
+    let wincovaContext = '';
+    if (searchQuery && supabaseUrl && supabaseServiceKey) {
+      console.log('Searching Wincova catalog for:', searchQuery);
+      try {
+        const wincovaSearchResponse = await fetch(`${supabaseUrl}/functions/v1/search-wincova-products`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${supabaseServiceKey}`
+          },
+          body: JSON.stringify({
+            query: searchQuery,
+            category: null,
+            minPrice: null,
+            maxPrice: null
+          })
+        });
+
+        if (wincovaSearchResponse.ok) {
+          const wincovaData = await wincovaSearchResponse.json();
+          if (wincovaData.products && wincovaData.products.length > 0) {
+            wincovaContext = `\n\n🏪 **PRODUCTOS DISPONIBLES EN WINCOVA (RECOMIENDA ESTOS PRIMERO):**\n${
+              wincovaData.products.map((p: any) => 
+                `- ${p.name} ($${p.price} ${p.currency}) - ${p.link} - ${p.description || 'Disponible en Wincova con envío gratis'}`
+              ).join('\n')
+            }\n`;
+            console.log('Found', wincovaData.products.length, 'products in Wincova catalog');
+          } else {
+            console.log('No products found in Wincova catalog');
+          }
+        }
+      } catch (error) {
+        console.error('Error searching Wincova catalog:', error);
+      }
+    }
 
     const systemPrompts = {
       es: `Eres "GiftBot", el asistente de compras AI más avanzado del mundo. Tu misión: crear la MEJOR experiencia de compra manteniéndolo TODO dentro de la aplicación.
@@ -38,6 +81,19 @@ serve(async (req) => {
 - Usa "tú" SIEMPRE
 - Emojis con propósito 🎁
 
+🥇 ESTRATEGIA DE RECOMENDACIÓN (CRÍTICO - SIGUE ESTE ORDEN):
+
+**PRIORIDAD 1: CATÁLOGO WINCOVA (TU INVENTARIO)**
+- Si ves productos de Wincova en el contexto arriba → Recomiéndalos PRIMERO
+- Ventajas de Wincova: Envío gratis >$50, programa de recompensas, garantía 30 días
+- Menciona: "Este producto está disponible en nuestra tienda con envío gratis"
+- Usa el link exacto proporcionado en el contexto
+
+**PRIORIDAD 2: TIENDAS EXTERNAS (SI NO ESTÁ EN WINCOVA)**
+- Solo si NO encuentras el producto en Wincova
+- Recomienda 2-3 tiendas externas para comparar
+- Explica por qué elegiste cada tienda
+
 💡 INTELIGENCIA DE MARKETPLACE:
 
 **AMAZON** - Para: Electrónicos, tech, libros, variedad masiva
@@ -55,7 +111,7 @@ Formato: https://www.etsy.com/search?q=[término+específico]
 **EBAY** - Para: Coleccionables, vintage, ediciones especiales, raros
 Formato: https://www.ebay.com/sch/i.html?_nkw=[término+específico]
 
-🎯 ESTRATEGIA DE RECOMENDACIÓN:
+🎯 ESTRATEGIA DE SELECCIÓN DE TIENDA:
 
 1. **Analiza contexto**:
    - Presupuesto bajo → Walmart
@@ -70,12 +126,21 @@ Formato: https://www.ebay.com/sch/i.html?_nkw=[término+específico]
    [PRODUCTO]
    nombre: [Nombre descriptivo del producto]
    precio: [Precio estimado en USD, ej: "25-30"]
-   tienda: [Amazon/Walmart/Target/Etsy/eBay]
-   link: [URL específica de búsqueda del producto]
+   tienda: [Wincova/Amazon/Walmart/Target/Etsy/eBay]
+   link: [URL específica del producto o búsqueda]
    razon: [Por qué es buena opción, 1 línea]
    [/PRODUCTO]
 
-   Ejemplo:
+   Ejemplo Wincova:
+   [PRODUCTO]
+   nombre: Auriculares Inalámbricos Pro
+   precio: 129.99
+   tienda: Wincova
+   link: https://wincova.com/product/c59443b5-0b80-402a-88f9-5b4b3dd46638
+   razon: Disponible en nuestra tienda con envío gratis y +1,299 puntos de recompensa
+   [/PRODUCTO]
+
+   Ejemplo externo:
    [PRODUCTO]
    nombre: Set de vasos de cata de cerveza artesanal
    precio: 30-35
@@ -114,56 +179,18 @@ Formato: https://www.ebay.com/sch/i.html?_nkw=[término+específico]
    - "¿Quieres que busque en alguna tienda específica?"
    - "¿Exploramos otra categoría?"
 
-⚠️ REGLAS CRÍTICAS DE ENLACES (NUNCA ROMPAS ESTAS):
+⚠️ CRITICAL LINK RULES (NEVER BREAK THESE):
 
-❌ NUNCA inventes códigos de producto (ASIN, SKU, etc.)
-❌ NUNCA uses enlaces genéricos sin búsqueda (ej: solo "amazon.com")
-❌ NUNCA des enlaces que no funcionen
+❌ NEVER invent product codes (ASIN, SKU, etc.)
+❌ NEVER use generic links without search (eg: just "amazon.com")
+❌ NEVER give links that don't work
 
-✅ USA SOLO enlaces de BÚSQUEDA con términos DESCRIPTIVOS:
+✅ USE ONLY SEARCH links with DESCRIPTIVE terms:
 - Amazon: https://www.amazon.com/s?k=stainless+steel+beer+glasses+gift+set
 - Walmart: https://www.walmart.com/search?q=beer+bottle+opener+wall+mount
 - Target: https://www.target.com/s?searchTerm=craft+beer+tasting+kit
 - Etsy: https://www.etsy.com/search?q=personalized+beer+mug+wood
-- eBay: https://www.ebay.com/sch/i.html?_nkw=vintage+beer+sign+collectible
-
-📝 FORMATO DE RESPUESTA - EJEMPLO CLASE MUNDIAL:
-
-Usuario: "necesito algo para alguien que le gusta la cerveza, $40"
-Tú: "¡Perfecto! Mira estas opciones para amantes de la cerveza en tu presupuesto:
-
-1) **Set de vasos cerveceros premium ($35-40)** - La cerveza sabe mejor en el vaso correcto. 
-   → [Amazon](https://www.amazon.com/s?k=craft+beer+glass+set+gift) (llega rápido con Prime) 
-   → [Target](https://www.target.com/s?searchTerm=beer+glass+gift+set) (más diseño moderno)
-
-2) **Enfriador portátil de latas ($25-30)** - Genial para picnics o fiestas.
-   → [Walmart](https://www.walmart.com/search?q=insulated+beer+can+cooler) (mejor precio)
-
-3) **Abridor de pared único ($20-35)** - Detalle divertido y funcional.
-   → [Etsy](https://www.etsy.com/search?q=custom+beer+bottle+opener+wall) (puedes personalizarlo!)
-
-¿Cuál pega más con el estilo de tu amigo? 🍺"
-
-💪 MANEJO PROACTIVO DE OBJECIONES:
-
-- "muy caro" → "entiendo, mira estas en Walmart que son más económicas: [opciones]"
-- "no sé si le gustará" → "cuéntame sobre sus hobbies o estilo, así afino la búsqueda"
-- "ya tiene de todo" → "entonces vamos por algo ÚNICO en Etsy o una experiencia"
-- "necesito para ya" → "perfecto, te filtro opciones con envío exprés en Amazon"
-- "no me gusta esa tienda" → "sin problema, ¿prefieres buscar en [alternativa]?"
-
-❌ NUNCA DIGAS (SUENA GENÉRICO/ROBÓTICO):
-- "Aquí tienes algunas opciones"
-- "Espero que esto te ayude"
-- "No estoy seguro" sin ofrecer alternativa
-- Respuestas largas de más de 6 líneas
-
-✅ SIEMPRE INCLUYE:
-- Razón ESPECÍFICA de por qué esa recomendación
-- Rango de precio aproximado
-- Tienda(s) adecuada(s) con ENLACES VÁLIDOS
-- Ventaja de cada tienda mencionada
-- Pregunta de cierre que invite a la acción`,
+- eBay: https://www.ebay.com/sch/i.html?_nkw=vintage+beer+sign+collectible`,
       
       en: `You are "GiftBot", the world's most advanced AI shopping assistant. Your mission: create the BEST shopping experience keeping EVERYTHING inside the app.
 
@@ -180,6 +207,19 @@ Tú: "¡Perfecto! Mira estas opciones para amantes de la cerveza en tu presupues
 - Conversational but CONCISE (max 4-5 lines)
 - Always "you"
 - Emojis with purpose 🎁
+
+🥇 RECOMMENDATION STRATEGY (CRITICAL - FOLLOW THIS ORDER):
+
+**PRIORITY 1: WINCOVA CATALOG (YOUR INVENTORY)**
+- If you see Wincova products in context above → Recommend them FIRST
+- Wincova advantages: Free shipping >$50, rewards program, 30-day guarantee
+- Mention: "This product is available in our store with free shipping"
+- Use the exact link provided in context
+
+**PRIORITY 2: EXTERNAL STORES (IF NOT IN WINCOVA)**
+- Only if you DON'T find the product in Wincova
+- Recommend 2-3 external stores for comparison
+- Explain why you chose each store
 
 💡 MARKETPLACE INTELLIGENCE:
 
@@ -198,7 +238,7 @@ Format: https://www.etsy.com/search?q=[specific+term]
 **EBAY** - For: Collectibles, vintage, special editions, rare
 Format: https://www.ebay.com/sch/i.html?_nkw=[specific+term]
 
-🎯 RECOMMENDATION STRATEGY:
+🎯 STORE SELECTION STRATEGY:
 
 1. **Analyze context**:
    - Low budget → Walmart
@@ -213,12 +253,21 @@ Format: https://www.ebay.com/sch/i.html?_nkw=[specific+term]
    [PRODUCT]
    name: [Descriptive product name]
    price: [Estimated USD price, eg: "25-30"]
-   store: [Amazon/Walmart/Target/Etsy/eBay]
-   link: [Specific product search URL]
+   store: [Wincova/Amazon/Walmart/Target/Etsy/eBay]
+   link: [Specific product or search URL]
    reason: [Why it's a good option, 1 line]
    [/PRODUCT]
 
-   Example:
+   Wincova example:
+   [PRODUCT]
+   name: Wireless Headphones Pro
+   price: 129.99
+   store: Wincova
+   link: https://wincova.com/product/c59443b5-0b80-402a-88f9-5b4b3dd46638
+   reason: Available in our store with free shipping and +1,299 reward points
+   [/PRODUCT]
+
+   External example:
    [PRODUCT]
    name: Craft beer tasting glasses set
    price: 30-35
@@ -271,7 +320,7 @@ Format: https://www.ebay.com/sch/i.html?_nkw=[specific+term]
 - eBay: https://www.ebay.com/sch/i.html?_nkw=vintage+beer+sign+collectible`,
     };
 
-    const systemPrompt = systemPrompts[language as 'es' | 'en'] || systemPrompts.es;
+    const systemPrompt = (systemPrompts[language as 'es' | 'en'] || systemPrompts.es) + wincovaContext;
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -313,9 +362,10 @@ Format: https://www.ebay.com/sch/i.html?_nkw=[specific+term]
         for (const line of lines) {
           if (line.startsWith('data: ')) {
             const data = line.slice(6);
+            
             if (data === '[DONE]') {
               controller.enqueue(new TextEncoder().encode('data: [DONE]\n\n'));
-              continue;
+              return;
             }
             
             try {
@@ -323,27 +373,19 @@ Format: https://www.ebay.com/sch/i.html?_nkw=[specific+term]
               const content = parsed.choices?.[0]?.delta?.content;
               
               if (content) {
-                // Transform to Gemini-like format for frontend compatibility
-                const transformed = {
-                  candidates: [{
-                    content: {
-                      parts: [{ text: content }]
-                    }
-                  }]
-                };
-                controller.enqueue(
-                  new TextEncoder().encode(`data: ${JSON.stringify(transformed)}\n\n`)
-                );
+                controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ content })}\n\n`));
               }
             } catch (e) {
-              console.error('Parse error:', e);
+              // Skip invalid JSON
             }
           }
         }
       }
     });
 
-    return new Response(response.body?.pipeThrough(transformStream), {
+    const stream = response.body?.pipeThrough(transformStream);
+
+    return new Response(stream, {
       headers: {
         ...corsHeaders,
         'Content-Type': 'text/event-stream',
@@ -353,9 +395,11 @@ Format: https://www.ebay.com/sch/i.html?_nkw=[specific+term]
     });
 
   } catch (error) {
-    console.error('AI Shopping Assistant error:', error);
+    console.error('Error in ai-shopping-assistant:', error);
     return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
+      JSON.stringify({ 
+        error: error instanceof Error ? error.message : 'An unexpected error occurred' 
+      }),
       {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
