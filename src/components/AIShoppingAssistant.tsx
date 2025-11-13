@@ -42,7 +42,7 @@ const removeProductTags = (text: string): string => {
   return text.replace(/\[PRODUCT\][\s\S]*?\[\/PRODUCT\]/g, "").trim();
 };
 
-// Function to render text with clickable links
+// Function to render text with links as plain text (not clickable)
 const renderMessageWithLinks = (text: string) => {
   const urlRegex = /(https?:\/\/[^\s\)]+)/g;
   const parts = text.split(urlRegex);
@@ -50,15 +50,12 @@ const renderMessageWithLinks = (text: string) => {
   return parts.map((part, index) => {
     if (part.match(urlRegex)) {
       return (
-        <a
+        <span
           key={index}
-          href={part}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-blue-500 hover:text-blue-700 underline break-all"
+          className="text-muted-foreground font-mono text-xs break-all italic"
         >
           {part}
-        </a>
+        </span>
       );
     }
     return <span key={index}>{part}</span>;
