@@ -17,3 +17,6 @@ verify_jwt = true
 
 [functions.extract-product-from-image]
 verify_jwt = true
+
+[functions.ai-shopping-assistant]
+verify_jwt = false

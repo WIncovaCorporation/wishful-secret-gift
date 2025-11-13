@@ -7,6 +7,7 @@ import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AnalyticsProvider } from "@/contexts/AnalyticsContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ScrollToTop } from "@/components/ScrollToTop";
+import { AIShoppingAssistant } from "@/components/AIShoppingAssistant";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import UpdatePassword from "./pages/UpdatePassword";
@@ -37,6 +38,7 @@ const App = () => (
           <BrowserRouter>
             <ScrollToTop />
             <AnalyticsProvider>
+              <AIShoppingAssistant />
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/auth" element={<Auth />} />
