@@ -14,10 +14,10 @@ serve(async (req) => {
 
   try {
     const { messages, userId, language = 'es' } = await req.json();
-    const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
+    const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
 
-    if (!geminiApiKey) {
-      throw new Error('GEMINI_API_KEY not configured');
+    if (!openaiApiKey) {
+      throw new Error('OPENAI_API_KEY not configured');
     }
 
     // Initialize Supabase client
@@ -114,37 +114,31 @@ You: "Awesome! Here are 3 options: 1) Spa/aromatherapy set ($45) - always wins, 
 
     const systemPrompt = systemPrompts[language as 'es' | 'en'] || systemPrompts.es;
 
-    const response = await fetch(
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:streamGenerateContent?alt=sse&key=' + geminiApiKey,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [
-            {
-              role: 'user',
-              parts: [{ text: systemPrompt }]
-            },
-            ...messages.map((msg: any) => ({
-              role: msg.role === 'assistant' ? 'model' : 'user',
-              parts: [{ text: msg.content }]
-            }))
-          ],
-          generationConfig: {
-            temperature: 0.9,
-            topK: 40,
-            topP: 0.95,
-            maxOutputTokens: 500,
-          }
-        }),
-      }
-    );
+    // Use OpenAI with streaming
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openaiApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini', // Fast and cost-effective
+        messages: [
+          { role: 'system', content: systemPrompt },
+          ...messages.map((msg: any) => ({
+            role: msg.role,
+            content: msg.content
+          }))
+        ],
+        max_completion_tokens: 500,
+        stream: true,
+      }),
+    });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Gemini API error:', response.status, errorText);
+      console.error('OpenAI API error:', response.status, errorText);
       
-      // Handle rate limit specifically
       if (response.status === 429) {
         return new Response(
           JSON.stringify({ 
@@ -158,11 +152,63 @@ You: "Awesome! Here are 3 options: 1) Spa/aromatherapy set ($45) - always wins, 
         );
       }
       
-      throw new Error(`Gemini API error: ${response.status}`);
+      throw new Error(`OpenAI API error: ${response.status}`);
     }
 
-    // Stream the response
-    return new Response(response.body, {
+    // Stream the response with SSE format
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      async start(controller) {
+        const reader = response.body?.getReader();
+        if (!reader) {
+          controller.close();
+          return;
+        }
+
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
+
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                const data = line.slice(6);
+                if (data === '[DONE]') continue;
+
+                try {
+                  const parsed = JSON.parse(data);
+                  const content = parsed.choices?.[0]?.delta?.content;
+                  if (content) {
+                    // Format as Gemini-style SSE for frontend compatibility
+                    const sseData = {
+                      candidates: [{
+                        content: {
+                          parts: [{ text: content }]
+                        }
+                      }]
+                    };
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify(sseData)}\n\n`));
+                  }
+                } catch (e) {
+                  console.error('Parse error:', e);
+                }
+              }
+            }
+          }
+        } finally {
+          controller.close();
+        }
+      }
+    });
+
+    return new Response(stream, {
       headers: {
         ...corsHeaders,
         'Content-Type': 'text/event-stream',
