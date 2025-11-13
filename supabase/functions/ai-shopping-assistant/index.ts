@@ -39,10 +39,7 @@ serve(async (req) => {
             'Authorization': `Bearer ${supabaseServiceKey}`
           },
           body: JSON.stringify({
-            query: searchQuery,
-            category: null,
-            minPrice: null,
-            maxPrice: null
+            query: searchQuery
           })
         });
 

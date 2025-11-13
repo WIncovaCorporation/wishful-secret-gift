@@ -38,10 +38,10 @@ serve(async (req) => {
     }
 
     // Add price range filters
-    if (minPrice !== undefined) {
+    if (minPrice !== undefined && minPrice !== null) {
       dbQuery = dbQuery.gte('price', minPrice);
     }
-    if (maxPrice !== undefined) {
+    if (maxPrice !== undefined && maxPrice !== null) {
       dbQuery = dbQuery.lte('price', maxPrice);
     }
 
