@@ -115,7 +115,7 @@ You: "Awesome! Here are 3 options: 1) Spa/aromatherapy set ($45) - always wins, 
     const systemPrompt = systemPrompts[language as 'es' | 'en'] || systemPrompts.es;
 
     const response = await fetch(
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:streamGenerateContent?alt=sse&key=' + geminiApiKey,
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:streamGenerateContent?alt=sse&key=' + geminiApiKey,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
