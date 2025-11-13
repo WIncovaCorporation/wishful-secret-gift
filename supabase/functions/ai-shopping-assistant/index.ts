@@ -1,6 +1,5 @@
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -13,40 +12,11 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, userId, language = 'es' } = await req.json();
+    const { messages, language = 'es' } = await req.json();
     const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
 
     if (!geminiApiKey) {
       throw new Error('GEMINI_API_KEY not configured');
-    }
-
-    // Initialize Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    // Get user context: recent lists, products, preferences
-    let userContext = "";
-    if (userId) {
-      const { data: lists } = await supabase
-        .from('gift_lists')
-        .select('name, description')
-        .eq('user_id', userId)
-        .limit(5);
-
-      const { data: items } = await supabase
-        .from('gift_list_items')
-        .select('name, description, category')
-        .eq('user_id', userId)
-        .limit(10);
-
-      if (lists && lists.length > 0) {
-        userContext += `\nListas del usuario: ${lists.map(l => l.name).join(', ')}`;
-      }
-      if (items && items.length > 0) {
-        const categories = [...new Set(items.map(i => i.category).filter(Boolean))];
-        userContext += `\nCategorías de interés: ${categories.join(', ')}`;
-      }
     }
 
     const systemPrompts = {
@@ -58,8 +28,6 @@ PERSONALIDAD:
 - Siempre orientado a la ACCIÓN: llevas al usuario a tomar decisiones
 - Haces preguntas específicas y útiles
 - Eres conciso pero valioso (máximo 3-4 líneas por respuesta)
-
-CONTEXTO DEL USUARIO:${userContext || " Usuario nuevo"}
 
 ESTILO DE COMUNICACIÓN:
 - Tutea SIEMPRE (usa "tú", nunca "usted")
@@ -89,8 +57,6 @@ PERSONALITY:
 - Always ACTION-oriented: lead users to make decisions
 - Ask specific and useful questions
 - Concise but valuable (max 3-4 lines per response)
-
-USER CONTEXT:${userContext || " New user"}
 
 COMMUNICATION STYLE:
 - Be direct and get to the point
