@@ -1,8 +1,9 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, Heart, ExternalLink } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import { AddToListDropdown } from "./AddToListDropdown";
 import { useState } from "react";
+import { ProductPreviewModal } from "./ProductPreviewModal";
 
 export interface RecommendedProduct {
   name: string;
@@ -18,6 +19,7 @@ interface ProductRecommendationProps {
 
 export const ProductRecommendation = ({ product }: ProductRecommendationProps) => {
   const [isAdded, setIsAdded] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
 
   // Convert to format compatible with AddToListDropdown
   const productForList = {
@@ -32,6 +34,10 @@ export const ProductRecommendation = ({ product }: ProductRecommendationProps) =
 
   const handleAddSuccess = () => {
     setIsAdded(true);
+  };
+
+  const handleViewDetails = () => {
+    setShowPreview(true);
   };
 
   const storeColors: Record<string, string> = {
@@ -75,15 +81,21 @@ export const ProductRecommendation = ({ product }: ProductRecommendationProps) =
         </div>
         
         <Button
-          variant="outline"
+          variant="default"
           size="default"
-          onClick={() => window.open(product.link, "_blank")}
+          onClick={handleViewDetails}
           className="gap-2 whitespace-nowrap"
         >
-          <ShoppingCart className="w-4 h-4" />
-          Comprar
+          Ver Detalles
+          <ExternalLink className="w-4 h-4" />
         </Button>
       </div>
+
+      <ProductPreviewModal
+        isOpen={showPreview}
+        onClose={() => setShowPreview(false)}
+        product={product}
+      />
     </Card>
   );
 };

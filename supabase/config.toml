@@ -20,3 +20,6 @@ verify_jwt = true
 
 [functions.ai-shopping-assistant]
 verify_jwt = false
+
+[functions.generate-external-affiliate-link]
+verify_jwt = false

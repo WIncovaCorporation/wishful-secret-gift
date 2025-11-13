@@ -744,20 +744,29 @@ Vender datos anonimizados y agregados de tendencias de regalos a marcas y retail
 
 ## <a name="roadmap"></a>🗓️ 14. Roadmap de Implementación Priorizado
 
-### Q1 2025 (Fundación) ✅
+### Q1 2025 (Fundación) ✅ EN PROGRESO
 **Objetivo**: Lanzar funcionalidades core de monetización sin descuentos
 
-- ✅ **Sistema de Puntos** (Base de datos + Edge functions)
+**✅ COMPLETADO (Semana 1):**
+- ✅ **Affiliate-First Architecture** (CRÍTICO)
+  - Edge function `generate-external-affiliate-link` 
+  - Product Preview Modal con tracking
+  - 100% links externos con código Wincova
+  - Intent Detection AI (READY_TO_BUY/RESEARCH/BROWSING)
+  - Wincova-First en recomendaciones AI
+  
+**⏳ EN PROGRESO (Semanas 2-4):**
+- ⏳ **Sistema de Puntos** (Base de datos + Edge functions)
   - Tabla `user_points`, `points_transactions`
   - Edge function `points-engine`
   - UI Dashboard de puntos
-- ✅ **Catálogo de Recompensas** (Solo servicios premium)
+- ⏳ **Catálogo de Recompensas** (Solo servicios premium)
   - 15 recompensas iniciales
   - Sistema de canje
-- ✅ **Niveles y Badges** (Gamificación básica)
+- ⏳ **Niveles y Badges** (Gamificación básica)
   - 4 niveles: Bronce, Plata, Oro, Platino
   - Progress bars visibles
-- ✅ **Programa de Referidos** (Básico)
+- ⏳ **Programa de Referidos** (Básico)
   - Códigos únicos por usuario
   - Tracking de conversiones
   - 500 puntos por referido
@@ -765,6 +774,11 @@ Vender datos anonimizados y agregados de tendencias de regalos a marcas y retail
   - Landing page
   - Stripe integration
   - Onboarding flow
+
+**🎯 PRÓXIMOS 30 DÍAS:**
+- Social Proof básico (contador de productos en listas)
+- Analytics dashboard de affiliate conversions
+- Price History Tracker (Keepa API)
 
 ### Q2 2025 (Escala B2C)
 **Objetivo**: Incrementar engagement y conversión con gamificación avanzada
