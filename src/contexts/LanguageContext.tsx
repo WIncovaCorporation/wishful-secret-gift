@@ -188,7 +188,7 @@ const translations = {
     
     // AI Assistant
     "aiAssistant.title": "Gift Assistant",
-    "aiAssistant.subtitle": "Powered by OpenAI GPT-4",
+    "aiAssistant.subtitle": "Powered by Gemini AI",
     "aiAssistant.initialMessage": "Hey! 👋 Ready to find the perfect gift? Tell me who it's for!",
     "aiAssistant.placeholder": "Tell me about the gift you're looking for...",
     "aiAssistant.giftBot": "GiftBot"
@@ -370,7 +370,7 @@ const translations = {
     
     // AI Assistant
     "aiAssistant.title": "Asistente de Regalos",
-    "aiAssistant.subtitle": "Powered by OpenAI GPT-4",
+    "aiAssistant.subtitle": "Powered by Gemini AI",
     "aiAssistant.initialMessage": "¡Hola! 👋 ¿Listo para encontrar el regalo perfecto? ¡Cuéntame para quién es!",
     "aiAssistant.placeholder": "Cuéntame sobre el regalo que buscas...",
     "aiAssistant.giftBot": "GiftBot"
