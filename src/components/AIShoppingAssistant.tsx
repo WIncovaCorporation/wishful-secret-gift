@@ -14,17 +14,29 @@ type Message = {
 };
 
 export const AIShoppingAssistant = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
+  const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  
+  // Initialize messages with current language
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
       content: t("aiAssistant.initialMessage"),
     },
   ]);
-  const [input, setInput] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Update initial message when language changes
+  useEffect(() => {
+    setMessages([
+      {
+        role: "assistant",
+        content: t("aiAssistant.initialMessage"),
+      },
+    ]);
+  }, [language, t]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -60,9 +72,18 @@ export const AIShoppingAssistant = () => {
       );
 
       if (!response.ok) {
-        const errorMsg = t("aiAssistant.initialMessage").includes("Hey") 
+        const errorText = await response.text();
+        let errorMsg = language === 'en' 
           ? "Could not connect to the assistant. Please try again."
           : "No pude conectar con el asistente. Intenta de nuevo.";
+        
+        // Handle rate limit errors specifically
+        if (response.status === 429 || errorText.includes('429')) {
+          errorMsg = language === 'en'
+            ? "The AI assistant is currently busy. Please wait a moment and try again."
+            : "El asistente está ocupado. Por favor espera un momento e intenta de nuevo.";
+        }
+        
         throw new Error(errorMsg);
       }
 
@@ -106,7 +127,7 @@ export const AIShoppingAssistant = () => {
     } catch (error) {
       console.error("Chat error:", error);
       const errorMsg = error instanceof Error ? error.message : (
-        t("aiAssistant.initialMessage").includes("Hey") 
+        language === 'en' 
           ? "Could not connect to the assistant. Please try again."
           : "No pude conectar con el asistente. Intenta de nuevo."
       );

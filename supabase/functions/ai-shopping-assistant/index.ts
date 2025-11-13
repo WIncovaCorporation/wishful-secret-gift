@@ -143,6 +143,21 @@ You: "Awesome! Here are 3 options: 1) Spa/aromatherapy set ($45) - always wins, 
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Gemini API error:', response.status, errorText);
+      
+      // Handle rate limit specifically
+      if (response.status === 429) {
+        return new Response(
+          JSON.stringify({ 
+            error: 'Rate limit exceeded. Please wait a moment and try again.',
+            status: 429 
+          }),
+          {
+            status: 429,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          }
+        );
+      }
+      
       throw new Error(`Gemini API error: ${response.status}`);
     }
 
