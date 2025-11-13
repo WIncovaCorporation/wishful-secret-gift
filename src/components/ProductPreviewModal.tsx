@@ -101,7 +101,7 @@ export const ProductPreviewModal = ({ isOpen, onClose, product }: ProductPreview
         </DialogHeader>
 
         <div className="space-y-6 pt-4">
-          {/* Store and Price */}
+          {/* Store and Price with Urgency Badge */}
           <div className="flex items-center gap-3 flex-wrap">
             <span className={`text-sm px-3 py-1.5 rounded-full font-semibold ${storeColors[product.store] || "bg-gray-100 text-gray-800"}`}>
               {product.store}
@@ -109,6 +109,16 @@ export const ProductPreviewModal = ({ isOpen, onClose, product }: ProductPreview
             <span className="text-2xl font-bold text-primary">
               ${product.price} USD
             </span>
+            {product.store.toLowerCase().includes('amazon') && (
+              <span className="text-xs px-2.5 py-1 rounded-full bg-orange-500 text-white font-semibold animate-pulse">
+                🔥 Oferta por 24h
+              </span>
+            )}
+            {product.store.toLowerCase().includes('wincova') && (
+              <span className="text-xs px-2.5 py-1 rounded-full bg-green-500 text-white font-semibold">
+                ✨ Envío Gratis
+              </span>
+            )}
           </div>
 
           {/* AI Recommendation Reason */}
