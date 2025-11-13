@@ -13,11 +13,13 @@ serve(async (req) => {
 
   try {
     const { messages, language = 'es' } = await req.json();
-    const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
+    const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
 
-    if (!geminiApiKey) {
-      throw new Error('GEMINI_API_KEY not configured');
+    if (!openaiApiKey) {
+      throw new Error('OPENAI_API_KEY not configured');
     }
+
+    console.log('Starting OpenAI chat with language:', language);
 
     const systemPrompts = {
       es: `Eres un asistente de compras AI experto en regalos llamado "GiftBot". Tu trabajo es ayudar a las personas a encontrar el regalo perfecto.
@@ -80,40 +82,77 @@ You: "Awesome! Here are 3 options: 1) Spa/aromatherapy set ($45) - always wins, 
 
     const systemPrompt = systemPrompts[language as 'es' | 'en'] || systemPrompts.es;
 
-    const response = await fetch(
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:streamGenerateContent?alt=sse&key=' + geminiApiKey,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [
-            {
-              role: 'user',
-              parts: [{ text: systemPrompt }]
-            },
-            ...messages.map((msg: any) => ({
-              role: msg.role === 'assistant' ? 'model' : 'user',
-              parts: [{ text: msg.content }]
-            }))
-          ],
-          generationConfig: {
-            temperature: 0.9,
-            topK: 40,
-            topP: 0.95,
-            maxOutputTokens: 500,
-          }
-        }),
-      }
-    );
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openaiApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          ...messages
+        ],
+        stream: true,
+        temperature: 0.9,
+        max_tokens: 500,
+      }),
+    });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Gemini API error:', response.status, errorText);
-      throw new Error(`Gemini API error: ${response.status}`);
+      console.error('OpenAI API error:', response.status, errorText);
+      
+      if (response.status === 429) {
+        throw new Error('OpenAI rate limit exceeded. Please try again in a moment.');
+      }
+      
+      throw new Error(`OpenAI API error: ${response.status}`);
     }
 
-    // Stream the response
-    return new Response(response.body, {
+    console.log('OpenAI streaming response started');
+
+    // Transform OpenAI SSE format to match what frontend expects
+    const transformStream = new TransformStream({
+      transform(chunk, controller) {
+        const text = new TextDecoder().decode(chunk);
+        const lines = text.split('\n');
+        
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') {
+              controller.enqueue(new TextEncoder().encode('data: [DONE]\n\n'));
+              continue;
+            }
+            
+            try {
+              const parsed = JSON.parse(data);
+              const content = parsed.choices?.[0]?.delta?.content;
+              
+              if (content) {
+                // Transform to Gemini-like format for frontend compatibility
+                const transformed = {
+                  candidates: [{
+                    content: {
+                      parts: [{ text: content }]
+                    }
+                  }]
+                };
+                controller.enqueue(
+                  new TextEncoder().encode(`data: ${JSON.stringify(transformed)}\n\n`)
+                );
+              }
+            } catch (e) {
+              console.error('Parse error:', e);
+            }
+          }
+        }
+      }
+    });
+
+    return new Response(response.body?.pipeThrough(transformStream), {
       headers: {
         ...corsHeaders,
         'Content-Type': 'text/event-stream',

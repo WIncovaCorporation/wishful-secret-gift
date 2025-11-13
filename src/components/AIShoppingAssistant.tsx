@@ -173,7 +173,7 @@ export const AIShoppingAssistant = () => {
               <Bot className="h-5 w-5" />
               <div>
                 <h3 className="font-semibold">{t("aiAssistant.title")}</h3>
-                <p className="text-xs opacity-90">Powered by Gemini AI</p>
+                <p className="text-xs opacity-90">Powered by OpenAI GPT-4</p>
               </div>
             </div>
             <Button
