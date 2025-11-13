@@ -212,11 +212,12 @@ export function AddToListDropdown({ product, isAdded, currentListId, onSuccess }
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
         <Button
-          variant="outline"
-          className="w-full gap-2"
+          variant="default"
+          size="lg"
+          className="w-full gap-2 text-base font-semibold"
         >
-          <Heart className="w-4 h-4" />
-          Agregar a Lista
+          <Heart className="w-5 h-5" />
+          💾 Guardar en mi lista
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" className="w-64 max-h-96 overflow-y-auto">
