@@ -23,3 +23,6 @@ verify_jwt = false
 
 [functions.generate-external-affiliate-link]
 verify_jwt = false
+
+[functions.github-audit-webhook]
+verify_jwt = false
