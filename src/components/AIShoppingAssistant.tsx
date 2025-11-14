@@ -7,11 +7,11 @@ import { MessageCircle, X, Send, Bot } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { ProductRecommendation, RecommendedProduct } from "./ProductRecommendation";
+import { ProductCard, ProductCardData } from "./ProductCard";
 
 // Parse products from AI message
-const parseProducts = (text: string): RecommendedProduct[] => {
-  const products: RecommendedProduct[] = [];
+const parseProducts = (text: string): ProductCardData[] => {
+  const products: ProductCardData[] = [];
   const productRegex = /\[PRODUCT\]([\s\S]*?)\[\/PRODUCT\]/g;
   let match;
 
@@ -22,6 +22,9 @@ const parseProducts = (text: string): RecommendedProduct[] => {
     const storeMatch = productText.match(/store:\s*(.+)/i) || productText.match(/tienda:\s*(.+)/i);
     const linkMatch = productText.match(/link:\s*(.+)/i);
     const reasonMatch = productText.match(/reason:\s*(.+)/i) || productText.match(/razon:\s*(.+)/i);
+    const imageMatch = productText.match(/image:\s*(.+)/i) || productText.match(/imagen:\s*(.+)/i);
+    const ratingMatch = productText.match(/rating:\s*(.+)/i) || productText.match(/calificacion:\s*(.+)/i);
+    const reviewCountMatch = productText.match(/reviews?:\s*(\d+)/i);
 
     if (nameMatch && priceMatch && storeMatch && linkMatch) {
       products.push({
@@ -30,6 +33,9 @@ const parseProducts = (text: string): RecommendedProduct[] => {
         store: storeMatch[1].trim(),
         link: linkMatch[1].trim(),
         reason: reasonMatch ? reasonMatch[1].trim() : "",
+        image: imageMatch ? imageMatch[1].trim() : undefined,
+        rating: ratingMatch ? parseFloat(ratingMatch[1]) : undefined,
+        reviewCount: reviewCountMatch ? parseInt(reviewCountMatch[1]) : undefined,
       });
     }
   }
@@ -65,7 +71,7 @@ const renderMessageWithLinks = (text: string) => {
 type Message = {
   role: "user" | "assistant";
   content: string;
-  products?: RecommendedProduct[];
+  products?: ProductCardData[];
 };
 
 export const AIShoppingAssistant = () => {
@@ -280,9 +286,9 @@ export const AIShoppingAssistant = () => {
                     )}
                     
                     {msg.products && msg.products.length > 0 && (
-                      <div className="space-y-2">
+                      <div className="space-y-4">
                         {msg.products.map((product, pidx) => (
-                          <ProductRecommendation key={pidx} product={product} />
+                          <ProductCard key={pidx} product={product} />
                         ))}
                       </div>
                     )}
