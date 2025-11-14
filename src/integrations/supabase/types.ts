@@ -304,6 +304,8 @@ export type Database = {
           group_id: string
           id: string
           receiver_id: string
+          view_count: number | null
+          viewed_at: string | null
         }
         Insert: {
           created_at?: string
@@ -311,6 +313,8 @@ export type Database = {
           group_id: string
           id?: string
           receiver_id: string
+          view_count?: number | null
+          viewed_at?: string | null
         }
         Update: {
           created_at?: string
@@ -318,6 +322,8 @@ export type Database = {
           group_id?: string
           id?: string
           receiver_id?: string
+          view_count?: number | null
+          viewed_at?: string | null
         }
         Relationships: [
           {
@@ -482,7 +488,9 @@ export type Database = {
           min_budget: number | null
           name: string
           notification_mode: string
+          organizer_message: string | null
           share_code: string
+          suggested_budget: number | null
           updated_at: string
         }
         Insert: {
@@ -497,7 +505,9 @@ export type Database = {
           min_budget?: number | null
           name: string
           notification_mode?: string
+          organizer_message?: string | null
           share_code: string
+          suggested_budget?: number | null
           updated_at?: string
         }
         Update: {
@@ -512,7 +522,9 @@ export type Database = {
           min_budget?: number | null
           name?: string
           notification_mode?: string
+          organizer_message?: string | null
           share_code?: string
+          suggested_budget?: number | null
           updated_at?: string
         }
         Relationships: [
@@ -549,6 +561,33 @@ export type Database = {
           id?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      rate_limits: {
+        Row: {
+          created_at: string
+          endpoint: string
+          id: string
+          identifier: string
+          request_count: number
+          window_start: string
+        }
+        Insert: {
+          created_at?: string
+          endpoint: string
+          id?: string
+          identifier: string
+          request_count?: number
+          window_start?: string
+        }
+        Update: {
+          created_at?: string
+          endpoint?: string
+          id?: string
+          identifier?: string
+          request_count?: number
+          window_start?: string
         }
         Relationships: []
       }
@@ -739,6 +778,7 @@ export type Database = {
       can_add_participant: { Args: { _group_id: string }; Returns: boolean }
       can_create_group: { Args: { _user_id: string }; Returns: boolean }
       can_use_ai: { Args: { _user_id: string }; Returns: boolean }
+      cleanup_old_rate_limits: { Args: never; Returns: undefined }
       get_products_by_category: {
         Args: { _category?: string; _limit?: number; _offset?: number }
         Returns: {
