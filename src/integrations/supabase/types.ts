@@ -429,6 +429,54 @@ export type Database = {
           },
         ]
       }
+      github_audit_logs: {
+        Row: {
+          audit_data: Json
+          branch: string | null
+          commit_message: string | null
+          commit_sha: string | null
+          created_at: string
+          event_type: string
+          findings_summary: Json | null
+          id: string
+          received_at: string
+          repository: string
+          status: string
+          workflow_name: string
+          workflow_run_id: string | null
+        }
+        Insert: {
+          audit_data?: Json
+          branch?: string | null
+          commit_message?: string | null
+          commit_sha?: string | null
+          created_at?: string
+          event_type: string
+          findings_summary?: Json | null
+          id?: string
+          received_at?: string
+          repository: string
+          status: string
+          workflow_name: string
+          workflow_run_id?: string | null
+        }
+        Update: {
+          audit_data?: Json
+          branch?: string | null
+          commit_message?: string | null
+          commit_sha?: string | null
+          created_at?: string
+          event_type?: string
+          findings_summary?: Json | null
+          id?: string
+          received_at?: string
+          repository?: string
+          status?: string
+          workflow_name?: string
+          workflow_run_id?: string | null
+        }
+        Relationships: []
+      }
       group_members: {
         Row: {
           group_id: string

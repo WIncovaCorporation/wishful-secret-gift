@@ -11,9 +11,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { User as UserIcon, Upload, LogOut, Settings } from "lucide-react";
+import { User as UserIcon, Upload, LogOut, Settings, Shield } from "lucide-react";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
+import { useUserRole } from "@/hooks/useUserRole";
 
 interface Profile {
   display_name: string | null;
@@ -26,6 +27,7 @@ interface ProfileMenuProps {
 
 export const ProfileMenu = ({ user }: ProfileMenuProps) => {
   const navigate = useNavigate();
+  const { isAdmin } = useUserRole();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -151,6 +153,19 @@ export const ProfileMenu = ({ user }: ProfileMenuProps) => {
             Configuración
           </DropdownMenuItem>
           <DropdownMenuSeparator />
+          
+          {isAdmin && (
+            <>
+              <DropdownMenuItem asChild>
+                <Link to="/admin/audit-logs" className="cursor-pointer flex items-center">
+                  <Shield className="mr-2 h-4 w-4" />
+                  Auditorías GitHub
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+            </>
+          )}
+          
           <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-destructive">
             <LogOut className="mr-2 h-4 w-4" />
             Cerrar Sesión
