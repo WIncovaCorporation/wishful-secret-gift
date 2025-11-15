@@ -25,7 +25,242 @@ serve(async (req) => {
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
     const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Process PUSH events with real-time AI analysis
+    if (githubEvent === 'push') {
+      console.log('🚀 Processing PUSH event with OpenAI analysis...');
+      
+      const repository = payload.repository;
+      const commits = payload.commits || [];
+      const headCommit = payload.head_commit;
+
+      if (!openaiApiKey) {
+        console.error('❌ OPENAI_API_KEY not configured');
+        return new Response(JSON.stringify({ error: 'OpenAI not configured' }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      // Create audit log entry
+      const { data: auditLog, error: auditError } = await supabase
+        .from('github_audit_logs')
+        .insert({
+          event_type: githubEvent,
+          repository: repository.full_name,
+          workflow_name: 'push-event',
+          branch: payload.ref?.replace('refs/heads/', ''),
+          commit_sha: headCommit?.id,
+          commit_message: headCommit?.message,
+          status: 'processing',
+          audit_data: {
+            commits_count: commits.length,
+            pusher: payload.pusher,
+            head_commit: headCommit
+          }
+        })
+        .select()
+        .single();
+
+      if (auditError) {
+        console.error('❌ Failed to create audit log:', auditError);
+        return new Response(JSON.stringify({ error: 'Database error' }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
+      console.log(`✅ Audit log created: ${auditLog.id}`);
+
+      // Prepare code context for analysis
+      const filesChanged = commits.flatMap((c: any) => [
+        ...(c.added || []),
+        ...(c.modified || []),
+        ...(c.removed || [])
+      ]).filter((f: any, i: number, arr: any[]) => arr.indexOf(f) === i); // unique files
+
+      const codeContext = {
+        repository: repository.full_name,
+        branch: payload.ref?.replace('refs/heads/', ''),
+        commit: headCommit?.id,
+        message: headCommit?.message,
+        author: headCommit?.author?.name,
+        files_changed: filesChanged,
+        commits_summary: commits.map((c: any) => ({
+          message: c.message,
+          author: c.author?.name,
+          files: [...(c.added || []), ...(c.modified || [])]
+        }))
+      };
+
+      console.log('📊 Code context prepared:', JSON.stringify(codeContext, null, 2));
+
+      // Call OpenAI for analysis
+      try {
+        const analysisPrompt = `Eres un auditor de código experto. Analiza los siguientes cambios en el repositorio y genera correcciones específicas.
+
+**Contexto del Commit:**
+- Repositorio: ${codeContext.repository}
+- Branch: ${codeContext.branch}
+- Autor: ${codeContext.author}
+- Mensaje: ${codeContext.message}
+- Archivos modificados: ${filesChanged.join(', ')}
+
+**Instrucciones:**
+1. Identifica problemas de SEGURIDAD (vulnerabilidades, exposición de datos, validación)
+2. Identifica problemas de UX (accesibilidad, performance, experiencia de usuario)
+3. Identifica problemas de CÓDIGO (bugs potenciales, anti-patterns, code smells)
+
+Para cada problema encontrado, responde en formato JSON con este esquema:
+{
+  "corrections": [
+    {
+      "severity": "critical" | "important" | "suggestion",
+      "file_path": "ruta/del/archivo.tsx",
+      "line_number": 123,
+      "issue_title": "Título corto del problema",
+      "issue_description": "Descripción detallada del problema y por qué es importante",
+      "code_before": "código actual problemático (si aplica)",
+      "code_after": "código sugerido corregido (si aplica)"
+    }
+  ]
+}
+
+Si no encuentras problemas, devuelve: { "corrections": [] }`;
+
+        console.log('🤖 Calling OpenAI GPT-4o-mini for analysis...');
+        
+        const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${openaiApiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o-mini',
+            messages: [
+              { 
+                role: 'system', 
+                content: 'Eres un auditor de código senior especializado en seguridad, UX y mejores prácticas. Respondes solo en formato JSON válido.'
+              },
+              { role: 'user', content: analysisPrompt }
+            ],
+            temperature: 0.3,
+            max_tokens: 2000
+          }),
+        });
+
+        if (!openaiResponse.ok) {
+          const errorText = await openaiResponse.text();
+          console.error('❌ OpenAI error:', openaiResponse.status, errorText);
+          throw new Error(`OpenAI API error: ${openaiResponse.status}`);
+        }
+
+        const openaiData = await openaiResponse.json();
+        const aiResponse = openaiData.choices?.[0]?.message?.content;
+        
+        console.log('🤖 OpenAI response received:', aiResponse?.substring(0, 200));
+
+        // Parse AI response
+        let aiAnalysis;
+        try {
+          // Clean response if it has markdown code blocks
+          const cleanedResponse = aiResponse
+            ?.replace(/```json\n?/g, '')
+            .replace(/```\n?/g, '')
+            .trim();
+          
+          aiAnalysis = JSON.parse(cleanedResponse);
+        } catch (parseError) {
+          console.error('❌ Failed to parse AI response:', parseError);
+          aiAnalysis = { corrections: [] };
+        }
+
+        const corrections = aiAnalysis.corrections || [];
+        console.log(`📝 Found ${corrections.length} corrections`);
+
+        // Save corrections to database
+        if (corrections.length > 0) {
+          const correctionsToInsert = corrections.map((c: any) => ({
+            audit_log_id: auditLog.id,
+            severity: c.severity,
+            file_path: c.file_path,
+            line_number: c.line_number,
+            issue_title: c.issue_title,
+            issue_description: c.issue_description,
+            code_before: c.code_before,
+            code_after: c.code_after,
+            status: 'pending'
+          }));
+
+          const { error: correctionsError } = await supabase
+            .from('ai_corrections')
+            .insert(correctionsToInsert);
+
+          if (correctionsError) {
+            console.error('❌ Failed to insert corrections:', correctionsError);
+          } else {
+            console.log(`✅ ${corrections.length} corrections saved to database`);
+          }
+        }
+
+        // Update audit log with analysis
+        await supabase
+          .from('github_audit_logs')
+          .update({
+            status: 'completed',
+            ai_analysis: {
+              agent: 'OpenAI GPT-4o-mini',
+              timestamp: new Date().toISOString(),
+              analysis: aiAnalysis
+            },
+            findings_summary: {
+              total_corrections: corrections.length,
+              by_severity: {
+                critical: corrections.filter((c: any) => c.severity === 'critical').length,
+                important: corrections.filter((c: any) => c.severity === 'important').length,
+                suggestion: corrections.filter((c: any) => c.severity === 'suggestion').length
+              }
+            }
+          })
+          .eq('id', auditLog.id);
+
+        console.log('✅ Push event processed successfully');
+
+        return new Response(JSON.stringify({ 
+          success: true,
+          audit_log_id: auditLog.id,
+          corrections_found: corrections.length
+        }), {
+          status: 200,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+
+      } catch (analysisError) {
+        console.error('❌ Analysis error:', analysisError);
+        
+        // Update audit log with error
+        await supabase
+          .from('github_audit_logs')
+          .update({
+            status: 'failed',
+            ai_analysis: {
+              error: analysisError instanceof Error ? analysisError.message : 'Unknown error'
+            }
+          })
+          .eq('id', auditLog.id);
+
+        return new Response(JSON.stringify({ 
+          error: 'Analysis failed',
+          details: analysisError instanceof Error ? analysisError.message : 'Unknown error'
+        }), {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+    }
 
     // Process workflow_run events (auditoría completada)
     if (githubEvent === 'workflow_run') {
