@@ -23,7 +23,16 @@ serve(async (req) => {
 
     // Verify signature only if secret is configured
     const secret = Deno.env.get('GITHUB_WEBHOOK_SECRET');
-    if (secret && secret.trim() !== '') {
+    const hasValidSecret = secret && secret.trim().length > 0;
+    
+    console.log('🔑 Secret check:', { 
+      exists: !!secret, 
+      length: secret?.length || 0, 
+      trimmedLength: secret?.trim().length || 0,
+      hasValidSecret 
+    });
+    
+    if (hasValidSecret) {
       if (!signature) {
         console.error('❌ Missing GitHub signature');
         return new Response(
