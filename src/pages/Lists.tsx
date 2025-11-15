@@ -752,17 +752,52 @@ const Lists = () => {
                             {item.brand && <p className="text-sm">Marca: {item.brand}</p>}
                             {item.notes && <p className="text-sm text-muted-foreground mt-1">{item.notes}</p>}
                             {item.reference_link && (
-                              <a
-                                href={item.reference_link}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                onClick={(e) => e.stopPropagation()}
-                                className="inline-flex items-center gap-1 px-3 py-1.5 mt-2 rounded-md border border-primary/30 bg-primary/5 hover:bg-primary/10 text-primary text-sm font-medium transition-colors"
-                              >
-                                <ShoppingBag className="w-3.5 h-3.5" />
-                                Ver en tienda
-                                <ExternalLink className="w-3 h-3" />
-                              </a>
+                              <div className="flex flex-col gap-1.5 mt-2">
+                                <a
+                                  href={item.reference_link}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={async (e) => {
+                                    e.stopPropagation();
+                                    
+                                    // Track click con Edge Function (analytics avanzado)
+                                    try {
+                                      await supabase.functions.invoke('track-affiliate-click', {
+                                        body: {
+                                          item_id: item.id,
+                                          item_name: item.name,
+                                          category: item.category,
+                                          reference_link: item.reference_link,
+                                          user_id: user?.id
+                                        }
+                                      });
+                                    } catch (error) {
+                                      // Silent fail - no bloqueamos el click
+                                      console.log('📊 Analytics tracking (optional):', error);
+                                    }
+                                    
+                                    toast.success('¡Redirigiendo a la tienda!', {
+                                      description: 'Gracias por usar nuestro link de afiliado 🎁'
+                                    });
+                                  }}
+                                  className="group relative inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-gradient-to-r from-primary via-primary to-primary/90 hover:from-primary/95 hover:via-primary/90 hover:to-primary/85 text-primary-foreground text-sm font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] overflow-hidden"
+                                >
+                                  {/* Shine effect */}
+                                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                                  
+                                  <ShoppingBag className="w-4 h-4 relative z-10" />
+                                  <span className="relative z-10">Comprar Ahora</span>
+                                  <ExternalLink className="w-3.5 h-3.5 relative z-10" />
+                                  
+                                  {/* Badge de comisión */}
+                                  <span className="absolute -top-1 -right-1 flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-success text-success-foreground text-[10px] font-bold shadow-sm">
+                                    💰 +
+                                  </span>
+                                </a>
+                                <span className="text-[11px] text-muted-foreground text-center leading-tight px-2">
+                                  🎁 Link de afiliado - Apoyas sin costo extra
+                                </span>
+                              </div>
                             )}
                           </div>
                           <div className="flex flex-col gap-2">
