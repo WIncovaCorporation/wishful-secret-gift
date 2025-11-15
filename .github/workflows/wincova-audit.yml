@@ -162,49 +162,185 @@ jobs:
             mv changes_truncated.diff changes.diff
           fi
 
-      - name: 🤖 Analyze with OpenAI
+      - name: 🤖 WINCOVA Security Auditor v2.0
         id: ai-analysis
         continue-on-error: true
         run: |
-          echo "Analyzing code changes with OpenAI..."
+          echo "🤖 Iniciando WINCOVA Security Auditor v2.0..."
+          echo "📊 Modelo: GPT-5 | Temperatura: 0.2 | Max Tokens: 4000"
           
           # Read diff content
           DIFF_CONTENT=$(cat changes.diff | jq -Rs .)
+          CHANGED_FILES="${{ steps.get-diff.outputs.changed_files }}"
           
-          # Create OpenAI request
-          RESPONSE=$(curl -s https://api.openai.com/v1/chat/completions \
-            -H "Authorization: Bearer ${{ secrets.OPENAI_API_KEY }}" \
-            -H "Content-Type: application/json" \
-            -d "{
-              \"model\": \"gpt-5\",
-              \"messages\": [
-                {
-                  \"role\": \"system\",
-                  \"content\": \"Eres un auditor de código experto. Analiza los cambios y clasifícalos en: CRITICAL (seguridad, bugs que rompen funcionalidad), IMPORTANT (performance, calidad de código), SUGGESTION (mejoras opcionales). Responde SOLO con JSON válido en este formato: {\\\"corrections\\\": [{\\\"severity\\\": \\\"critical|important|suggestion\\\", \\\"file\\\": \\\"ruta/archivo\\\", \\\"line\\\": 123, \\\"title\\\": \\\"Título breve\\\", \\\"description\\\": \\\"Descripción detallada\\\", \\\"code_before\\\": \\\"código anterior\\\", \\\"code_after\\\": \\\"código sugerido\\\"}]}\"
-                },
-                {
-                  \"role\": \"user\",
-                  \"content\": \"Analiza estos cambios de código y sugiere correcciones:\n\nArchivos modificados: ${{ steps.get-diff.outputs.changed_files }}\n\nDiff:\n${DIFF_CONTENT}\"
-                }
-              ],
-              \"temperature\": 0.3,
-              \"max_completion_tokens\": 4000
-            }")
+          # Create advanced system prompt
+          SYSTEM_PROMPT="# WINCOVA Security Auditor v2.0
+
+## Identidad
+Eres el **WINCOVA Security Auditor**, un agente especializado en auditoría de código para aplicaciones web modernas. Tu misión es garantizar código seguro, performante y mantenible.
+
+## Stack Tecnológico del Proyecto
+- **Frontend**: React 18 + TypeScript + Vite + Tailwind CSS
+- **Backend**: Supabase (PostgreSQL + Edge Functions)
+- **Auth**: Supabase Auth con RLS (Row Level Security)
+- **Deploy**: GitHub Actions CI/CD
+- **Patrones**: Hooks, Context API, React Query, shadcn/ui
+
+## Capas de Análisis
+
+### 🔐 CRITICAL - Seguridad (Máxima Prioridad)
+- Credenciales hardcodeadas o secrets expuestos
+- Vulnerabilidades OWASP Top 10 (SQLi, XSS, CSRF, etc.)
+- Fallos en autenticación/autorización
+- Bypass de RLS policies en Supabase
+- Datos sensibles sin encriptar
+- API endpoints sin rate limiting
+- CORS mal configurado
+
+### ⚡ IMPORTANT - Performance & Calidad
+- Memory leaks (useEffect sin cleanup)
+- Re-renders innecesarios (falta React.memo, useMemo)
+- Queries N+1 en base de datos
+- Imágenes sin optimizar (falta lazy loading)
+- Bundles pesados (imports innecesarios)
+- Código duplicado que debe refactorizarse
+- Violaciones de principios SOLID
+
+### 🎨 SUGGESTION - UX & Mejoras
+- Accesibilidad WCAG 2.1 (alt text, aria-labels)
+- Estados de loading/error faltantes
+- Responsive design issues
+- Código legacy que puede modernizarse
+- Mejores nombres de variables/funciones
+- Comentarios/documentación faltantes
+
+## Formato de Respuesta
+
+Responde ÚNICAMENTE con JSON válido (sin markdown, sin texto adicional):
+
+{
+  \"agent\": \"WINCOVA Security Auditor v2.0\",
+  \"model\": \"gpt-5\",
+  \"timestamp\": \"ISO-8601\",
+  \"summary\": {
+    \"critical_count\": 0,
+    \"important_count\": 0,
+    \"suggestion_count\": 0,
+    \"overall_risk\": \"low|medium|high|critical\"
+  },
+  \"corrections\": [
+    {
+      \"severity\": \"critical|important|suggestion\",
+      \"category\": \"security|performance|architecture|ux|accessibility\",
+      \"file\": \"ruta/completa/archivo.tsx\",
+      \"line\": 123,
+      \"title\": \"Título conciso (max 60 chars)\",
+      \"description\": \"Descripción técnica detallada con impacto y solución (max 300 chars)\",
+      \"code_before\": \"código problemático actual\",
+      \"code_after\": \"código corregido sugerido\",
+      \"references\": [\"https://owasp.org/...\", \"https://react.dev/...\"],
+      \"impact\": \"Descripción del impacto en producción\"
+    }
+  ]
+}
+
+## Priorización
+1. **CRITICAL**: Fix inmediato requerido
+2. **IMPORTANT**: Fix en próximo sprint
+3. **SUGGESTION**: Considerar para refactoring futuro
+
+## Restricciones
+- NO sugieras cambios en node_modules/
+- NO sugieras cambios en archivos generados (.d.ts, build/)
+- Enfócate en cambios del diff, no en todo el proyecto
+- Sé específico: línea exacta, código exacto
+- Código sugerido debe ser funcional y testeable"
+
+          # Create OpenAI request with retry logic
+          MAX_RETRIES=3
+          RETRY_COUNT=0
+          SUCCESS=false
           
-          # Extract AI response
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ] && [ "$SUCCESS" = false ]; do
+            echo "🔄 Intento $((RETRY_COUNT + 1)) de $MAX_RETRIES..."
+            
+            RESPONSE=$(curl -s https://api.openai.com/v1/chat/completions \
+              -H "Authorization: Bearer ${{ secrets.OPENAI_API_KEY }}" \
+              -H "Content-Type: application/json" \
+              -d "{
+                \"model\": \"gpt-5\",
+                \"messages\": [
+                  {
+                    \"role\": \"system\",
+                    \"content\": $(echo "$SYSTEM_PROMPT" | jq -Rs .)
+                  },
+                  {
+                    \"role\": \"user\",
+                    \"content\": \"Analiza estos cambios:\n\n## Archivos Modificados\n${CHANGED_FILES}\n\n## Git Diff\n${DIFF_CONTENT}\"
+                  }
+                ],
+                \"temperature\": 0.2,
+                \"max_completion_tokens\": 4000
+              }")
+            
+            # Check for API errors
+            if echo "$RESPONSE" | jq -e '.error' > /dev/null; then
+              ERROR_MSG=$(echo "$RESPONSE" | jq -r '.error.message')
+              ERROR_TYPE=$(echo "$RESPONSE" | jq -r '.error.type')
+              echo "::warning::OpenAI API Error (Attempt $((RETRY_COUNT + 1))): $ERROR_TYPE - $ERROR_MSG"
+              
+              # Exponential backoff
+              SLEEP_TIME=$((2 ** RETRY_COUNT))
+              echo "⏳ Esperando ${SLEEP_TIME}s antes de reintentar..."
+              sleep $SLEEP_TIME
+              
+              RETRY_COUNT=$((RETRY_COUNT + 1))
+            else
+              SUCCESS=true
+              echo "✅ Análisis completado exitosamente"
+            fi
+          done
+          
+          if [ "$SUCCESS" = false ]; then
+            echo "::error::Failed to get AI analysis after $MAX_RETRIES attempts"
+            echo "ai_analysis={\"error\": \"Max retries exceeded\", \"corrections\": []}" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          # Extract and validate AI response
           AI_ANALYSIS=$(echo "$RESPONSE" | jq -r '.choices[0].message.content')
           
-          # Save to output
-          echo "ai_analysis<<EOF" >> $GITHUB_OUTPUT
-          echo "$AI_ANALYSIS" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+          # Remove markdown code blocks if present
+          AI_ANALYSIS=$(echo "$AI_ANALYSIS" | sed 's/^```json//g' | sed 's/^```//g' | sed 's/```$//g')
           
-          # Check for errors
-          if echo "$RESPONSE" | jq -e '.error' > /dev/null; then
-            ERROR_MSG=$(echo "$RESPONSE" | jq -r '.error.message')
-            echo "::error::OpenAI API Error: $ERROR_MSG"
+          # Validate JSON
+          if echo "$AI_ANALYSIS" | jq empty 2>/dev/null; then
+            echo "✅ JSON válido recibido"
+            
+            # Extract summary
+            CRITICAL_COUNT=$(echo "$AI_ANALYSIS" | jq -r '.summary.critical_count // 0')
+            IMPORTANT_COUNT=$(echo "$AI_ANALYSIS" | jq -r '.summary.important_count // 0')
+            SUGGESTION_COUNT=$(echo "$AI_ANALYSIS" | jq -r '.summary.suggestion_count // 0')
+            OVERALL_RISK=$(echo "$AI_ANALYSIS" | jq -r '.summary.overall_risk // "unknown"')
+            
+            echo "📊 Resumen del Análisis:"
+            echo "  🔴 Críticos: $CRITICAL_COUNT"
+            echo "  🟡 Importantes: $IMPORTANT_COUNT"
+            echo "  🟢 Sugerencias: $SUGGESTION_COUNT"
+            echo "  ⚠️ Riesgo General: $OVERALL_RISK"
+            
+            # Set GitHub output
+            echo "ai_analysis<<EOF" >> $GITHUB_OUTPUT
+            echo "$AI_ANALYSIS" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+            
+            # Create annotation for critical issues
+            if [ "$CRITICAL_COUNT" -gt 0 ]; then
+              echo "::error::🚨 Se encontraron $CRITICAL_COUNT problemas CRÍTICOS de seguridad"
+            fi
           else
-            echo "✅ AI analysis completed successfully"
+            echo "::warning::Respuesta de OpenAI no es JSON válido"
+            echo "ai_analysis={\"error\": \"Invalid JSON response\", \"corrections\": [], \"raw_response\": $(echo "$AI_ANALYSIS" | jq -Rs .)}" >> $GITHUB_OUTPUT
           fi
 
       - name: 📤 Upload AI Analysis
