@@ -15,59 +15,54 @@ serve(async (req) => {
   try {
     console.log('🔔 GitHub webhook received');
 
-    // Validate GitHub signature
+    // Validate GitHub signature (optional if secret not configured)
     const signature = req.headers.get('x-hub-signature-256');
     const githubEvent = req.headers.get('x-github-event');
-    
-    if (!signature) {
-      console.error('❌ Missing GitHub signature');
-      return new Response(
-        JSON.stringify({ error: 'Missing signature' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
     const rawBody = await req.text();
     const payload = JSON.parse(rawBody);
 
-    // Verify signature
+    // Verify signature only if secret is configured
     const secret = Deno.env.get('GITHUB_WEBHOOK_SECRET');
-    if (!secret) {
-      console.error('❌ GITHUB_WEBHOOK_SECRET not configured');
-      return new Response(
-        JSON.stringify({ error: 'Webhook secret not configured' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    if (secret && secret.trim() !== '') {
+      if (!signature) {
+        console.error('❌ Missing GitHub signature');
+        return new Response(
+          JSON.stringify({ error: 'Missing signature' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const encoder = new TextEncoder();
+      const key = await crypto.subtle.importKey(
+        'raw',
+        encoder.encode(secret),
+        { name: 'HMAC', hash: 'SHA-256' },
+        false,
+        ['sign']
       );
-    }
 
-    const encoder = new TextEncoder();
-    const key = await crypto.subtle.importKey(
-      'raw',
-      encoder.encode(secret),
-      { name: 'HMAC', hash: 'SHA-256' },
-      false,
-      ['sign']
-    );
-
-    const signatureBytes = await crypto.subtle.sign(
-      'HMAC',
-      key,
-      encoder.encode(rawBody)
-    );
-
-    const computedSignature = 'sha256=' + Array.from(new Uint8Array(signatureBytes))
-      .map(b => b.toString(16).padStart(2, '0'))
-      .join('');
-
-    if (computedSignature !== signature) {
-      console.error('❌ Invalid signature');
-      return new Response(
-        JSON.stringify({ error: 'Invalid signature' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      const signatureBytes = await crypto.subtle.sign(
+        'HMAC',
+        key,
+        encoder.encode(rawBody)
       );
-    }
 
-    console.log('✅ Signature verified');
+      const computedSignature = 'sha256=' + Array.from(new Uint8Array(signatureBytes))
+        .map(b => b.toString(16).padStart(2, '0'))
+        .join('');
+
+      if (computedSignature !== signature) {
+        console.error('❌ Invalid signature');
+        return new Response(
+          JSON.stringify({ error: 'Invalid signature' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.log('✅ Signature verified');
+    } else {
+      console.log('⚠️ No webhook secret configured - skipping signature validation');
+    }
     console.log('📦 Event type:', githubEvent);
 
     // Initialize Supabase client
