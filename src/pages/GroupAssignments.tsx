@@ -36,6 +36,7 @@ const GroupAssignments = () => {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [group, setGroup] = useState<Group | null>(null);
   const [isCreator, setIsCreator] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadAssignments();
@@ -43,6 +44,13 @@ const GroupAssignments = () => {
 
   const loadAssignments = async () => {
     try {
+      // Validate groupId
+      if (!groupId || groupId === ':groupId') {
+        setError('ID de grupo inválido');
+        setLoading(false);
+        return;
+      }
+
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session) {
@@ -103,6 +111,7 @@ const GroupAssignments = () => {
       setAssignments(enrichedAssignments);
     } catch (error) {
       console.error("Error loading assignments:", error);
+      setError('Error al cargar las asignaciones. Por favor intenta de nuevo.');
     } finally {
       setLoading(false);
     }
@@ -110,6 +119,27 @@ const GroupAssignments = () => {
 
   if (loading) {
     return <LoadingSpinner message="Cargando asignaciones..." />;
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <Card className="max-w-md w-full">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="h-5 w-5" />
+              Error
+            </CardTitle>
+            <CardDescription>{error}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Button onClick={() => navigate("/groups")} className="w-full">
+              Volver a Grupos
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   if (!isCreator) {
