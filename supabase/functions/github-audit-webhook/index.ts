@@ -32,6 +32,28 @@ serve(async (req) => {
       const workflowRun = payload.workflow_run;
       const repository = payload.repository;
 
+      // Parse AI analysis if available
+      let aiAnalysis = null;
+      let parsedCorrections = null;
+      
+      if (workflowRun.ai_analysis) {
+        try {
+          // AI analysis viene como string JSON escapado, parsearlo
+          const aiAnalysisStr = typeof workflowRun.ai_analysis === 'string' 
+            ? workflowRun.ai_analysis 
+            : JSON.stringify(workflowRun.ai_analysis);
+          
+          console.log('🤖 Processing AI analysis...');
+          aiAnalysis = JSON.parse(aiAnalysisStr);
+          parsedCorrections = aiAnalysis.corrections || [];
+          console.log(`📊 Found ${parsedCorrections.length} AI corrections`);
+        } catch (e) {
+          console.error('⚠️ Failed to parse AI analysis:', e);
+          const errorMessage = e instanceof Error ? e.message : 'Unknown error';
+          aiAnalysis = { raw: workflowRun.ai_analysis, parse_error: errorMessage };
+        }
+      }
+
       // Extract audit data
       const auditLog = {
         repository: repository.full_name,
@@ -42,6 +64,7 @@ serve(async (req) => {
         workflow_run_id: workflowRun.id.toString(),
         event_type: workflowRun.event,
         status: workflowRun.conclusion || workflowRun.status,
+        ai_analysis: aiAnalysis,
         audit_data: {
           workflow_url: workflowRun.html_url,
           run_number: workflowRun.run_number,
@@ -52,7 +75,7 @@ serve(async (req) => {
           repository_url: repository.html_url,
           full_payload: payload
         },
-        findings_summary: null // Se puede agregar lógica para parsear findings
+        findings_summary: null
       };
 
       // Insert into database
@@ -71,11 +94,38 @@ serve(async (req) => {
       }
 
       console.log('✅ Audit log saved:', data.id);
+
+      // Insert AI corrections if available
+      if (parsedCorrections && parsedCorrections.length > 0) {
+        const corrections = parsedCorrections.map((correction: any) => ({
+          audit_log_id: data.id,
+          severity: correction.severity?.toLowerCase() || 'suggestion',
+          file_path: correction.file || 'unknown',
+          line_number: correction.line || null,
+          issue_title: correction.title || 'AI Suggestion',
+          issue_description: correction.description || '',
+          code_before: correction.code_before || null,
+          code_after: correction.code_after || null,
+          status: 'pending'
+        }));
+
+        const { data: correctionsData, error: correctionsError } = await supabase
+          .from('ai_corrections')
+          .insert(corrections)
+          .select();
+
+        if (correctionsError) {
+          console.error('⚠️ Failed to save AI corrections:', correctionsError);
+        } else {
+          console.log(`✅ Saved ${correctionsData.length} AI corrections`);
+        }
+      }
       
       return new Response(
         JSON.stringify({ 
           success: true, 
           log_id: data.id,
+          ai_corrections_count: parsedCorrections?.length || 0,
           message: 'Audit log saved successfully' 
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

@@ -129,7 +129,94 @@ jobs:
           echo "✅ No obvious hardcoded secrets found"
 
   # ============================================
-  # FASE 4: Build Verification
+  # FASE 4: AI Code Analysis with OpenAI
+  # ============================================
+  ai-analysis:
+    name: 🤖 OpenAI Code Analysis
+    runs-on: ubuntu-latest
+    needs: [code-quality, testing, security]
+    if: always()
+    steps:
+      - name: 🔍 Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: 📊 Get commit changes
+        id: get-diff
+        run: |
+          echo "Getting diff for commit ${{ github.sha }}"
+          git diff HEAD^ HEAD > changes.diff
+          
+          # Get list of changed files
+          CHANGED_FILES=$(git diff --name-only HEAD^ HEAD | tr '\n' ',' | sed 's/,$//')
+          echo "changed_files=$CHANGED_FILES" >> $GITHUB_OUTPUT
+          
+          # Check if diff is too large (max 100KB for API)
+          DIFF_SIZE=$(wc -c < changes.diff)
+          echo "Diff size: $DIFF_SIZE bytes"
+          
+          if [ $DIFF_SIZE -gt 100000 ]; then
+            echo "⚠️ Diff too large, truncating..."
+            head -c 100000 changes.diff > changes_truncated.diff
+            mv changes_truncated.diff changes.diff
+          fi
+
+      - name: 🤖 Analyze with OpenAI
+        id: ai-analysis
+        continue-on-error: true
+        run: |
+          echo "Analyzing code changes with OpenAI..."
+          
+          # Read diff content
+          DIFF_CONTENT=$(cat changes.diff | jq -Rs .)
+          
+          # Create OpenAI request
+          RESPONSE=$(curl -s https://api.openai.com/v1/chat/completions \
+            -H "Authorization: Bearer ${{ secrets.OPENAI_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"model\": \"gpt-5\",
+              \"messages\": [
+                {
+                  \"role\": \"system\",
+                  \"content\": \"Eres un auditor de código experto. Analiza los cambios y clasifícalos en: CRITICAL (seguridad, bugs que rompen funcionalidad), IMPORTANT (performance, calidad de código), SUGGESTION (mejoras opcionales). Responde SOLO con JSON válido en este formato: {\\\"corrections\\\": [{\\\"severity\\\": \\\"critical|important|suggestion\\\", \\\"file\\\": \\\"ruta/archivo\\\", \\\"line\\\": 123, \\\"title\\\": \\\"Título breve\\\", \\\"description\\\": \\\"Descripción detallada\\\", \\\"code_before\\\": \\\"código anterior\\\", \\\"code_after\\\": \\\"código sugerido\\\"}]}\"
+                },
+                {
+                  \"role\": \"user\",
+                  \"content\": \"Analiza estos cambios de código y sugiere correcciones:\n\nArchivos modificados: ${{ steps.get-diff.outputs.changed_files }}\n\nDiff:\n${DIFF_CONTENT}\"
+                }
+              ],
+              \"temperature\": 0.3,
+              \"max_completion_tokens\": 4000
+            }")
+          
+          # Extract AI response
+          AI_ANALYSIS=$(echo "$RESPONSE" | jq -r '.choices[0].message.content')
+          
+          # Save to output
+          echo "ai_analysis<<EOF" >> $GITHUB_OUTPUT
+          echo "$AI_ANALYSIS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          
+          # Check for errors
+          if echo "$RESPONSE" | jq -e '.error' > /dev/null; then
+            ERROR_MSG=$(echo "$RESPONSE" | jq -r '.error.message')
+            echo "::error::OpenAI API Error: $ERROR_MSG"
+          else
+            echo "✅ AI analysis completed successfully"
+          fi
+
+      - name: 📤 Upload AI Analysis
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ai-analysis
+          path: changes.diff
+          retention-days: 30
+
+  # ============================================
+  # FASE 5: Build Verification
   # ============================================
   build:
     name: 🏗️ Build Verification
@@ -175,13 +262,21 @@ jobs:
   report:
     name: 📡 Report to WINCOVA Dashboard
     runs-on: ubuntu-latest
-    needs: [code-quality, testing, security, build]
+    needs: [code-quality, testing, security, ai-analysis, build]
     if: always()
     steps:
       - name: 📊 Collect Results
         id: collect
         run: |
           echo "Collecting audit results..."
+          
+          # Get AI analysis if available
+          AI_ANALYSIS="${{ needs.ai-analysis.outputs.ai_analysis }}"
+          if [ -n "$AI_ANALYSIS" ]; then
+            echo "ai_analysis=$AI_ANALYSIS" >> $GITHUB_OUTPUT
+          else
+            echo "ai_analysis={}" >> $GITHUB_OUTPUT
+          fi
           
           # Determine overall status
           if [[ "${{ needs.code-quality.result }}" == "failure" ]] || \
@@ -200,6 +295,14 @@ jobs:
         run: |
           # Escape commit message for JSON
           COMMIT_MSG=$(echo "${{ github.event.head_commit.message }}" | jq -Rs .)
+          
+          # Escape AI analysis for JSON
+          AI_ANALYSIS='${{ steps.collect.outputs.ai_analysis }}'
+          if [ -z "$AI_ANALYSIS" ] || [ "$AI_ANALYSIS" = "{}" ]; then
+            AI_ANALYSIS_JSON="null"
+          else
+            AI_ANALYSIS_JSON=$(echo "$AI_ANALYSIS" | jq -Rs .)
+          fi
           
           # Build and send payload
           curl -X POST "${{ secrets.WINCOVA_WEBHOOK_URL }}" \
@@ -225,7 +328,8 @@ jobs:
                   "login": "${{ github.actor }}"
                 },
                 "created_at": "${{ github.event.repository.created_at }}",
-                "updated_at": "${{ github.event.repository.updated_at }}"
+                "updated_at": "${{ github.event.repository.updated_at }}",
+                "ai_analysis": '"${AI_ANALYSIS_JSON}"'
               },
               "repository": {
                 "full_name": "${{ github.repository }}",
@@ -248,6 +352,7 @@ jobs:
           echo "- Code Quality: ${{ needs.code-quality.result }}" >> $GITHUB_STEP_SUMMARY
           echo "- Testing: ${{ needs.testing.result }}" >> $GITHUB_STEP_SUMMARY
           echo "- Security: ${{ needs.security.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- AI Analysis: ${{ needs.ai-analysis.result }}" >> $GITHUB_STEP_SUMMARY
           echo "- Build: ${{ needs.build.result }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "🔗 [View Full Report](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
