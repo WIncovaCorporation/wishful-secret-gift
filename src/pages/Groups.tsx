@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useSubscription } from "@/hooks/useSubscription";
 import { UpgradePrompt } from "@/components/UpgradePrompt";
@@ -21,6 +22,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { HelpTooltip } from "@/components/HelpTooltip";
 import { EmptyStateCard } from "@/components/EmptyStateCard";
+import { GroupMembersList } from "@/components/GroupMembersList";
 import type { User } from "@supabase/supabase-js";
 
 interface Group {
@@ -865,30 +867,22 @@ const Groups = () => {
                       </div>
                     </div>
                     <div>
-                      <h4 className="font-semibold mb-2">
-                        Miembros ({group.members?.length || 0})
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="font-semibold">
+                          Miembros
+                        </h4>
                         {(group.members?.length || 0) < 3 && !group.is_drawn && (
-                          <span className="text-xs text-yellow-600 ml-2">(mínimo 3 requeridos)</span>
+                          <Badge variant="outline" className="bg-yellow-50 border-yellow-200 text-yellow-700 text-xs">
+                            Mínimo 3 requeridos
+                          </Badge>
                         )}
-                      </h4>
-                      <div className="flex flex-wrap gap-2">
-                        {group.members?.map((member) => {
-                          const hasViewed = group.exchanges?.some(
-                            ex => ex.giver_id === member.user_id && ex.viewed_at
-                          );
-                          return (
-                            <span
-                              key={member.id}
-                              className="px-3 py-1 bg-gradient-mint text-secondary-foreground rounded-full text-sm flex items-center gap-1"
-                            >
-                              {member.profiles?.display_name || "Usuario"}
-                              {group.is_drawn && hasViewed && (
-                                <span className="text-green-700 font-bold">✓</span>
-                              )}
-                            </span>
-                          );
-                        })}
                       </div>
+                      <GroupMembersList 
+                        members={group.members || []}
+                        exchanges={group.exchanges}
+                        isDrawn={group.is_drawn}
+                        maxVisible={5}
+                      />
                     </div>
                   </div>
                 </CardContent>
