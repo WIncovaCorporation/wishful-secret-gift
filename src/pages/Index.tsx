@@ -235,4 +235,5 @@ const FeatureCard = ({ icon, title, description, onClick }: {
   </div>
 );
 
+// Test: Activar sistema de auditoría dual WINCOVA + Ultra UX Bot
 export default Index;
