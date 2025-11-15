@@ -26,3 +26,6 @@ verify_jwt = false
 
 [functions.github-audit-webhook]
 verify_jwt = false
+
+[functions.track-affiliate-click]
+verify_jwt = false
