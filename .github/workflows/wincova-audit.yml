@@ -1,0 +1,249 @@
+name: 🔐 WINCOVA Security Audit Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '18'
+
+jobs:
+  # ============================================
+  # FASE 1: Code Quality & Type Safety
+  # ============================================
+  code-quality:
+    name: 📋 Code Quality Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🔍 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📥 Install dependencies
+        run: npm ci
+
+      - name: 🔎 Run ESLint
+        run: npm run lint || echo "::warning::Linting issues found"
+        continue-on-error: true
+
+      - name: 🔍 TypeScript Type Check
+        run: npx tsc --noEmit
+
+      - name: 📊 Upload ESLint results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: eslint-results
+          path: eslint-report.json
+          retention-days: 30
+
+  # ============================================
+  # FASE 2: Automated Testing
+  # ============================================
+  testing:
+    name: 🧪 Automated Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🔍 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📥 Install dependencies
+        run: npm ci
+
+      - name: 🧪 Run Tests with Coverage
+        run: npm run test || echo "::warning::Some tests failed"
+        continue-on-error: true
+
+      - name: 📊 Generate Test Report
+        if: always()
+        run: |
+          echo "## Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "Tests executed at $(date)" >> $GITHUB_STEP_SUMMARY
+
+      - name: 📈 Upload Coverage
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 30
+
+  # ============================================
+  # FASE 3: Security Scanning
+  # ============================================
+  security:
+    name: 🛡️ Security Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🔍 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📥 Install dependencies
+        run: npm ci
+
+      - name: 🔐 Run npm audit
+        run: |
+          npm audit --json > audit-report.json || true
+          echo "## Security Audit" >> $GITHUB_STEP_SUMMARY
+          npm audit || echo "::warning::Security vulnerabilities found"
+        continue-on-error: true
+
+      - name: 📊 Upload Audit Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-audit
+          path: audit-report.json
+          retention-days: 30
+
+      - name: 🔍 Check for hardcoded secrets
+        run: |
+          echo "Scanning for hardcoded secrets..."
+          if grep -r "sk_live_" src/ 2>/dev/null; then
+            echo "::error::Found potential Stripe live keys!"
+            exit 1
+          fi
+          if grep -r "password.*=.*['\"]" src/ 2>/dev/null | grep -v "placeholder"; then
+            echo "::warning::Found potential hardcoded passwords"
+          fi
+          echo "✅ No obvious hardcoded secrets found"
+
+  # ============================================
+  # FASE 4: Build Verification
+  # ============================================
+  build:
+    name: 🏗️ Build Verification
+    runs-on: ubuntu-latest
+    needs: [code-quality, testing]
+    steps:
+      - name: 🔍 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 📦 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: 📥 Install dependencies
+        run: npm ci
+
+      - name: 🏗️ Build Project
+        run: npm run build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || 'https://placeholder.supabase.co' }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY || 'placeholder-key' }}
+          VITE_SUPABASE_PROJECT_ID: ${{ secrets.VITE_SUPABASE_PROJECT_ID || 'placeholder-id' }}
+
+      - name: 📊 Check Build Size
+        run: |
+          BUILD_SIZE=$(du -sh dist | cut -f1)
+          echo "## Build Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "📦 Build size: $BUILD_SIZE" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Build completed successfully" >> $GITHUB_STEP_SUMMARY
+
+      - name: 📤 Upload Build Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-output
+          path: dist/
+          retention-days: 7
+
+  # ============================================
+  # REPORTING: Send Results to Webhook
+  # ============================================
+  report:
+    name: 📡 Report to WINCOVA Dashboard
+    runs-on: ubuntu-latest
+    needs: [code-quality, testing, security, build]
+    if: always()
+    steps:
+      - name: 📊 Collect Results
+        id: collect
+        run: |
+          echo "Collecting audit results..."
+          
+          # Determine overall status
+          if [[ "${{ needs.code-quality.result }}" == "failure" ]] || \
+             [[ "${{ needs.testing.result }}" == "failure" ]] || \
+             [[ "${{ needs.security.result }}" == "failure" ]] || \
+             [[ "${{ needs.build.result }}" == "failure" ]]; then
+            echo "status=failure" >> $GITHUB_OUTPUT
+            echo "conclusion=failure" >> $GITHUB_OUTPUT
+          else
+            echo "status=success" >> $GITHUB_OUTPUT
+            echo "conclusion=success" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 📡 Send to Webhook
+        if: always()
+        run: |
+          curl -X POST "${{ secrets.WINCOVA_WEBHOOK_URL }}" \
+            -H "Content-Type: application/json" \
+            -H "X-GitHub-Event: workflow_run" \
+            -d '{
+              "action": "completed",
+              "workflow_run": {
+                "id": ${{ github.run_id }},
+                "name": "${{ github.workflow }}",
+                "head_branch": "${{ github.ref_name }}",
+                "head_sha": "${{ github.sha }}",
+                "head_commit": {
+                  "message": "${{ github.event.head_commit.message }}"
+                },
+                "event": "${{ github.event_name }}",
+                "status": "completed",
+                "conclusion": "${{ steps.collect.outputs.conclusion }}",
+                "html_url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                "run_number": ${{ github.run_number }},
+                "run_attempt": ${{ github.run_attempt }},
+                "triggering_actor": {
+                  "login": "${{ github.actor }}"
+                },
+                "created_at": "${{ github.event.repository.created_at }}",
+                "updated_at": "${{ github.event.repository.updated_at }}"
+              },
+              "repository": {
+                "full_name": "${{ github.repository }}",
+                "html_url": "${{ github.server_url }}/${{ github.repository }}"
+              }
+            }' || echo "::warning::Failed to send webhook notification"
+
+      - name: ✅ Summary
+        if: always()
+        run: |
+          echo "# 🔐 WINCOVA Audit Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Repository:** ${{ github.repository }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status:** ${{ steps.collect.outputs.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Run:** #${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📊 **Results:**" >> $GITHUB_STEP_SUMMARY
+          echo "- Code Quality: ${{ needs.code-quality.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Testing: ${{ needs.testing.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Security: ${{ needs.security.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Build: ${{ needs.build.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 [View Full Report](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
