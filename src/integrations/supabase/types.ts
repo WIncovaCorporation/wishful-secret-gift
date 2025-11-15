@@ -124,6 +124,71 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_corrections: {
+        Row: {
+          admin_notes: string | null
+          applied_at: string | null
+          audit_log_id: string
+          code_after: string | null
+          code_before: string | null
+          created_at: string | null
+          file_path: string
+          id: string
+          issue_description: string
+          issue_title: string
+          line_number: number | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          severity: string
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          applied_at?: string | null
+          audit_log_id: string
+          code_after?: string | null
+          code_before?: string | null
+          created_at?: string | null
+          file_path: string
+          id?: string
+          issue_description: string
+          issue_title: string
+          line_number?: number | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          severity: string
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          applied_at?: string | null
+          audit_log_id?: string
+          code_after?: string | null
+          code_before?: string | null
+          created_at?: string | null
+          file_path?: string
+          id?: string
+          issue_description?: string
+          issue_title?: string
+          line_number?: number | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          severity?: string
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_corrections_audit_log_id_fkey"
+            columns: ["audit_log_id"]
+            isOneToOne: false
+            referencedRelation: "github_audit_logs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       amazon_credentials: {
         Row: {
           access_key: string
@@ -431,6 +496,7 @@ export type Database = {
       }
       github_audit_logs: {
         Row: {
+          ai_analysis: Json | null
           audit_data: Json
           branch: string | null
           commit_message: string | null
@@ -446,6 +512,7 @@ export type Database = {
           workflow_run_id: string | null
         }
         Insert: {
+          ai_analysis?: Json | null
           audit_data?: Json
           branch?: string | null
           commit_message?: string | null
@@ -461,6 +528,7 @@ export type Database = {
           workflow_run_id?: string | null
         }
         Update: {
+          ai_analysis?: Json | null
           audit_data?: Json
           branch?: string | null
           commit_message?: string | null
