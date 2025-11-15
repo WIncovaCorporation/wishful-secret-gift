@@ -35,6 +35,7 @@ serve(async (req) => {
       // Parse AI analysis if available
       let aiAnalysis = null;
       let parsedCorrections = null;
+      let analysisSummary = null;
       
       if (workflowRun.ai_analysis) {
         try {
@@ -43,14 +44,39 @@ serve(async (req) => {
             ? workflowRun.ai_analysis 
             : JSON.stringify(workflowRun.ai_analysis);
           
-          console.log('🤖 Processing AI analysis...');
+          console.log('🤖 Processing WINCOVA Security Auditor v2.0 analysis...');
           aiAnalysis = JSON.parse(aiAnalysisStr);
+          
+          // Validate AI agent
+          if (aiAnalysis.agent && aiAnalysis.agent.includes('WINCOVA')) {
+            console.log(`✅ Agent verified: ${aiAnalysis.agent}`);
+            console.log(`📅 Analysis timestamp: ${aiAnalysis.timestamp}`);
+            
+            // Extract summary
+            analysisSummary = aiAnalysis.summary || {
+              critical_count: 0,
+              important_count: 0,
+              suggestion_count: 0,
+              overall_risk: 'unknown'
+            };
+            
+            console.log(`📊 Summary:`);
+            console.log(`   🔴 Critical: ${analysisSummary.critical_count}`);
+            console.log(`   🟡 Important: ${analysisSummary.important_count}`);
+            console.log(`   🟢 Suggestions: ${analysisSummary.suggestion_count}`);
+            console.log(`   ⚠️ Overall Risk: ${analysisSummary.overall_risk}`);
+          }
+          
           parsedCorrections = aiAnalysis.corrections || [];
-          console.log(`📊 Found ${parsedCorrections.length} AI corrections`);
+          console.log(`📝 Found ${parsedCorrections.length} corrections`);
         } catch (e) {
           console.error('⚠️ Failed to parse AI analysis:', e);
           const errorMessage = e instanceof Error ? e.message : 'Unknown error';
-          aiAnalysis = { raw: workflowRun.ai_analysis, parse_error: errorMessage };
+          aiAnalysis = { 
+            error: true,
+            parse_error: errorMessage,
+            raw: workflowRun.ai_analysis 
+          };
         }
       }
 
@@ -99,11 +125,11 @@ serve(async (req) => {
       if (parsedCorrections && parsedCorrections.length > 0) {
         const corrections = parsedCorrections.map((correction: any) => ({
           audit_log_id: data.id,
-          severity: correction.severity?.toLowerCase() || 'suggestion',
+          severity: (correction.severity?.toLowerCase() || 'suggestion') as string,
           file_path: correction.file || 'unknown',
           line_number: correction.line || null,
           issue_title: correction.title || 'AI Suggestion',
-          issue_description: correction.description || '',
+          issue_description: `${correction.description || ''}\n\n**Categoría:** ${correction.category || 'general'}\n**Impacto:** ${correction.impact || 'No especificado'}\n\n${correction.references?.length ? `**Referencias:**\n${correction.references.map((ref: string) => `- ${ref}`).join('\n')}` : ''}`,
           code_before: correction.code_before || null,
           code_after: correction.code_after || null,
           status: 'pending'
@@ -118,6 +144,15 @@ serve(async (req) => {
           console.error('⚠️ Failed to save AI corrections:', correctionsError);
         } else {
           console.log(`✅ Saved ${correctionsData.length} AI corrections`);
+          
+          // Log breakdown by severity
+          const criticalCount = correctionsData.filter((c: any) => c.severity === 'critical').length;
+          const importantCount = correctionsData.filter((c: any) => c.severity === 'important').length;
+          const suggestionCount = correctionsData.filter((c: any) => c.severity === 'suggestion').length;
+          
+          console.log(`   🔴 Critical: ${criticalCount}`);
+          console.log(`   🟡 Important: ${importantCount}`);
+          console.log(`   🟢 Suggestions: ${suggestionCount}`);
         }
       }
       
