@@ -198,6 +198,10 @@ jobs:
       - name: 📡 Send to Webhook
         if: always()
         run: |
+          # Escape commit message for JSON
+          COMMIT_MSG=$(echo "${{ github.event.head_commit.message }}" | jq -Rs .)
+          
+          # Build and send payload
           curl -X POST "${{ secrets.WINCOVA_WEBHOOK_URL }}" \
             -H "Content-Type: application/json" \
             -H "X-GitHub-Event: workflow_run" \
@@ -209,7 +213,7 @@ jobs:
                 "head_branch": "${{ github.ref_name }}",
                 "head_sha": "${{ github.sha }}",
                 "head_commit": {
-                  "message": "${{ github.event.head_commit.message }}"
+                  "message": '"${COMMIT_MSG}"'
                 },
                 "event": "${{ github.event_name }}",
                 "status": "completed",
