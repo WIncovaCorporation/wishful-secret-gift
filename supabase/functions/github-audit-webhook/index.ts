@@ -110,6 +110,10 @@ serve(async (req) => {
       console.log(`   🎨 UX: ${combinedSummary.ux.critical_count}C/${combinedSummary.ux.important_count}I ($${combinedSummary.ux.revenue_at_risk_daily}/day)`);
       console.log(`   ⚠️ Combined Risk: ${combinedSummary.combined_risk_level.toUpperCase()}`);
 
+      // Combine all corrections from both agents
+      const allCorrections = [...securityCorrections, ...uxCorrections];
+      console.log(`📝 Total corrections: ${allCorrections.length} (${securityCorrections.length} security + ${uxCorrections.length} UX)`);
+
       // Extract audit data with DUAL AGENT analysis
       const auditLog = {
         repository: repository.full_name,
@@ -155,19 +159,28 @@ serve(async (req) => {
 
       console.log('✅ Audit log saved:', data.id);
 
-      // Insert AI corrections if available
-      if (parsedCorrections && parsedCorrections.length > 0) {
-        const corrections = parsedCorrections.map((correction: any) => ({
-          audit_log_id: data.id,
-          severity: (correction.severity?.toLowerCase() || 'suggestion') as string,
-          file_path: correction.file || 'unknown',
-          line_number: correction.line || null,
-          issue_title: correction.title || 'AI Suggestion',
-          issue_description: `${correction.description || ''}\n\n**Categoría:** ${correction.category || 'general'}\n**Impacto:** ${correction.impact || 'No especificado'}\n\n${correction.references?.length ? `**Referencias:**\n${correction.references.map((ref: string) => `- ${ref}`).join('\n')}` : ''}`,
-          code_before: correction.code_before || null,
-          code_after: correction.code_after || null,
-          status: 'pending'
-        }));
+      // Insert AI corrections from BOTH agents
+      if (allCorrections.length > 0) {
+        const corrections = allCorrections.map((correction: any) => {
+          // Determine source agent
+          const isUX = uxCorrections.includes(correction);
+          const agent = isUX ? 'Ultra UX Bot v2.0' : 'WINCOVA Security Auditor v2.0';
+          
+          return {
+            audit_log_id: data.id,
+            severity: (correction.severity?.toLowerCase() || 'suggestion') as string,
+            file_path: correction.file || correction.file_path || 'unknown',
+            line_number: correction.line || correction.line_number || null,
+            issue_title: `[${agent}] ${correction.title || correction.issue_title || 'AI Suggestion'}`,
+            issue_description: `${correction.description || correction.issue_description || ''}\n\n**Categoría:** ${correction.category || 'general'}\n**Impacto:** ${correction.impact || 'No especificado'}\n\n${correction.references?.length ? `**Referencias:**\n${correction.references.map((ref: string) => `- ${ref}`).join('\n')}` : ''}`,
+            code_before: correction.code_before || null,
+            code_after: correction.code_after || null,
+            status: 'pending',
+            admin_notes: isUX && correction.roi_calculation 
+              ? `ROI: $${correction.roi_calculation.daily_revenue_at_risk}/day at risk`
+              : null
+          };
+        });
 
         const { data: correctionsData, error: correctionsError } = await supabase
           .from('ai_corrections')
@@ -194,8 +207,11 @@ serve(async (req) => {
         JSON.stringify({ 
           success: true, 
           log_id: data.id,
-          ai_corrections_count: parsedCorrections?.length || 0,
-          message: 'Audit log saved successfully' 
+          ai_corrections_count: allCorrections.length,
+          security_corrections: securityCorrections.length,
+          ux_corrections: uxCorrections.length,
+          combined_risk: combinedSummary.combined_risk_level,
+          message: 'Dual agent audit log saved successfully' 
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
