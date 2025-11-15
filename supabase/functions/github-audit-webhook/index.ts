@@ -77,17 +77,52 @@ serve(async (req) => {
       // Prepare code context for analysis
       const filesChanged = commits.flatMap((c: any) => [
         ...(c.added || []),
-        ...(c.modified || []),
-        ...(c.removed || [])
+        ...(c.modified || [])
       ]).filter((f: any, i: number, arr: any[]) => arr.indexOf(f) === i); // unique files
+
+      // Download actual file contents from GitHub
+      const fileContents: any[] = [];
+      const repoOwner = repository.owner.login;
+      const repoName = repository.name;
+      const branch = payload.ref?.replace('refs/heads/', '');
+      
+      console.log(`📥 Descargando contenido de ${filesChanged.length} archivos...`);
+      
+      for (const filePath of filesChanged.slice(0, 10)) { // Limit to 10 files to avoid timeout
+        try {
+          const githubUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${filePath}?ref=${branch}`;
+          console.log(`⬇️ Descargando: ${filePath}`);
+          
+          const response = await fetch(githubUrl, {
+            headers: {
+              'Accept': 'application/vnd.github.v3.raw',
+              'User-Agent': 'Supabase-Edge-Function'
+            }
+          });
+          
+          if (response.ok) {
+            const content = await response.text();
+            fileContents.push({
+              path: filePath,
+              content: content.slice(0, 3000) // Limit to first 3000 chars per file
+            });
+            console.log(`✅ Descargado: ${filePath} (${content.length} chars)`);
+          } else {
+            console.log(`⚠️ No se pudo descargar: ${filePath} (${response.status})`);
+          }
+        } catch (error) {
+          console.error(`❌ Error descargando ${filePath}:`, error);
+        }
+      }
 
       const codeContext = {
         repository: repository.full_name,
-        branch: payload.ref?.replace('refs/heads/', ''),
+        branch: branch,
         commit: headCommit?.id,
         message: headCommit?.message,
         author: headCommit?.author?.name,
         files_changed: filesChanged,
+        file_contents: fileContents,
         commits_summary: commits.map((c: any) => ({
           message: c.message,
           author: c.author?.name,
@@ -95,40 +130,52 @@ serve(async (req) => {
         }))
       };
 
-      console.log('📊 Code context prepared:', JSON.stringify(codeContext, null, 2));
+      console.log(`📊 Contexto preparado con ${fileContents.length} archivos descargados`);
 
       // Call OpenAI for analysis
       try {
-        const analysisPrompt = `Eres un auditor de código experto. Analiza los siguientes cambios en el repositorio y genera correcciones específicas.
+        // Build detailed file contents for analysis
+        const fileDetails = codeContext.file_contents.map((f: any) => 
+          `### Archivo: ${f.path}\n\`\`\`\n${f.content}\n\`\`\``
+        ).join('\n\n');
+
+        const analysisPrompt = `Eres un auditor de código experto especializado en React, TypeScript y Supabase. Analiza el código REAL proporcionado y genera correcciones específicas.
 
 **Contexto del Commit:**
 - Repositorio: ${codeContext.repository}
 - Branch: ${codeContext.branch}
 - Autor: ${codeContext.author}
 - Mensaje: ${codeContext.message}
-- Archivos modificados: ${filesChanged.join(', ')}
 
-**Instrucciones:**
-1. Identifica problemas de SEGURIDAD (vulnerabilidades, exposición de datos, validación)
-2. Identifica problemas de UX (accesibilidad, performance, experiencia de usuario)
-3. Identifica problemas de CÓDIGO (bugs potenciales, anti-patterns, code smells)
+**Código Real de los Archivos Modificados:**
+${fileDetails || 'No se pudo descargar el contenido de los archivos'}
 
-Para cada problema encontrado, responde en formato JSON con este esquema:
+**Instrucciones CRÍTICAS:**
+1. Analiza ÚNICAMENTE el código real proporcionado arriba
+2. NO inventes ejemplos ni archivos que no existen
+3. Si no hay código para analizar, devuelve un array vacío de correcciones
+4. Identifica problemas de:
+   - Seguridad (XSS, SQL injection, autenticación)
+   - Rendimiento (re-renders innecesarios, memory leaks)
+   - Accesibilidad (ARIA labels, contraste)
+   - Calidad de código (tipos TypeScript, manejo de errores)
+
+**Formato de Respuesta (JSON válido):**
 {
   "corrections": [
     {
       "severity": "critical" | "important" | "suggestion",
-      "file_path": "ruta/del/archivo.tsx",
-      "line_number": 123,
-      "issue_title": "Título corto del problema",
-      "issue_description": "Descripción detallada del problema y por qué es importante",
-      "code_before": "código actual problemático (si aplica)",
-      "code_after": "código sugerido corregido (si aplica)"
+      "file_path": "ruta/exacta/del/archivo.tsx",
+      "line_number": número_de_línea,
+      "issue_title": "Título específico del problema",
+      "issue_description": "Descripción detallada del problema y su impacto",
+      "code_before": "código problemático exacto del archivo",
+      "code_after": "código corregido sugerido"
     }
   ]
 }
 
-Si no encuentras problemas, devuelve: { "corrections": [] }`;
+**SI NO HAY CÓDIGO PARA ANALIZAR, responde:** { "corrections": [] }`;
 
         console.log('🤖 Calling OpenAI GPT-4o-mini for analysis...');
         
@@ -143,7 +190,7 @@ Si no encuentras problemas, devuelve: { "corrections": [] }`;
             messages: [
               { 
                 role: 'system', 
-                content: 'Eres un auditor de código senior especializado en seguridad, UX y mejores prácticas. Respondes solo en formato JSON válido.'
+                content: 'Eres un auditor de código senior especializado en React, TypeScript y Supabase. Analizas ÚNICAMENTE el código proporcionado. NUNCA inventes ejemplos. Respondes solo en formato JSON válido. Si no hay código, devuelves {"corrections": []}.'
               },
               { role: 'user', content: analysisPrompt }
             ],
