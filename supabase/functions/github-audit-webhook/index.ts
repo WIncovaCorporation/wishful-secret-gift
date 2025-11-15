@@ -32,55 +32,85 @@ serve(async (req) => {
       const workflowRun = payload.workflow_run;
       const repository = payload.repository;
 
-      // Parse AI analysis if available
-      let aiAnalysis = null;
-      let parsedCorrections = null;
-      let analysisSummary = null;
+      // Parse DUAL AGENT analysis (Security + UX)
+      let securityAnalysis = null;
+      let uxAnalysis = null;
+      let securityCorrections = [];
+      let uxCorrections = [];
+      let combinedSummary = {
+        security: { critical_count: 0, important_count: 0, suggestion_count: 0, overall_risk: 'unknown' },
+        ux: { critical_count: 0, important_count: 0, suggestion_count: 0, ux_score: 0, revenue_at_risk_daily: 0 },
+        combined_risk_level: 'unknown'
+      };
       
-      if (workflowRun.ai_analysis) {
+      // Process WINCOVA Security Auditor v2.0 analysis
+      if (workflowRun.security_analysis) {
         try {
-          // AI analysis viene como string JSON escapado, parsearlo
-          const aiAnalysisStr = typeof workflowRun.ai_analysis === 'string' 
-            ? workflowRun.ai_analysis 
-            : JSON.stringify(workflowRun.ai_analysis);
+          const securityAnalysisStr = typeof workflowRun.security_analysis === 'string' 
+            ? workflowRun.security_analysis 
+            : JSON.stringify(workflowRun.security_analysis);
           
-          console.log('🤖 Processing WINCOVA Security Auditor v2.0 analysis...');
-          aiAnalysis = JSON.parse(aiAnalysisStr);
+          console.log('🔐 Processing WINCOVA Security Auditor v2.0...');
+          securityAnalysis = JSON.parse(securityAnalysisStr);
           
-          // Validate AI agent
-          if (aiAnalysis.agent && aiAnalysis.agent.includes('WINCOVA')) {
-            console.log(`✅ Agent verified: ${aiAnalysis.agent}`);
-            console.log(`📅 Analysis timestamp: ${aiAnalysis.timestamp}`);
-            
-            // Extract summary
-            analysisSummary = aiAnalysis.summary || {
-              critical_count: 0,
-              important_count: 0,
-              suggestion_count: 0,
-              overall_risk: 'unknown'
-            };
-            
-            console.log(`📊 Summary:`);
-            console.log(`   🔴 Critical: ${analysisSummary.critical_count}`);
-            console.log(`   🟡 Important: ${analysisSummary.important_count}`);
-            console.log(`   🟢 Suggestions: ${analysisSummary.suggestion_count}`);
-            console.log(`   ⚠️ Overall Risk: ${analysisSummary.overall_risk}`);
+          if (securityAnalysis.agent && securityAnalysis.agent.includes('WINCOVA')) {
+            console.log(`✅ Security Agent: ${securityAnalysis.agent}`);
+            combinedSummary.security = securityAnalysis.summary || combinedSummary.security;
+            securityCorrections = securityAnalysis.corrections || [];
+            console.log(`🔐 Security: ${combinedSummary.security.critical_count} critical, ${securityCorrections.length} total`);
           }
-          
-          parsedCorrections = aiAnalysis.corrections || [];
-          console.log(`📝 Found ${parsedCorrections.length} corrections`);
         } catch (e) {
-          console.error('⚠️ Failed to parse AI analysis:', e);
-          const errorMessage = e instanceof Error ? e.message : 'Unknown error';
-          aiAnalysis = { 
-            error: true,
-            parse_error: errorMessage,
-            raw: workflowRun.ai_analysis 
-          };
+          console.error('⚠️ Failed to parse security analysis:', e);
+          securityAnalysis = { error: true, parse_error: e instanceof Error ? e.message : 'Unknown error' };
         }
       }
 
-      // Extract audit data
+      // Process Ultra UX Bot v2.0 analysis
+      if (workflowRun.ux_analysis) {
+        try {
+          const uxAnalysisStr = typeof workflowRun.ux_analysis === 'string' 
+            ? workflowRun.ux_analysis 
+            : JSON.stringify(workflowRun.ux_analysis);
+          
+          console.log('🎨 Processing Ultra UX & Frontline Validation Bot v2.0...');
+          uxAnalysis = JSON.parse(uxAnalysisStr);
+          
+          if (uxAnalysis.agent && uxAnalysis.agent.includes('Ultra UX')) {
+            console.log(`✅ UX Agent: ${uxAnalysis.agent}`);
+            combinedSummary.ux = {
+              critical_count: uxAnalysis.summary?.critical_count || 0,
+              important_count: uxAnalysis.summary?.important_count || 0,
+              suggestion_count: uxAnalysis.summary?.suggestion_count || 0,
+              ux_score: uxAnalysis.summary?.overall_ux_score || 0,
+              revenue_at_risk_daily: uxAnalysis.summary?.revenue_at_risk_daily || 0
+            };
+            uxCorrections = uxAnalysis.corrections || [];
+            console.log(`🎨 UX: ${combinedSummary.ux.critical_count} critical, $${combinedSummary.ux.revenue_at_risk_daily}/day at risk`);
+          }
+        } catch (e) {
+          console.error('⚠️ Failed to parse UX analysis:', e);
+          uxAnalysis = { error: true, parse_error: e instanceof Error ? e.message : 'Unknown error' };
+        }
+      }
+
+      // Calculate combined risk level
+      const totalCritical = combinedSummary.security.critical_count + combinedSummary.ux.critical_count;
+      const totalImportant = combinedSummary.security.important_count + combinedSummary.ux.important_count;
+      
+      if (totalCritical > 0) {
+        combinedSummary.combined_risk_level = 'high';
+      } else if (totalImportant > 2) {
+        combinedSummary.combined_risk_level = 'medium';
+      } else {
+        combinedSummary.combined_risk_level = 'low';
+      }
+
+      console.log(`📊 COMBINED SUMMARY:`);
+      console.log(`   🔐 Security: ${combinedSummary.security.critical_count}C/${combinedSummary.security.important_count}I`);
+      console.log(`   🎨 UX: ${combinedSummary.ux.critical_count}C/${combinedSummary.ux.important_count}I ($${combinedSummary.ux.revenue_at_risk_daily}/day)`);
+      console.log(`   ⚠️ Combined Risk: ${combinedSummary.combined_risk_level.toUpperCase()}`);
+
+      // Extract audit data with DUAL AGENT analysis
       const auditLog = {
         repository: repository.full_name,
         branch: workflowRun.head_branch,
@@ -90,7 +120,11 @@ serve(async (req) => {
         workflow_run_id: workflowRun.id.toString(),
         event_type: workflowRun.event,
         status: workflowRun.conclusion || workflowRun.status,
-        ai_analysis: aiAnalysis,
+        ai_analysis: {
+          security: securityAnalysis,
+          ux: uxAnalysis,
+          combined_summary: combinedSummary
+        },
         audit_data: {
           workflow_url: workflowRun.html_url,
           run_number: workflowRun.run_number,
