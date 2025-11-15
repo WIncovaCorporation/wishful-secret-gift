@@ -1,6 +1,7 @@
 /**
  * Analytics Configuration and Helpers
  * Fix #05: Integrate Google Analytics 4 for user behavior tracking
+ * Test: Webhook con análisis OpenAI en tiempo real activado
  */
 
 // Note: In production, you'll need to:
