@@ -150,10 +150,15 @@ const AdminAuditLogs = () => {
             Informes automáticos de GitHub Actions
           </p>
         </div>
-        <Button onClick={fetchLogs} variant="outline" size="sm">
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Actualizar
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={() => navigate('/admin/corrections')} variant="default">
+            Ver Correcciones AI
+          </Button>
+          <Button onClick={fetchLogs} variant="outline" size="sm">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Actualizar
+          </Button>
+        </div>
       </div>
 
       <Tabs defaultValue="all" className="w-full" onValueChange={(v) => setFilter(v as any)}>
