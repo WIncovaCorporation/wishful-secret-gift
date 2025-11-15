@@ -149,8 +149,20 @@ const Events = () => {
       <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" onClick={() => navigate("/dashboard")}>
-              ← Volver
+            <Button 
+              variant="outline" 
+              onClick={() => navigate("/")}
+              className="gap-2"
+            >
+              <Calendar className="h-4 w-4" />
+              Inicio
+            </Button>
+            <Button 
+              variant="ghost" 
+              onClick={() => navigate("/dashboard")}
+              className="gap-2"
+            >
+              Dashboard
             </Button>
             <h1 className="text-2xl font-bold flex items-center gap-2">
               Mis Eventos
