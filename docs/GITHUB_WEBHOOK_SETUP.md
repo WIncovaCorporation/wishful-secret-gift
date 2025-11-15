@@ -88,38 +88,83 @@ El webhook valida automáticamente cada request usando HMAC-SHA256:
 - **Base de datos**: RLS habilitado, solo admins leen/eliminan
 - **Dashboard**: Protegido por rol, redirección automática
 
-## 📝 Ejemplo de Workflow en GitHub Actions
+## 📝 Workflow Completo de Auditoría WINCOVA
 
-Crea un workflow que se ejecute automáticamente:
+El proyecto incluye un workflow completo y automatizado en `.github/workflows/wincova-audit.yml` que ejecuta:
+
+✅ **Code Quality Analysis** - ESLint & TypeScript checks  
+✅ **Automated Testing** - Suite completa de tests con coverage  
+✅ **Security Scanning** - npm audit & detección de secrets  
+✅ **Build Verification** - Validación de build de producción  
+✅ **Automatic Reporting** - Envío automático de resultados al dashboard  
+
+### 🚀 Setup Rápido
+
+**1. Copia el workflow a tu repositorio:**
+```bash
+mkdir -p .github/workflows
+cp .github/workflows/wincova-audit.yml .github/workflows/
+git add .github/workflows/wincova-audit.yml
+git commit -m "Add WINCOVA automated audit workflow"
+git push
+```
+
+**2. Configura GitHub Secrets** en tu repositorio (Settings → Secrets → Actions):
+- `WINCOVA_WEBHOOK_URL` - **REQUERIDO**: `https://ghbksqyioendvispcseu.supabase.co/functions/v1/github-audit-webhook`
+- `VITE_SUPABASE_URL` - Opcional (para verificación de build)
+- `VITE_SUPABASE_PUBLISHABLE_KEY` - Opcional (para verificación de build)
+- `VITE_SUPABASE_PROJECT_ID` - Opcional (para verificación de build)
+
+**3. El workflow se activará automáticamente en:**
+- Push a `main` o `develop`
+- Pull requests a `main` o `develop`
+- Ejecución manual desde el tab Actions
+
+### 📋 Ejemplo de Workflow Simple
+
+Si prefieres un workflow más básico:
 
 ```yaml
-# .github/workflows/audit.yml
-name: Security Audit
+# .github/workflows/simple-audit.yml
+name: Simple Audit
 
 on:
   push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   audit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
       
-      - name: Run security audit
+      - name: Install & Test
         run: |
-          echo "Running security checks..."
-          npm audit --audit-level=moderate
-          
-      - name: Code quality check
+          npm ci
+          npm test
+      
+      - name: Report to Webhook
+        if: always()
         run: |
-          echo "Running linting..."
-          npm run lint
+          curl -X POST "${{ secrets.WINCOVA_WEBHOOK_URL }}" \
+            -H "Content-Type: application/json" \
+            -H "X-GitHub-Event: workflow_run" \
+            -d '{
+              "workflow_run": {
+                "name": "${{ github.workflow }}",
+                "status": "completed",
+                "conclusion": "${{ job.status }}",
+                "html_url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+              },
+              "repository": {
+                "full_name": "${{ github.repository }}"
+              }
+            }'
 ```
-
-Este workflow automáticamente enviará su estado al webhook cuando se complete.
 
 ## 🧪 Pruebas
 
