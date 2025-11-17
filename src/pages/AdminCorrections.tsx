@@ -93,6 +93,7 @@ export default function AdminCorrections() {
   const [adminNotes, setAdminNotes] = useState("");
   const [showDialog, setShowDialog] = useState(false);
   const [dialogAction, setDialogAction] = useState<"approve" | "reject" | null>(null);
+  const [isApplying, setIsApplying] = useState(false);
 
   useEffect(() => {
     if (isAdmin) {
@@ -192,6 +193,150 @@ ${correction.code_after}
   };
 
   const approvedCount = filterCorrections("approved").length;
+  const pendingCount = filterCorrections("pending").length;
+
+  const handleApproveAll = async () => {
+    const pending = filterCorrections("pending");
+    if (pending.length === 0) return;
+
+    const { error } = await supabase
+      .from("ai_corrections")
+      .update({ 
+        status: "approved",
+        reviewed_by: (await supabase.auth.getUser()).data.user?.id,
+        reviewed_at: new Date().toISOString(),
+      })
+      .eq("status", "pending");
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "No se pudieron aprobar las correcciones",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Aprobadas",
+      description: `${pending.length} correcciones aprobadas exitosamente`,
+    });
+    fetchCorrections();
+  };
+
+  const handleRejectAll = async () => {
+    const pending = filterCorrections("pending");
+    if (pending.length === 0) return;
+
+    const { error } = await supabase
+      .from("ai_corrections")
+      .update({ 
+        status: "rejected",
+        reviewed_by: (await supabase.auth.getUser()).data.user?.id,
+        reviewed_at: new Date().toISOString(),
+      })
+      .eq("status", "pending");
+
+    if (error) {
+      toast({
+        title: "Error",
+        description: "No se pudieron rechazar las correcciones",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Rechazadas",
+      description: `${pending.length} correcciones rechazadas`,
+    });
+    fetchCorrections();
+  };
+
+  const handleCopyAll = () => {
+    const pending = filterCorrections("pending");
+    const text = pending.map(c => `# ${c.issue_title}
+**Archivo:** ${c.file_path}${c.line_number ? ` (línea ${c.line_number})` : ''}
+**Severidad:** ${c.severity}
+
+## Descripción
+${c.issue_description}
+
+${c.code_before ? `## Código Actual
+\`\`\`
+${c.code_before}
+\`\`\`
+` : ''}
+
+${c.code_after ? `## Código Sugerido
+\`\`\`
+${c.code_after}
+\`\`\`
+` : ''}
+---
+`).join('\n\n');
+
+    navigator.clipboard.writeText(text);
+    toast({
+      title: "Copiado",
+      description: `${pending.length} correcciones copiadas al portapapeles`,
+    });
+  };
+
+  const handleApplyCorrections = async () => {
+    const approved = filterCorrections("approved");
+    if (approved.length === 0) {
+      toast({
+        title: "Sin correcciones",
+        description: "No hay correcciones aprobadas para aplicar",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsApplying(true);
+    let appliedCount = 0;
+    let errorCount = 0;
+
+    for (const correction of approved) {
+      if (!correction.code_before || !correction.code_after || !correction.line_number) {
+        errorCount++;
+        continue;
+      }
+
+      try {
+        // Aquí el usuario deberá aplicar manualmente cada corrección
+        // Por ahora solo marcamos como "applied" y mostramos la info
+        const { error } = await supabase
+          .from("ai_corrections")
+          .update({ 
+            status: "applied",
+            applied_at: new Date().toISOString(),
+          })
+          .eq("id", correction.id);
+
+        if (!error) {
+          appliedCount++;
+        } else {
+          errorCount++;
+        }
+      } catch (e) {
+        errorCount++;
+      }
+    }
+
+    setIsApplying(false);
+    
+    toast({
+      title: appliedCount > 0 ? "Correcciones marcadas" : "Error",
+      description: appliedCount > 0 
+        ? `${appliedCount} correcciones marcadas como aplicadas. ${errorCount > 0 ? `${errorCount} fallaron.` : ''}`
+        : "No se pudieron marcar las correcciones",
+      variant: errorCount > 0 ? "destructive" : "default",
+    });
+
+    fetchCorrections();
+  };
 
   if (loading) {
     return <div className="flex items-center justify-center min-h-screen">Cargando...</div>;
@@ -245,12 +390,50 @@ ${correction.code_after}
             Revisa y aprueba las correcciones sugeridas por OpenAI
           </p>
         </div>
-        {approvedCount > 0 && (
-          <Button size="lg" className="gap-2">
-            <CheckCheck className="h-5 w-5" />
-            Aplicar {approvedCount} Correcciones
-          </Button>
-        )}
+        <div className="flex gap-2">
+          {pendingCount > 0 && (
+            <>
+              <Button 
+                variant="outline" 
+                size="lg" 
+                className="gap-2"
+                onClick={handleApproveAll}
+              >
+                <CheckCircle className="h-5 w-5" />
+                Aprobar Todas ({pendingCount})
+              </Button>
+              <Button 
+                variant="outline" 
+                size="lg" 
+                className="gap-2"
+                onClick={handleRejectAll}
+              >
+                <XCircle className="h-5 w-5" />
+                Rechazar Todas
+              </Button>
+              <Button 
+                variant="outline" 
+                size="lg" 
+                className="gap-2"
+                onClick={handleCopyAll}
+              >
+                <Copy className="h-5 w-5" />
+                Copiar Todas
+              </Button>
+            </>
+          )}
+          {approvedCount > 0 && (
+            <Button 
+              size="lg" 
+              className="gap-2"
+              onClick={handleApplyCorrections}
+              disabled={isApplying}
+            >
+              <CheckCheck className="h-5 w-5" />
+              {isApplying ? "Aplicando..." : `Aplicar ${approvedCount} Correcciones`}
+            </Button>
+          )}
+        </div>
       </div>
 
       <Tabs value={selectedTab} onValueChange={setSelectedTab}>
