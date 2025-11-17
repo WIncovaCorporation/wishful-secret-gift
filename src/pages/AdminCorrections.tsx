@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useUserRole } from "@/hooks/useUserRole";
 import { Button } from "@/components/ui/button";
@@ -14,7 +15,10 @@ import {
   Info,
   AlertCircle,
   Clock,
-  CheckCheck
+  CheckCheck,
+  ArrowLeft,
+  Home,
+  LayoutDashboard
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -80,6 +84,7 @@ const getStatusIcon = (status: string) => {
 };
 
 export default function AdminCorrections() {
+  const navigate = useNavigate();
   const { isAdmin, loading } = useUserRole();
   const { toast } = useToast();
   const [corrections, setCorrections] = useState<AICorrection[]>([]);
@@ -202,6 +207,37 @@ ${correction.code_after}
 
   return (
     <div className="container mx-auto py-8">
+      {/* Barra de navegación */}
+      <div className="flex items-center gap-2 mb-6">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate(-1)}
+          className="gap-2"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Regresar
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate("/dashboard")}
+          className="gap-2"
+        >
+          <LayoutDashboard className="h-4 w-4" />
+          Dashboard
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate("/")}
+          className="gap-2"
+        >
+          <Home className="h-4 w-4" />
+          Inicio
+        </Button>
+      </div>
+
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold">Correcciones AI</h1>
