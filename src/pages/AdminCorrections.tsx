@@ -314,48 +314,16 @@ ${c.code_after}
       return;
     }
 
-    setIsApplying(true);
-    let appliedCount = 0;
-    let errorCount = 0;
-
-    for (const correction of approved) {
-      if (!correction.code_before || !correction.code_after || !correction.line_number) {
-        errorCount++;
-        continue;
-      }
-
-      try {
-        // Aquí el usuario deberá aplicar manualmente cada corrección
-        // Por ahora solo marcamos como "applied" y mostramos la info
-        const { error } = await supabase
-          .from("ai_corrections")
-          .update({ 
-            status: "applied",
-            applied_at: new Date().toISOString(),
-          })
-          .eq("id", correction.id);
-
-        if (!error) {
-          appliedCount++;
-        } else {
-          errorCount++;
-        }
-      } catch (e) {
-        errorCount++;
-      }
-    }
-
-    setIsApplying(false);
+    // Copiar comando para el chat de Lovable
+    const message = `Aplica automáticamente las ${approved.length} correcciones aprobadas. Lee la API GET /functions/v1/get-approved-corrections, aplica cada corrección al código usando lov-line-replace, y marca como aplicadas llamando a POST /functions/v1/mark-corrections-applied con los IDs.`;
+    
+    navigator.clipboard.writeText(message);
     
     toast({
-      title: appliedCount > 0 ? "Correcciones marcadas" : "Error",
-      description: appliedCount > 0 
-        ? `${appliedCount} correcciones marcadas como aplicadas. ${errorCount > 0 ? `${errorCount} fallaron.` : ''}`
-        : "No se pudieron marcar las correcciones",
-      variant: errorCount > 0 ? "destructive" : "default",
+      title: "✅ Comando copiado al portapapeles",
+      description: `Pega el comando en el chat de Lovable para aplicar ${approved.length} correcciones automáticamente`,
+      duration: 8000,
     });
-
-    fetchCorrections();
   };
 
   if (loading) {
@@ -445,12 +413,11 @@ ${c.code_after}
           {approvedCount > 0 && (
             <Button 
               size="lg" 
-              className="gap-2"
+              className="gap-2 bg-primary hover:bg-primary/90"
               onClick={handleApplyCorrections}
-              disabled={isApplying}
             >
               <CheckCheck className="h-5 w-5" />
-              {isApplying ? "Aplicando..." : `Aplicar ${approvedCount} Correcciones`}
+              Copiar Comando para Aplicar {approvedCount} Correcciones
             </Button>
           )}
         </div>
