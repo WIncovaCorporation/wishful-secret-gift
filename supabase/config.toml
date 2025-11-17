@@ -29,3 +29,9 @@ verify_jwt = false
 
 [functions.track-affiliate-click]
 verify_jwt = false
+
+[functions.get-approved-corrections]
+verify_jwt = false
+
+[functions.mark-corrections-applied]
+verify_jwt = false
