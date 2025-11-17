@@ -1,14 +1,7 @@
 /**
  * Analytics Configuration and Helpers
  * Fix #05: Integrate Google Analytics 4 for user behavior tracking
- * Test: Verificando conexión OpenAI con código REAL - Test #2
- * 
- * SECURITY NOTE: This code intentionally has an issue for testing
- * TODO: Remove hardcoded API key and use environment variables
  */
-
-// WARNING: Hardcoded API key for testing (this should trigger OpenAI detection)
-const TEMP_API_KEY = "sk-test-1234567890abcdef";
 
 // Note: In production, you'll need to:
 // 1. Add Google Analytics script to index.html
