@@ -21,6 +21,7 @@ import {
   LayoutDashboard
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
+import { z } from "zod";
 import {
   Dialog,
   DialogContent,
@@ -29,6 +30,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+
+// Schema de validación para notas de admin
+const adminNotesSchema = z.string()
+  .max(1000, "Las notas no pueden exceder 1000 caracteres")
+  .trim()
+  .optional();
 
 interface AICorrection {
   id: string;
@@ -157,35 +164,48 @@ ${correction.code_after}
   const handleAction = async () => {
     if (!selectedCorrection || !dialogAction) return;
 
-    const { error } = await supabase
-      .from("ai_corrections")
-      .update({
-        status: dialogAction === "approve" ? "approved" : "rejected",
-        admin_notes: adminNotes || null,
-        reviewed_by: (await supabase.auth.getUser()).data.user?.id,
-        reviewed_at: new Date().toISOString(),
-      })
-      .eq("id", selectedCorrection.id);
+    // Validar y sanitizar las notas de admin
+    try {
+      const sanitizedNotes = adminNotes ? adminNotesSchema.parse(adminNotes) : null;
 
-    if (error) {
+      const { error } = await supabase
+        .from("ai_corrections")
+        .update({
+          status: dialogAction === "approve" ? "approved" : "rejected",
+          admin_notes: sanitizedNotes || null,
+          reviewed_by: (await supabase.auth.getUser()).data.user?.id,
+          reviewed_at: new Date().toISOString(),
+        })
+        .eq("id", selectedCorrection.id);
+
+      if (error) {
+        toast({
+          title: "Error",
+          description: `No se pudo ${dialogAction === "approve" ? "aprobar" : "rechazar"} la corrección`,
+          variant: "destructive",
+        });
+        return;
+      }
+
       toast({
-        title: "Error",
-        description: `No se pudo ${dialogAction === "approve" ? "aprobar" : "rechazar"} la corrección`,
-        variant: "destructive",
+        title: dialogAction === "approve" ? "Aprobada" : "Rechazada",
+        description: `Corrección ${dialogAction === "approve" ? "aprobada" : "rechazada"} exitosamente`,
       });
-      return;
+
+      setShowDialog(false);
+      setSelectedCorrection(null);
+      setAdminNotes("");
+      setDialogAction(null);
+      fetchCorrections();
+    } catch (validationError) {
+      if (validationError instanceof z.ZodError) {
+        toast({
+          title: "Error de validación",
+          description: validationError.errors[0]?.message || "Las notas contienen errores",
+          variant: "destructive",
+        });
+      }
     }
-
-    toast({
-      title: dialogAction === "approve" ? "Aprobada" : "Rechazada",
-      description: `Corrección ${dialogAction === "approve" ? "aprobada" : "rechazada"} exitosamente`,
-    });
-
-    setShowDialog(false);
-    setSelectedCorrection(null);
-    setAdminNotes("");
-    setDialogAction(null);
-    fetchCorrections();
   };
 
   const filterCorrections = (status: string) => {
@@ -567,7 +587,12 @@ ${c.code_after}
                 onChange={(e) => setAdminNotes(e.target.value)}
                 placeholder="Agrega notas sobre esta decisión..."
                 rows={3}
+                maxLength={1000}
+                aria-describedby="notes-hint"
               />
+              <p id="notes-hint" className="text-xs text-muted-foreground mt-1">
+                Máximo 1000 caracteres ({adminNotes.length}/1000)
+              </p>
             </div>
           </div>
 
