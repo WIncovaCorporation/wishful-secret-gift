@@ -1,6 +1,20 @@
-# Integración de Agentes AI para Aplicar Correcciones
+# Integración de Agentes AI para Aplicar Correcciones Automáticas
 
-Este documento explica cómo **cualquier agente AI** (Lovable, Replit, Claude, GPT, etc.) puede leer y aplicar automáticamente las correcciones aprobadas en el sistema.
+> **Última actualización:** 2025-11-17  
+> **Versión:** 2.0.0  
+> **Sistema:** Wincova - Correcciones Automáticas
+
+---
+
+## 📚 Documentación Relacionada
+
+- **Documentación Completa:** [SISTEMA_CORRECCIONES_AUTOMATICAS.md](./SISTEMA_CORRECCIONES_AUTOMATICAS.md)
+- **Guía Rápida:** [QUICK_START_CORRECCIONES.md](./QUICK_START_CORRECCIONES.md)
+- **Flujo Visual:** [FLUJO_VISUAL_CORRECCIONES.md](./FLUJO_VISUAL_CORRECCIONES.md)
+
+---
+
+Este documento explica cómo **cualquier agente AI** (Lovable, Replit, Claude, GPT, Cursor, etc.) puede leer y aplicar automáticamente las correcciones aprobadas en el sistema.
 
 ## 🎯 Objetivo
 
