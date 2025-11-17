@@ -45,18 +45,18 @@ interface AICorrection {
   audit_log_id: string;
 }
 
-const getSeverityIcon = (severity: string) => {
+const getSeverityIcon = (severity: AICorrection['severity']) => {
   switch (severity) {
     case "critical":
-      return <AlertCircle className="h-5 w-5 text-destructive" />;
+      return <AlertCircle className="h-5 w-5 text-destructive" aria-label="Severidad crítica" />;
     case "important":
-      return <AlertTriangle className="h-5 w-5 text-warning" />;
+      return <AlertTriangle className="h-5 w-5 text-warning" aria-label="Severidad importante" />;
     default:
-      return <Info className="h-5 w-5 text-info" />;
+      return <Info className="h-5 w-5 text-info" aria-label="Sugerencia" />;
   }
 };
 
-const getSeverityBadge = (severity: string) => {
+const getSeverityBadge = (severity: AICorrection['severity']) => {
   const variants = {
     critical: "destructive",
     important: "default",
@@ -70,7 +70,7 @@ const getSeverityBadge = (severity: string) => {
   );
 };
 
-const getStatusIcon = (status: string) => {
+const getStatusIcon = (status: AICorrection['status']) => {
   switch (status) {
     case "approved":
       return <CheckCircle className="h-4 w-4 text-success" />;
