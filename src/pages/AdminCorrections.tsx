@@ -18,7 +18,9 @@ import {
   CheckCheck,
   ArrowLeft,
   Home,
-  LayoutDashboard
+  LayoutDashboard,
+  Square,
+  CheckSquare
 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { z } from "zod";
@@ -101,6 +103,7 @@ export default function AdminCorrections() {
   const [showDialog, setShowDialog] = useState(false);
   const [dialogAction, setDialogAction] = useState<"approve" | "reject" | null>(null);
   const [isApplying, setIsApplying] = useState(false);
+  const [selectedForApply, setSelectedForApply] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (isAdmin) {
@@ -303,25 +306,47 @@ ${c.code_after}
     });
   };
 
+  const toggleSelectCorrection = (correctionId: string) => {
+    setSelectedForApply(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(correctionId)) {
+        newSet.delete(correctionId);
+      } else {
+        newSet.add(correctionId);
+      }
+      return newSet;
+    });
+  };
+
+  const selectAllInTab = () => {
+    const tabCorrections = filterCorrections(selectedTab);
+    setSelectedForApply(new Set(tabCorrections.map(c => c.id)));
+  };
+
+  const clearSelection = () => {
+    setSelectedForApply(new Set());
+  };
+
   const handleApplyCorrections = async () => {
-    const approved = filterCorrections("approved");
-    if (approved.length === 0) {
+    if (selectedForApply.size === 0) {
       toast({
-        title: "Sin correcciones",
-        description: "No hay correcciones aprobadas para aplicar",
+        title: "Sin correcciones seleccionadas",
+        description: "Selecciona al menos una corrección para aplicar",
         variant: "destructive",
       });
       return;
     }
 
+    const selectedCorrections = corrections.filter(c => selectedForApply.has(c.id));
+    
     // Copiar comando para el chat de Lovable
-    const message = `Aplica automáticamente las ${approved.length} correcciones aprobadas. Lee la API GET /functions/v1/get-approved-corrections, aplica cada corrección al código usando lov-line-replace, y marca como aplicadas llamando a POST /functions/v1/mark-corrections-applied con los IDs.`;
+    const message = `Aplica automáticamente las ${selectedForApply.size} correcciones seleccionadas. Los IDs son: ${Array.from(selectedForApply).join(', ')}. Lee la API GET /functions/v1/get-approved-corrections, aplica cada corrección al código usando lov-line-replace, y marca como aplicadas llamando a POST /functions/v1/mark-corrections-applied con estos IDs.`;
     
     navigator.clipboard.writeText(message);
     
     toast({
       title: "✅ Comando copiado al portapapeles",
-      description: `Pega el comando en el chat de Lovable para aplicar ${approved.length} correcciones automáticamente`,
+      description: `Pega el comando en el chat de Lovable para aplicar ${selectedForApply.size} correcciones automáticamente`,
       duration: 8000,
     });
   };
@@ -377,8 +402,35 @@ ${c.code_after}
           <p className="text-muted-foreground">
             Revisa y aprueba las correcciones sugeridas por OpenAI
           </p>
+          {selectedForApply.size > 0 && (
+            <p className="text-sm font-medium text-primary mt-2">
+              {selectedForApply.size} corrección(es) seleccionada(s) para aplicar
+            </p>
+          )}
         </div>
         <div className="flex gap-2">
+          {selectedForApply.size > 0 && (
+            <>
+              <Button 
+                variant="default" 
+                size="lg" 
+                className="gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
+                onClick={handleApplyCorrections}
+              >
+                <CheckCheck className="h-5 w-5" />
+                Aplicar Seleccionadas ({selectedForApply.size})
+              </Button>
+              <Button 
+                variant="outline" 
+                size="lg" 
+                className="gap-2"
+                onClick={clearSelection}
+              >
+                <XCircle className="h-5 w-5" />
+                Limpiar Selección
+              </Button>
+            </>
+          )}
           {pendingCount > 0 && (
             <>
               <Button 
@@ -410,16 +462,15 @@ ${c.code_after}
               </Button>
             </>
           )}
-          {approvedCount > 0 && (
-            <Button 
-              size="lg" 
-              className="gap-2 bg-primary hover:bg-primary/90"
-              onClick={handleApplyCorrections}
-            >
-              <CheckCheck className="h-5 w-5" />
-              Copiar Comando para Aplicar {approvedCount} Correcciones
-            </Button>
-          )}
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="gap-2"
+            onClick={selectAllInTab}
+          >
+            <CheckSquare className="h-4 w-4" />
+            Seleccionar Todas en {selectedTab === 'pending' ? 'Pendientes' : selectedTab === 'approved' ? 'Aprobadas' : selectedTab === 'rejected' ? 'Rechazadas' : 'Aplicadas'}
+          </Button>
         </div>
       </div>
 
@@ -450,6 +501,19 @@ ${c.code_after}
             filterCorrections(selectedTab).map((correction) => (
               <Card key={correction.id} className="p-6">
                 <div className="flex items-start gap-4">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 mt-1"
+                    onClick={() => toggleSelectCorrection(correction.id)}
+                  >
+                    {selectedForApply.has(correction.id) ? (
+                      <CheckSquare className="h-5 w-5 text-primary" />
+                    ) : (
+                      <Square className="h-5 w-5 text-muted-foreground" />
+                    )}
+                  </Button>
+                  
                   <div className="mt-1">{getSeverityIcon(correction.severity)}</div>
                   
                   <div className="flex-1 space-y-3">
