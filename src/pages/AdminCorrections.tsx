@@ -32,6 +32,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 // Schema de validación para notas de admin
 const adminNotesSchema = z.string()
@@ -104,6 +111,7 @@ export default function AdminCorrections() {
   const [dialogAction, setDialogAction] = useState<"approve" | "reject" | null>(null);
   const [isApplying, setIsApplying] = useState(false);
   const [selectedForApply, setSelectedForApply] = useState<Set<string>>(new Set());
+  const [severityFilter, setSeverityFilter] = useState<string>("all");
 
   useEffect(() => {
     if (isAdmin) {
@@ -212,7 +220,13 @@ ${correction.code_after}
   };
 
   const filterCorrections = (status: string) => {
-    return corrections.filter((c) => c.status === status);
+    let filtered = corrections.filter((c) => c.status === status);
+    
+    if (severityFilter !== "all") {
+      filtered = filtered.filter((c) => c.severity === severityFilter);
+    }
+    
+    return filtered;
   };
 
   const approvedCount = filterCorrections("approved").length;
@@ -397,7 +411,7 @@ ${c.code_after}
       </div>
 
       <div className="flex items-center justify-between mb-8">
-        <div>
+        <div className="flex-1">
           <h1 className="text-3xl font-bold">Correcciones AI</h1>
           <p className="text-muted-foreground">
             Revisa y aprueba las correcciones sugeridas por OpenAI
@@ -407,6 +421,49 @@ ${c.code_after}
               {selectedForApply.size} corrección(es) seleccionada(s) para aplicar
             </p>
           )}
+          
+          {/* Filtro de severidad */}
+          <div className="flex items-center gap-2 mt-4">
+            <span className="text-sm font-medium">Filtrar por severidad:</span>
+            <Select value={severityFilter} onValueChange={setSeverityFilter}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Todas" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas</SelectItem>
+                <SelectItem value="critical">
+                  <div className="flex items-center gap-2">
+                    <AlertCircle className="h-4 w-4 text-destructive" />
+                    Críticas
+                  </div>
+                </SelectItem>
+                <SelectItem value="important">
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle className="h-4 w-4 text-warning" />
+                    Importantes
+                  </div>
+                </SelectItem>
+                <SelectItem value="suggestion">
+                  <div className="flex items-center gap-2">
+                    <Info className="h-4 w-4 text-info" />
+                    Sugerencias
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+            
+            {severityFilter !== "all" && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSeverityFilter("all")}
+                className="gap-1"
+              >
+                <XCircle className="h-4 w-4" />
+                Limpiar filtro
+              </Button>
+            )}
+          </div>
         </div>
         <div className="flex gap-2">
           {selectedForApply.size > 0 && (
