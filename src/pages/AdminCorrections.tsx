@@ -89,13 +89,13 @@ const getSeverityBadge = (severity: AICorrection['severity']) => {
 const getStatusIcon = (status: AICorrection['status']) => {
   switch (status) {
     case "approved":
-      return <CheckCircle className="h-4 w-4 text-success" />;
+      return <CheckCircle className="h-4 w-4 text-success" aria-label="Aprobado" />;
     case "rejected":
-      return <XCircle className="h-4 w-4 text-destructive" />;
+      return <XCircle className="h-4 w-4 text-destructive" aria-label="Rechazado" />;
     case "applied":
-      return <CheckCheck className="h-4 w-4 text-success" />;
+      return <CheckCheck className="h-4 w-4 text-success" aria-label="Aplicado" />;
     default:
-      return <Clock className="h-4 w-4 text-muted-foreground" />;
+      return <Clock className="h-4 w-4 text-muted-foreground" aria-label="Pendiente" />;
   }
 };
 
