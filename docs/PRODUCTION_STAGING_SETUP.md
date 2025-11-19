@@ -1,11 +1,21 @@
 # Configuración de Ambientes: Producción y Staging
 
+## 🔗 REPOSITORIO OFICIAL
+**GitHub Repository**: https://github.com/WIncovaCorporation/wishful-secret-gift
+
 ## 📋 RESUMEN EJECUTIVO
 
 Este documento explica cómo configurar **dos ambientes automáticos** para Winkova:
 
-1. **PRODUCCIÓN** (`app.winkova.com`) - Solo código aprobado y probado
+1. **PRODUCCIÓN** (dominio temporal Vercel) - Solo código aprobado y probado
 2. **STAGING/PREVIEW** - Pruebas automáticas de cada cambio
+
+**⚠️ IMPORTANTE - DOMINIO TEMPORAL:**
+- **Backend**: Permanece en Lovable Cloud (NO migrar sin autorización)
+- **Dominio de producción**: Pendiente de definición por el propietario
+- **Dominio temporal**: Usar URL de Vercel (ej: `wincova-platform.vercel.app`)
+- **NO configurar dominio custom** hasta recibir confirmación del propietario
+- **Acceso**: Propietario debe ser OWNER en Vercel y GitHub
 
 **Resultado final:** Cada cambio genera automáticamente una URL de prueba. Solo los cambios aprobados llegan a producción.
 
@@ -21,8 +31,12 @@ Este documento explica cómo configurar **dos ambientes automáticos** para Wink
 
 2. **Importar proyecto:**
    - Click en "Add New..." → "Project"
-   - Buscar el repositorio: `winkova-giftapp` (o como se llame)
+   - Buscar el repositorio: `WIncovaCorporation/wishful-secret-gift`
    - Click en "Import"
+   
+   **⚠️ IMPORTANTE:**
+   - El propietario debe tener rol de OWNER en Vercel
+   - Todas las integraciones deben estar bajo la cuenta/organización del propietario
 
 3. **Configurar el proyecto:**
 
@@ -71,31 +85,33 @@ Este documento explica cómo configurar **dos ambientes automáticos** para Wink
 5. **Deploy:**
    - Click en "Deploy"
    - Esperar 2-3 minutos
-   - ✅ Tu app estará en una URL temporal de Vercel
+   - ✅ Tu app estará en una URL temporal de Vercel (ej: `wincova-platform.vercel.app`)
 
 ---
 
-### PASO 2: Configurar Dominio Custom (10 minutos)
+### PASO 2: Dominio Custom (PENDIENTE DE CONFIRMACIÓN)
+
+**⚠️ NO CONFIGURAR TODAVÍA - ESPERAR INSTRUCCIONES DEL PROPIETARIO**
+
+Por ahora, usar el dominio temporal de Vercel para todos los ambientes.
+
+**Cuando el propietario confirme el subdominio definitivo:**
 
 1. **En Vercel:**
    - Ir a Project Settings → Domains
    - Click en "Add Domain"
-   - Escribir: `app.winkova.com`
+   - Escribir el subdominio confirmado (ej: `app.winkova.com`)
    - Click en "Add"
 
-2. **Vercel te dará un registro CNAME:**
+2. **Vercel proporcionará registros DNS:**
    ```
-   CNAME app.winkova.com → cname.vercel-dns.com
+   CNAME [subdominio] → cname.vercel-dns.com
    ```
 
-3. **En SiteGround (tu proveedor de dominio):**
+3. **En SiteGround:**
    - Login a SiteGround
    - Ir a: Sitios Web → Dominios → winkova.com → DNS Zone Editor
-   - Añadir nuevo registro:
-     - **Type:** CNAME
-     - **Name:** app
-     - **Value:** cname.vercel-dns.com
-     - **TTL:** 3600 (1 hora)
+   - Añadir registro CNAME proporcionado por Vercel
    - Guardar cambios
 
 4. **Esperar propagación DNS:**
@@ -104,8 +120,7 @@ Este documento explica cómo configurar **dos ambientes automáticos** para Wink
 
 5. **Verificar SSL:**
    - Vercel automáticamente genera certificado SSL/HTTPS
-   - Cuando el dominio esté activo, verás "SSL: Active" en Vercel
-   - Tu app estará disponible en: `https://app.winkova.com`
+   - Confirmar "SSL: Active" en Vercel
 
 ---
 
@@ -115,12 +130,13 @@ Este documento explica cómo configurar **dos ambientes automáticos** para Wink
 
 #### 🟢 **Production (main branch)**
 - **Trigger:** Cada push a `main`
-- **URL:** `app.winkova.com`
+- **URL:** Dominio temporal Vercel (ej: `wincova-platform.vercel.app`)
 - **Uso:** Solo código aprobado y probado
+- **Nota:** Cuando se configure dominio custom, cambiará a la URL definitiva
 
 #### 🟡 **Preview/Staging (feature branches)**
 - **Trigger:** Cada push a cualquier otro branch
-- **URL:** Auto-generada por Vercel (ej: `app-winkova-git-feature-x-team.vercel.app`)
+- **URL:** Auto-generada por Vercel (ej: `wishful-secret-gift-git-feature-x.vercel.app`)
 - **Uso:** Pruebas y desarrollo
 
 #### 🔵 **Pull Requests**
