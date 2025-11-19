@@ -162,7 +162,7 @@ const HowItWorks = () => {
 
         {/* FAQ */}
         <div className="space-y-6 mb-12">
-          <h2 className="text-2xl font-bold">❓ FAQ</h2>
+          <h2 className="text-2xl font-bold">❓ {t("howItWorks.faqTitle")}</h2>
           
           <div className="bg-card border rounded-lg p-6">
             <h3 className="font-bold mb-2">{t("howItWorks.faqExpensive")}</h3>
