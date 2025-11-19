@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, CheckCircle, XCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle, XCircle, Gift } from "lucide-react";
 import Footer from "@/components/Footer";
 import { useLanguage } from "@/contexts/LanguageContext";
+import LanguageSelector from "@/components/LanguageSelector";
 
 const HowItWorks = () => {
   const navigate = useNavigate();
@@ -10,18 +11,33 @@ const HowItWorks = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header with Back Button */}
+      {/* Header with Logo, Back Button and Language Selector */}
       <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="container mx-auto px-4 py-3">
-          <Button 
-            variant="ghost" 
-            onClick={() => navigate(-1)}
-            className="gap-2"
-            aria-label={t("howItWorks.backButton")}
-          >
-            <ArrowLeft className="w-4 h-4" />
-            {t("howItWorks.backButton")}
-          </Button>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Button 
+                variant="ghost" 
+                onClick={() => navigate("/")}
+                className="gap-2"
+                aria-label="Home"
+              >
+                <Gift className="w-5 h-5 text-primary" />
+                <span className="font-semibold">GiftApp</span>
+              </Button>
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => navigate(-1)}
+                className="gap-2"
+                aria-label={t("howItWorks.backButton")}
+              >
+                <ArrowLeft className="w-4 h-4" />
+                {t("howItWorks.backButton")}
+              </Button>
+            </div>
+            <LanguageSelector />
+          </div>
         </div>
       </header>
 
