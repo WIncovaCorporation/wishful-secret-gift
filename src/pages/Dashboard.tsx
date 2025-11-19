@@ -173,7 +173,7 @@ const Dashboard = () => {
         {/* Quick Actions */}
         <div className="mb-8" data-tour="quick-actions">
           <h2 className="text-2xl font-bold mb-4">{t("dashboard.quickActions")}</h2>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <Button
               data-tour="create-list"
               onClick={() => navigate("/lists")}
@@ -215,7 +215,7 @@ const Dashboard = () => {
         </div>
 
         {/* Marketplace & Affiliate Section */}
-        <div className="mb-8 grid sm:grid-cols-2 gap-4">
+        <div className="mb-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Card 
             className="shadow-medium hover:shadow-large transition-all cursor-pointer hover:scale-105 active:scale-95"
             onClick={() => navigate("/marketplace")}
@@ -254,7 +254,7 @@ const Dashboard = () => {
         {/* Stats Overview */}
         <div className="mb-8" data-tour="stats-overview">
           <h2 className="text-2xl font-bold mb-4">{t("dashboard.overview")}</h2>
-          <div className="grid sm:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             <StatsCard
               icon={<Gift className="w-8 h-8" />}
               title={t("dashboard.myLists")}

@@ -50,28 +50,28 @@ export const ProductCard = ({ product }: ProductCardProps) => {
 
   return (
     <Card className="overflow-hidden hover:shadow-lg transition-all">
-      <div className="flex flex-col sm:flex-row gap-4 p-4">
-        {/* Product Image */}
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 p-3 sm:p-4">
+        {/* Product Image - Centrada en móvil */}
         <div className="flex-shrink-0 mx-auto sm:mx-0">
           <img
             src={productImage}
             alt={product.name}
-            className="w-[150px] h-[150px] object-cover rounded-lg border border-border"
+            className="w-32 h-32 sm:w-36 sm:h-36 md:w-40 md:h-40 object-cover rounded-lg border border-border"
             onError={(e) => {
               e.currentTarget.src = `https://placehold.co/150x150/e5e7eb/6b7280?text=${encodeURIComponent(product.name.slice(0, 20))}`;
             }}
           />
         </div>
 
-        {/* Product Info */}
+        {/* Product Info - Apilada en móvil */}
         <div className="flex-1 flex flex-col gap-2 min-w-0">
           {/* Product Name */}
-          <h4 className="font-semibold text-base leading-tight line-clamp-2">
+          <h4 className="font-semibold text-sm sm:text-base leading-tight line-clamp-2">
             {product.name}
           </h4>
 
           {/* Price */}
-          <div className="text-2xl font-bold text-primary">
+          <div className="text-xl sm:text-2xl font-bold text-primary">
             {formatPrice(product.price)}
           </div>
 
@@ -100,24 +100,24 @@ export const ProductCard = ({ product }: ProductCardProps) => {
 
           {/* Store Badge */}
           <div>
-            <Badge className={`${storeColor} rounded-full`}>
+            <Badge className={`${storeColor} rounded-full text-xs`}>
               {product.store}
             </Badge>
           </div>
 
           {/* Reason */}
           {product.reason && (
-            <p className="text-sm text-muted-foreground line-clamp-2">
+            <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">
               {product.reason}
             </p>
           )}
 
-          {/* Action Buttons */}
+          {/* Action Buttons - Stack en móvil */}
           <div className="flex flex-col sm:flex-row gap-2 mt-auto pt-2">
             <Button
               variant="outline"
-              size="sm"
-              className="flex-1"
+              size="touch"
+              className="sm:size-sm flex-1"
               onClick={() => window.open(product.link, "_blank")}
             >
               <ExternalLink className="w-4 h-4 mr-2" />
