@@ -7,7 +7,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, ExternalLink, Plus } from "lucide-react";
+import { ShoppingCart, ExternalLink, Plus, Info } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { AddToListDropdown } from "./AddToListDropdown";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -30,6 +31,7 @@ interface ProductPreviewModalProps {
 export const ProductPreviewModal = ({ isOpen, onClose, product }: ProductPreviewModalProps) => {
   const [isAdded, setIsAdded] = useState(false);
   const [isGeneratingLink, setIsGeneratingLink] = useState(false);
+  const { t } = useLanguage();
 
   const productForList = {
     id: `rec-${Date.now()}-${Math.random()}`,

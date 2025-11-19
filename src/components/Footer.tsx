@@ -47,6 +47,15 @@ const Footer = () => {
                     {language === 'es' ? 'Política de Privacidad' : 'Privacy Policy'}
                   </Link>
                 </li>
+                <li>
+                  <Link 
+                    to="/how-it-works" 
+                    className="text-sm text-muted-foreground hover:text-primary transition-colors"
+                    aria-label={language === 'es' ? 'Cómo funciona GiftApp' : 'How GiftApp works'}
+                  >
+                    {language === 'es' ? 'Cómo Funciona' : 'How It Works'}
+                  </Link>
+                </li>
               </ul>
             </nav>
           </div>

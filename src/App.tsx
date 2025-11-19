@@ -20,6 +20,7 @@ import GroupAssignments from "./pages/GroupAssignments";
 import Messages from "./pages/Messages";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
+import HowItWorks from "./pages/HowItWorks";
 import NotFound from "./pages/NotFound";
 import RolesTest from "./pages/RolesTest";
 import Pricing from "./pages/Pricing";
@@ -55,6 +56,7 @@ const App = () => (
                 <Route path="/events" element={<Events />} />
                 <Route path="/terms" element={<Terms />} />
                 <Route path="/privacy" element={<Privacy />} />
+                <Route path="/how-it-works" element={<HowItWorks />} />
           <Route path="/roles-test" element={<RolesTest />} />
           <Route path="/pricing" element={<Pricing />} />
           <Route path="/marketplace" element={<Marketplace />} />
