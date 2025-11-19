@@ -143,6 +143,26 @@ export const ProductPreviewModal = ({ isOpen, onClose, product }: ProductPreview
             </p>
           </div>
 
+          {/* Affiliate Disclosure */}
+          <div className="flex items-start gap-2 p-3 bg-muted/30 rounded-lg text-xs text-muted-foreground border-l-2 border-primary/20">
+            <Info className="w-4 h-4 mt-0.5 flex-shrink-0 text-primary" />
+            <p>
+              <strong className="text-foreground">{t("disclosure.smartBuying")}</strong>{" "}
+              {t("disclosure.message")}{" "}
+              <a 
+                href="/how-it-works" 
+                className="underline hover:text-foreground font-medium"
+                onClick={(e) => {
+                  e.preventDefault();
+                  onClose();
+                  window.location.href = '/how-it-works';
+                }}
+              >
+                {t("disclosure.learnMore")}
+              </a>
+            </p>
+          </div>
+
           {/* Call to Actions */}
           <div className="space-y-3 pt-2">
             {/* Primary CTA: Add to List */}
