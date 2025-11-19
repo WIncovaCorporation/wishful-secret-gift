@@ -90,7 +90,35 @@ const Terms = () => {
 
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-foreground mb-4">
-              {language === 'es' ? '5. Privacidad' : '5. Privacy'}
+              {language === 'es' ? '5. Enlaces de Afiliados y Comisiones' : '5. Affiliate Links and Commissions'}
+            </h2>
+            <p className="text-foreground mb-4">
+              {language === 'es'
+                ? 'GiftApp genera ingresos a través de enlaces de afiliados con retailers incluyendo Amazon, Walmart, Target, Best Buy, Etsy y otros. Cuando utilizas nuestro servicio de recomendación de productos y realizas una compra a través de estos enlaces, podemos recibir una comisión.'
+                : 'GiftApp generates revenue through affiliate links with retailers including Amazon, Walmart, Target, Best Buy, Etsy, and others. When you use our product recommendation service and make a purchase through these links, we may receive a commission.'}
+            </p>
+            <div className="mb-4">
+              <h3 className="text-xl font-medium text-foreground mb-2">
+                {language === 'es' ? 'Declaraciones Importantes:' : 'Important Statements:'}
+              </h3>
+              <ul className="list-disc pl-6 text-foreground space-y-2">
+                <li>{language === 'es' ? 'No pagas precio adicional - el precio es idéntico a comprar directamente del retailer' : 'You pay no additional price - the price is identical to buying directly from the retailer'}</li>
+                <li>{language === 'es' ? 'Las comisiones provienen del margen del retailer, no de tu bolsillo' : 'Commissions come from the retailer\'s margin, not from your pocket'}</li>
+                <li>{language === 'es' ? 'Nuestras recomendaciones se basan en valor del producto, no en tasas de comisión' : 'Our recommendations are based on product value, not commission rates'}</li>
+                <li>{language === 'es' ? 'Revelamos claramente nuestra participación en programas de afiliados' : 'We clearly disclose our participation in affiliate programs'}</li>
+                <li>{language === 'es' ? 'No estamos obligados a recomendar productos específicos por acuerdos comerciales' : 'We are not obligated to recommend specific products through commercial agreements'}</li>
+              </ul>
+            </div>
+            <p className="text-foreground">
+              {language === 'es'
+                ? 'Al usar nuestro servicio de búsqueda y recomendación de productos, aceptas que GiftApp pueda ganar comisiones de tus compras. Este modelo nos permite ofrecer el servicio gratuitamente mientras mantenemos independencia editorial en nuestras recomendaciones.'
+                : 'By using our product search and recommendation service, you agree that GiftApp may earn commissions from your purchases. This model allows us to offer the service for free while maintaining editorial independence in our recommendations.'}
+            </p>
+          </section>
+
+          <section className="mb-8">
+            <h2 className="text-2xl font-semibold text-foreground mb-4">
+              {language === 'es' ? '6. Privacidad' : '6. Privacy'}
             </h2>
             <p className="text-foreground mb-4">
               {language === 'es'
@@ -107,18 +135,18 @@ const Terms = () => {
 
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-foreground mb-4">
-              {language === 'es' ? '6. Descargo de Responsabilidad' : '6. Disclaimer'}
+              {language === 'es' ? '7. Descargo de Responsabilidad' : '7. Disclaimer'}
             </h2>
             <p className="text-foreground mb-4">
               {language === 'es'
-                ? 'EL SERVICIO SE PROPORCIONA "TAL CUAL" Y "SEGÚN DISPONIBILIDAD". NO GARANTIZAMOS QUE EL SERVICIO ESTÉ LIBRE DE ERRORES O INTERRUPCIONES. EN LA MÁXIMA MEDIDA PERMITIDA POR LEY, RECHAZAMOS TODAS LAS GARANTÍAS, EXPRESAS O IMPLÍCITAS.'
-                : 'THE SERVICE IS PROVIDED "AS IS" AND "AS AVAILABLE". WE DO NOT GUARANTEE THAT THE SERVICE WILL BE ERROR-FREE OR UNINTERRUPTED. TO THE MAXIMUM EXTENT PERMITTED BY LAW, WE DISCLAIM ALL WARRANTIES, EXPRESS OR IMPLIED.'}
+                ? 'EL SERVICIO SE PROPORCIONA "TAL CUAL" Y "SEGÚN DISPONIBILIDAD". NO GARANTIZAMOS QUE EL SERVICIO ESTÉ LIBRE DE ERRORES O INTERRUPCIONES. EN LA MÁXIMA MEDIDA PERMITIDA POR LEY, RECHAZAMOS TODAS LAS GARANTÍAS, EXPRESAS O IMPLÍCITAS. NO SOMOS RESPONSABLES DE LA CALIDAD, PRECIO O DISPONIBILIDAD DE PRODUCTOS VENDIDOS POR RETAILERS DE TERCEROS.'
+                : 'THE SERVICE IS PROVIDED "AS IS" AND "AS AVAILABLE". WE DO NOT GUARANTEE THAT THE SERVICE WILL BE ERROR-FREE OR UNINTERRUPTED. TO THE MAXIMUM EXTENT PERMITTED BY LAW, WE DISCLAIM ALL WARRANTIES, EXPRESS OR IMPLIED. WE ARE NOT RESPONSIBLE FOR THE QUALITY, PRICE, OR AVAILABILITY OF PRODUCTS SOLD BY THIRD-PARTY RETAILERS.'}
             </p>
           </section>
 
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-foreground mb-4">
-              {language === 'es' ? '7. Contacto' : '7. Contact'}
+              {language === 'es' ? '8. Contacto' : '8. Contact'}
             </h2>
             <p className="text-foreground mb-4">
               {language === 'es' ? 'Para preguntas sobre estos Términos:' : 'For questions about these Terms:'}

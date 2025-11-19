@@ -76,12 +76,49 @@ const Privacy = () => {
               <li>{language === 'es' ? 'Enviar notificaciones relacionadas con el servicio' : 'Send service-related notifications'}</li>
               <li>{language === 'es' ? 'Analizar el uso de la plataforma' : 'Analyze platform usage'}</li>
               <li>{language === 'es' ? 'Proteger contra fraude y abuso' : 'Protect against fraud and abuse'}</li>
+              <li>{language === 'es' ? 'Generar enlaces de afiliados para recomendaciones de productos' : 'Generate affiliate links for product recommendations'}</li>
             </ul>
           </section>
 
           <section className="mb-8">
             <h2 className="text-2xl font-semibold text-foreground mb-4">
-              {language === 'es' ? '4. Tus Derechos' : '4. Your Rights'}
+              {language === 'es' ? '4. Divulgación de Enlaces de Afiliados' : '4. Affiliate Links Disclosure'}
+            </h2>
+            <div className="bg-muted/50 border-l-4 border-primary p-6 rounded-lg mb-4">
+              <p className="text-foreground mb-4">
+                {language === 'es'
+                  ? 'GiftApp participa en programas de afiliados con Amazon, Walmart, Target, Best Buy, Etsy y otros retailers. Cuando haces clic en un enlace de producto y realizas una compra, podemos recibir una pequeña comisión sin costo adicional para ti.'
+                  : 'GiftApp participates in affiliate programs with Amazon, Walmart, Target, Best Buy, Etsy, and other retailers. When you click on a product link and make a purchase, we may receive a small commission at no additional cost to you.'}
+              </p>
+              <p className="text-foreground mb-4">
+                <strong>{language === 'es' ? 'Cómo funciona:' : 'How it works:'}</strong>
+              </p>
+              <ul className="list-disc pl-6 text-foreground space-y-2 mb-4">
+                <li>{language === 'es' ? 'Tú pagas el mismo precio que pagarías comprando directamente en la tienda' : 'You pay the same price you would pay buying directly from the store'}</li>
+                <li>{language === 'es' ? 'La tienda nos compensa con una comisión (típicamente 3-10%) de su margen de ganancia' : 'The store compensates us with a commission (typically 3-10%) from their profit margin'}</li>
+                <li>{language === 'es' ? 'Usamos estas comisiones para mantener GiftApp 100% gratis para ti' : 'We use these commissions to keep GiftApp 100% free for you'}</li>
+                <li>{language === 'es' ? 'Nunca recomendamos productos basados en comisiones, sino en valor real para el usuario' : 'We never recommend products based on commissions, but on real value for the user'}</li>
+              </ul>
+              <p className="text-foreground">
+                {language === 'es'
+                  ? 'Participamos en el Programa de Asociados de Amazon Services LLC, un programa de publicidad de afiliados diseñado para proporcionar un medio para que los sitios ganen tarifas de publicidad mediante la publicidad y el enlace a Amazon.com. También participamos en programas similares con Walmart.com, Target.com, BestBuy.com y Etsy.com.'
+                  : 'We participate in the Amazon Services LLC Associates Program, an affiliate advertising program designed to provide a means for sites to earn advertising fees by advertising and linking to Amazon.com. We also participate in similar programs with Walmart.com, Target.com, BestBuy.com, and Etsy.com.'}
+              </p>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              {language === 'es'
+                ? 'Para más detalles sobre cómo funciona nuestro modelo de comisiones, visita nuestra página '
+                : 'For more details on how our commission model works, visit our '}
+              <Link to="/how-it-works" className="text-primary hover:underline">
+                {language === 'es' ? 'Cómo Funciona' : 'How It Works'}
+              </Link>
+              {language === 'es' ? '.' : ' page.'}
+            </p>
+          </section>
+
+          <section className="mb-8">
+            <h2 className="text-2xl font-semibold text-foreground mb-4">
+              {language === 'es' ? '5. Tus Derechos' : '5. Your Rights'}
             </h2>
             <div className="mb-4">
               <h3 className="text-xl font-medium text-foreground mb-2">
