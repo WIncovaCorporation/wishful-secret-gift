@@ -1046,7 +1046,7 @@ const Lists = () => {
                       <div className="space-y-4 p-4 border-2 border-dashed border-border rounded-xl animate-in fade-in slide-in-from-top-2">
                         <Label className="text-sm font-semibold text-muted-foreground">Detalles opcionales</Label>
                         
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                           <div className="space-y-2">
                             <Label htmlFor="simple-color" className="text-sm">Color</Label>
                             <Input
@@ -1671,7 +1671,7 @@ const Lists = () => {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="edit-color">Color</Label>
                   <Input

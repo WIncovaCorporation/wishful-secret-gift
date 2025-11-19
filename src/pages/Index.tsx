@@ -44,46 +44,63 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/20">
-      {/* Header with User Info */}
+      {/* Header with User Info - Responsive */}
       <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-warm rounded-xl flex items-center justify-center shadow-soft">
-              <Gift className="w-6 h-6 text-primary-foreground" />
+        <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-3 flex items-center justify-between gap-2">
+          {/* Logo compacto en móvil */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-warm rounded-xl flex items-center justify-center shadow-soft">
+              <Gift className="w-4 h-4 sm:w-6 sm:h-6 text-primary-foreground" />
             </div>
-            <div>
-              <h1 className="text-lg font-bold">GiftApp</h1>
-            </div>
+            <h1 className="text-base sm:text-lg font-bold">GiftApp</h1>
           </div>
-          <div className="flex items-center gap-3">
+          
+          {/* Botones con iconos en móvil, texto en desktop */}
+          <div className="flex items-center gap-2 sm:gap-3">
             <LanguageSelector />
             {user ? (
-              <div className="flex items-center gap-3">
-                <div className="hidden sm:flex items-center gap-2 px-3 py-2 bg-muted/50 rounded-lg">
+              <div className="flex items-center gap-2">
+                {/* User info solo en desktop */}
+                <div className="hidden md:flex items-center gap-2 px-3 py-2 bg-muted/50 rounded-lg">
                   <User className="w-4 h-4 text-primary" />
-                  <span className="text-sm font-medium">
+                  <span className="text-sm font-medium truncate max-w-[120px]">
                     {user.user_metadata?.display_name || user.email?.split('@')[0] || 'Usuario'}
                   </span>
                 </div>
+                {/* Dashboard: texto en desktop, icono en móvil */}
                 <Button 
                   onClick={() => navigate("/dashboard")}
                   size="sm"
                   variant="outline"
+                  className="hidden sm:flex"
                 >
                   Dashboard
                 </Button>
                 <Button 
-                  onClick={handleSignOut}
-                  size="sm"
-                  variant="ghost"
+                  onClick={() => navigate("/dashboard")}
+                  size="icon"
+                  variant="outline"
+                  className="sm:hidden h-9 w-9"
+                  aria-label="Dashboard"
                 >
-                  <LogOut className="w-4 h-4" />
+                  <User className="h-4 w-4" />
+                </Button>
+                {/* Logout siempre con icono */}
+                <Button 
+                  onClick={handleSignOut}
+                  size="icon"
+                  variant="ghost"
+                  className="h-9 w-9"
+                  aria-label="Sign out"
+                >
+                  <LogOut className="h-4 w-4" />
                 </Button>
               </div>
             ) : (
               <Button 
                 onClick={() => navigate("/auth")}
                 size="sm"
+                className="text-xs sm:text-sm px-3 sm:px-4 h-9"
               >
                 {t("auth.signIn")}
               </Button>
