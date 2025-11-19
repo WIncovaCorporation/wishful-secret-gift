@@ -90,6 +90,13 @@ export const AIShoppingAssistant = () => {
     },
   ]);
 
+  // Listen for external open requests
+  useEffect(() => {
+    const handleOpenChat = () => setIsOpen(true);
+    window.addEventListener('openAIChat', handleOpenChat);
+    return () => window.removeEventListener('openAIChat', handleOpenChat);
+  }, []);
+
   // Update initial message when language changes
   useEffect(() => {
     setMessages([

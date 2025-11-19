@@ -200,7 +200,10 @@ const HowItWorks = () => {
           </h2>
           <Button 
             size="lg"
-            onClick={() => navigate("/")}
+            onClick={() => {
+              // Dispatch custom event to open AI chat
+              window.dispatchEvent(new CustomEvent('openAIChat'));
+            }}
             className="bg-white text-primary hover:bg-white/90"
           >
             {t("howItWorks.ctaButton")}
