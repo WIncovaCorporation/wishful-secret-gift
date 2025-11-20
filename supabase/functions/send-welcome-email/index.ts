@@ -2,10 +2,11 @@ import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import Resend from "https://esm.sh/resend@3.2.0";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+const allowedOrigins = [
+  'https://lovable.dev',
+  'http://localhost:5173',
+  'http://localhost:3000'
+];
 
 interface WelcomeEmailRequest {
   email: string;
@@ -14,6 +15,16 @@ interface WelcomeEmailRequest {
 }
 
 serve(async (req) => {
+  const origin = req.headers.get('origin') || '';
+  const corsOrigin = allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
+
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': corsOrigin,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Max-Age': '86400',
+  };
+
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -47,11 +58,11 @@ serve(async (req) => {
         <body>
           <div class="container">
             <div class="header">
-              <h1>¡Bienvenido a GiftApp! 🎁</h1>
+              <h1>¡Bienvenido a Givlyn! 🎁</h1>
             </div>
             <div class="content">
               <p>Hola ${name || ""}!</p>
-              <p>Gracias por unirte a GiftApp. Estamos emocionados de tenerte con nosotros.</p>
+              <p>Gracias por unirte a Givlyn. Estamos emocionados de tenerte con nosotros.</p>
               <p><strong>Tu plan actual:</strong> ${plan === "free" ? "Gratuito" : plan === "premium_individual" ? "Premium Individual" : "Premium Business"}</p>
               
               ${plan === "free" ? `
@@ -74,11 +85,14 @@ serve(async (req) => {
                 <a href="${Deno.env.get("VITE_SUPABASE_URL")?.replace("supabase.co", "lovable.app")}/dashboard" class="button">Ir al Dashboard</a>
               `}
               
-              <p>Si tienes alguna pregunta, no dudes en contactarnos.</p>
-              <p>¡Felices regalos!<br>El equipo de GiftApp</p>
+              <p>Si tienes alguna pregunta, no dudes en contactarnos a support@givlyn.com</p>
+              <p>¡Felices regalos!<br>El equipo de Givlyn<br><span style="font-size: 12px; color: #999;">Un producto de Wincova Corporation</span></p>
             </div>
             <div class="footer">
-              <p>&copy; ${new Date().getFullYear()} GiftApp. Todos los derechos reservados.</p>
+              <p>&copy; ${new Date().getFullYear()} Wincova Corporation. Todos los derechos reservados.</p>
+              <p style="font-size: 11px; color: #999; margin-top: 10px;">
+                2615 Medical Center Parkway, Suite 1560, Murfreesboro, TN 37129
+              </p>
             </div>
           </div>
         </body>
@@ -86,9 +100,9 @@ serve(async (req) => {
     `;
 
     const result = await resend.emails.send({
-      from: "GiftApp <onboarding@resend.dev>",
+      from: "Givlyn <hello@givlyn.com>",
       to: [email],
-      subject: plan === "free" ? "¡Bienvenido a GiftApp! 🎁" : "¡Bienvenido a GiftApp Premium! 👑",
+      subject: plan === "free" ? "¡Bienvenido a Givlyn! 🎁" : "¡Bienvenido a Givlyn Premium! 👑",
       html: emailHtml,
     });
 

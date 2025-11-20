@@ -1,10 +1,11 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import Resend from "https://esm.sh/resend@3.2.0";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+const allowedOrigins = [
+  'https://lovable.dev',
+  'http://localhost:5173',
+  'http://localhost:3000'
+];
 
 interface SubscriptionEmailRequest {
   email: string;
@@ -16,6 +17,16 @@ interface SubscriptionEmailRequest {
 }
 
 serve(async (req) => {
+  const origin = req.headers.get('origin') || '';
+  const corsOrigin = allowedOrigins.includes(origin) ? origin : allowedOrigins[0];
+
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': corsOrigin,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Max-Age': '86400',
+  };
+
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -38,19 +49,19 @@ serve(async (req) => {
 
     switch (type) {
       case "confirmed":
-        subject = "✅ Suscripción confirmada - GiftApp Premium";
+        subject = "✅ Suscripción confirmada - Givlyn Premium";
         content = `
           <p>Hola ${name || ""}!</p>
           <p>Tu suscripción a <strong>${plan}</strong> ha sido confirmada exitosamente.</p>
           <p><strong>Monto:</strong> $${amount} MXN</p>
           <p><strong>Próxima fecha de cobro:</strong> ${nextBillingDate}</p>
-          <p>Ya puedes disfrutar de todas las funciones premium de GiftApp.</p>
+          <p>Ya puedes disfrutar de todas las funciones premium de Givlyn.</p>
           <a href="${Deno.env.get("VITE_SUPABASE_URL")?.replace("supabase.co", "lovable.app")}/dashboard" style="display: inline-block; background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; margin: 20px 0;">Ir al Dashboard</a>
         `;
         break;
 
       case "payment_failed":
-        subject = "⚠️ Pago fallido - GiftApp";
+        subject = "⚠️ Pago fallido - Givlyn";
         content = `
           <p>Hola ${name || ""}!</p>
           <p>Intentamos procesar tu pago de suscripción pero no fue exitoso.</p>
@@ -63,7 +74,7 @@ serve(async (req) => {
         break;
 
       case "cancelled":
-        subject = "😢 Suscripción cancelada - GiftApp";
+        subject = "😢 Suscripción cancelada - Givlyn";
         content = `
           <p>Hola ${name || ""}!</p>
           <p>Tu suscripción a <strong>${plan}</strong> ha sido cancelada.</p>
@@ -80,13 +91,13 @@ serve(async (req) => {
         break;
 
       case "renewed":
-        subject = "✨ Suscripción renovada - GiftApp Premium";
+        subject = "✨ Suscripción renovada - Givlyn Premium";
         content = `
           <p>Hola ${name || ""}!</p>
           <p>Tu suscripción a <strong>${plan}</strong> ha sido renovada exitosamente.</p>
           <p><strong>Monto:</strong> $${amount} MXN</p>
           <p><strong>Próxima fecha de cobro:</strong> ${nextBillingDate}</p>
-          <p>Gracias por seguir confiando en GiftApp.</p>
+          <p>Gracias por seguir confiando en Givlyn.</p>
         `;
         break;
     }
@@ -106,15 +117,19 @@ serve(async (req) => {
         <body>
           <div class="container">
             <div class="header">
-              <h1>GiftApp</h1>
+              <h1>Givlyn Premium 👑</h1>
             </div>
             <div class="content">
               ${content}
-              <p>Si tienes alguna pregunta, no dudes en contactarnos.</p>
-              <p>Saludos,<br>El equipo de GiftApp</p>
+              
+              <p style="margin-top: 30px; color: #666; font-size: 12px;">Si tienes preguntas, contáctanos en support@givlyn.com</p>
+              <p style="margin-top: 10px; color: #999; font-size: 11px;">Un producto de Wincova Corporation</p>
             </div>
             <div class="footer">
-              <p>&copy; ${new Date().getFullYear()} GiftApp. Todos los derechos reservados.</p>
+              <p>&copy; ${new Date().getFullYear()} Wincova Corporation. Todos los derechos reservados.</p>
+              <p style="font-size: 11px; color: #999; margin-top: 10px;">
+                2615 Medical Center Parkway, Suite 1560, Murfreesboro, TN 37129
+              </p>
             </div>
           </div>
         </body>
@@ -122,7 +137,7 @@ serve(async (req) => {
     `;
 
     const result = await resend.emails.send({
-      from: "GiftApp <notifications@resend.dev>",
+      from: "Givlyn <hello@givlyn.com>",
       to: [email],
       subject: subject,
       html: emailHtml,

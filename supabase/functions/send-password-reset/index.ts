@@ -81,9 +81,9 @@ const handler = async (req: Request): Promise<Response> => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "GiftApp <onboarding@resend.dev>",
+        from: "Givlyn Support <support@givlyn.com>",
         to: [email],
-        subject: "Recupera tu contraseña - GiftApp",
+        subject: "Recupera tu contraseña - Givlyn",
         html: `
           <!DOCTYPE html>
           <html>
@@ -100,7 +100,7 @@ const handler = async (req: Request): Promise<Response> => {
                       <!-- Header -->
                       <tr>
                         <td style="background: linear-gradient(135deg, #FF6B6B 0%, #FFD93D 100%); padding: 40px 30px; text-align: center;">
-                          <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: bold;">🎁 GiftApp</h1>
+                          <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: bold;">🎁 Givlyn</h1>
                         </td>
                       </tr>
                       
@@ -109,7 +109,7 @@ const handler = async (req: Request): Promise<Response> => {
                         <td style="padding: 40px 30px;">
                           <h2 style="margin: 0 0 20px 0; color: #333333; font-size: 24px; font-weight: bold;">Recupera tu contraseña</h2>
                           <p style="margin: 0 0 20px 0; color: #666666; font-size: 16px; line-height: 1.6;">
-                            Recibimos una solicitud para restablecer la contraseña de tu cuenta de GiftApp.
+                            Recibimos una solicitud para restablecer la contraseña de tu cuenta de Givlyn.
                           </p>
                           <p style="margin: 0 0 30px 0; color: #666666; font-size: 16px; line-height: 1.6;">
                             Haz clic en el botón de abajo para crear una nueva contraseña:
@@ -139,6 +139,11 @@ const handler = async (req: Request): Promise<Response> => {
                           <p style="margin: 0; color: #999999; font-size: 14px; line-height: 1.6;">
                             Si no solicitaste este cambio, puedes ignorar este correo de forma segura.
                           </p>
+                          <p style="margin: 16px 0; color: #666666; font-size: 14px; line-height: 1.5;">
+                            Saludos,<br>
+                            <strong>El equipo de Givlyn</strong><br>
+                            <span style="font-size: 12px; color: #999;">Un producto de Wincova Corporation</span>
+                          </p>
                         </td>
                       </tr>
                       
@@ -146,7 +151,11 @@ const handler = async (req: Request): Promise<Response> => {
                       <tr>
                         <td style="padding: 30px; background-color: #f8f8f8; text-align: center; border-top: 1px solid #eeeeee;">
                           <p style="margin: 0 0 10px 0; color: #999999; font-size: 13px;">
-                            © 2025 GiftApp. Todos los derechos reservados.
+                            © 2025 Wincova Corporation. Todos los derechos reservados.
+                          </p>
+                          <p style="margin: 0 0 10px 0; color: #999999; font-size: 11px;">
+                            Givlyn es un producto de Wincova Corporation<br />
+                            2615 Medical Center Parkway, Suite 1560, Murfreesboro, TN 37129
                           </p>
                           <p style="margin: 0; color: #999999; font-size: 12px;">
                             La mejor forma de organizar tus regalos perfectos

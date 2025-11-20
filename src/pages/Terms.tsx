@@ -24,8 +24,11 @@ const Terms = () => {
           <h1 className="text-4xl font-bold text-foreground mb-2">
             {language === 'es' ? 'Términos de Servicio' : 'Terms of Service'}
           </h1>
-          <p className="text-muted-foreground mb-8">
-            {language === 'es' ? 'Última actualización: 10 de noviembre de 2025' : 'Last updated: November 10, 2025'}
+          <p className="text-muted-foreground mb-4">
+            {language === 'es' ? 'Última actualización: 20 de noviembre de 2025' : 'Last updated: November 20, 2025'}
+          </p>
+          <p className="text-sm text-muted-foreground mb-8">
+            {language === 'es' ? 'Wincova Corporation' : 'Wincova Corporation'}
           </p>
 
           <section className="mb-8">
@@ -34,8 +37,8 @@ const Terms = () => {
             </h2>
             <p className="text-foreground mb-4">
               {language === 'es' 
-                ? 'Al acceder y usar GiftApp ("el Servicio"), aceptas estar sujeto a estos Términos de Servicio. Si no estás de acuerdo con alguna parte de estos términos, no puedes usar nuestro Servicio.'
-                : 'By accessing and using GiftApp ("the Service"), you agree to be bound by these Terms of Service. If you do not agree with any part of these terms, you may not use our Service.'}
+                ? 'Al acceder y usar Givlyn ("el Servicio"), operado por Wincova Corporation, aceptas estar sujeto a estos Términos de Servicio. Si no estás de acuerdo con alguna parte de estos términos, no puedes usar nuestro Servicio.'
+                : 'By accessing and using Givlyn ("the Service"), operated by Wincova Corporation, you agree to be bound by these Terms of Service. If you do not agree with any part of these terms, you may not use our Service.'}
             </p>
           </section>
 
@@ -45,8 +48,8 @@ const Terms = () => {
             </h2>
             <p className="text-foreground mb-4">
               {language === 'es'
-                ? 'GiftApp es una plataforma web que permite a los usuarios crear y gestionar listas de regalos, organizar grupos, planificar eventos especiales, buscar ideas de regalos y compartir listas con otros usuarios.'
-                : 'GiftApp is a web platform that allows users to create and manage gift lists, organize groups, plan special events, search for gift ideas, and share lists with other users.'}
+                ? 'Givlyn es una plataforma web que permite a los usuarios crear y gestionar listas de regalos, organizar grupos, planificar eventos especiales, buscar ideas de regalos y compartir listas con otros usuarios.'
+                : 'Givlyn is a web platform that allows users to create and manage gift lists, organize groups, plan special events, search for gift ideas, and share lists with other users.'}
             </p>
           </section>
 
@@ -148,20 +151,20 @@ const Terms = () => {
             <h2 className="text-2xl font-semibold text-foreground mb-4">
               {language === 'es' ? '8. Contacto' : '8. Contact'}
             </h2>
-            <p className="text-foreground mb-4">
-              {language === 'es' ? 'Para preguntas sobre estos Términos:' : 'For questions about these Terms:'}
-            </p>
-            <p className="text-foreground">
-              <strong>Email:</strong> legal@giftapp.com<br />
-              <strong>{language === 'es' ? 'Soporte' : 'Support'}:</strong> support@giftapp.com
-            </p>
+            <div className="space-y-2 text-foreground">
+              <p><strong>{language === 'es' ? 'Razón Social:' : 'Legal Entity:'}</strong> Wincova Corporation</p>
+              <p><strong>{language === 'es' ? 'Dirección:' : 'Address:'}</strong> 2615 Medical Center Parkway, Suite 1560, Murfreesboro, TN 37129</p>
+              <p><strong>{language === 'es' ? 'Teléfono:' : 'Phone:'}</strong> +1 615-728-9932</p>
+              <p><strong>Email Legal:</strong> legal@givlyn.com</p>
+              <p><strong>{language === 'es' ? 'Soporte' : 'Support'}:</strong> support@givlyn.com</p>
+            </div>
           </section>
 
           <div className="mt-12 pt-8 border-t border-border">
             <p className="text-sm text-muted-foreground">
-              <strong>{language === 'es' ? 'Versión:' : 'Version:'}</strong> 1.0<br />
+              <strong>{language === 'es' ? 'Versión:' : 'Version:'}</strong> 2.0<br />
               <strong>{language === 'es' ? 'Fecha de entrada en vigor:' : 'Effective date:'}</strong>{' '}
-              {language === 'es' ? '10 de noviembre de 2025' : 'November 10, 2025'}
+              {language === 'es' ? '20 de noviembre de 2025' : 'November 20, 2025'}
             </p>
           </div>
         </article>

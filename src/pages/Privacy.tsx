@@ -24,8 +24,11 @@ const Privacy = () => {
           <h1 className="text-4xl font-bold text-foreground mb-2">
             {language === 'es' ? 'Política de Privacidad' : 'Privacy Policy'}
           </h1>
-          <p className="text-muted-foreground mb-8">
-            {language === 'es' ? 'Última actualización: 10 de noviembre de 2025' : 'Last updated: November 10, 2025'}
+          <p className="text-muted-foreground mb-4">
+            {language === 'es' ? 'Última actualización: 20 de noviembre de 2025' : 'Last updated: November 20, 2025'}
+          </p>
+          <p className="text-sm text-muted-foreground mb-8">
+            {language === 'es' ? 'Responsable del Tratamiento: Wincova Corporation' : 'Data Controller: Wincova Corporation'}
           </p>
 
           <section className="mb-8">
@@ -34,8 +37,8 @@ const Privacy = () => {
             </h2>
             <p className="text-foreground mb-4">
               {language === 'es'
-                ? 'Bienvenido a GiftApp. Nos comprometemos a proteger tu privacidad y tus datos personales. Esta Política de Privacidad explica cómo recopilamos, usamos, almacenamos y protegemos tu información de acuerdo con el RGPD (Reglamento General de Protección de Datos) y la CCPA (Ley de Privacidad del Consumidor de California).'
-                : 'Welcome to GiftApp. We are committed to protecting your privacy and personal data. This Privacy Policy explains how we collect, use, store, and protect your information in accordance with GDPR (General Data Protection Regulation) and CCPA (California Consumer Privacy Act).'}
+                ? 'Bienvenido a Givlyn, un producto de Wincova Corporation. Nos comprometemos a proteger tu privacidad y tus datos personales. Esta Política de Privacidad explica cómo recopilamos, usamos, almacenamos y protegemos tu información de acuerdo con el RGPD (Reglamento General de Protección de Datos) y la CCPA (Ley de Privacidad del Consumidor de California).'
+                : 'Welcome to Givlyn, a product of Wincova Corporation. We are committed to protecting your privacy and personal data. This Privacy Policy explains how we collect, use, store, and protect your information in accordance with GDPR (General Data Protection Regulation) and CCPA (California Consumer Privacy Act).'}
             </p>
           </section>
 
@@ -175,20 +178,21 @@ const Privacy = () => {
             <h2 className="text-2xl font-semibold text-foreground mb-4">
               {language === 'es' ? '7. Contacto' : '7. Contact'}
             </h2>
-            <p className="text-foreground mb-4">
-              {language === 'es' ? 'Para preguntas sobre privacidad:' : 'For privacy questions:'}
-            </p>
-            <p className="text-foreground">
-              <strong>Email:</strong> privacy@giftapp.com<br />
-              <strong>{language === 'es' ? 'Responsable de Protección de Datos' : 'Data Protection Officer'}:</strong> dpo@giftapp.com
-            </p>
+            <div className="space-y-2 text-foreground">
+              <p><strong>{language === 'es' ? 'Responsable del Tratamiento:' : 'Data Controller:'}</strong> Wincova Corporation</p>
+              <p><strong>{language === 'es' ? 'Dirección:' : 'Address:'}</strong> 2615 Medical Center Parkway, Suite 1560, Murfreesboro, TN 37129</p>
+              <p><strong>{language === 'es' ? 'Teléfono:' : 'Phone:'}</strong> +1 615-728-9932</p>
+              <p><strong>Email Privacidad:</strong> <a href="mailto:privacy@givlyn.com" className="text-primary hover:underline">privacy@givlyn.com</a></p>
+              <p><strong>Email Soporte:</strong> <a href="mailto:support@givlyn.com" className="text-primary hover:underline">support@givlyn.com</a></p>
+              <p><strong>Email General:</strong> <a href="mailto:hello@givlyn.com" className="text-primary hover:underline">hello@givlyn.com</a></p>
+            </div>
           </section>
 
           <div className="mt-12 pt-8 border-t border-border">
             <p className="text-sm text-muted-foreground">
-              <strong>{language === 'es' ? 'Versión:' : 'Version:'}</strong> 1.0<br />
+              <strong>{language === 'es' ? 'Versión:' : 'Version:'}</strong> 2.0<br />
               <strong>{language === 'es' ? 'Fecha de entrada en vigor:' : 'Effective date:'}</strong>{' '}
-              {language === 'es' ? '10 de noviembre de 2025' : 'November 10, 2025'}
+              {language === 'es' ? '20 de noviembre de 2025' : 'November 20, 2025'}
             </p>
           </div>
         </article>
