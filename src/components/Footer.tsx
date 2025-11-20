@@ -56,7 +56,7 @@ const Footer = () => {
                   <Link 
                     to="/how-it-works" 
                     className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                    aria-label={language === 'es' ? 'Cómo funciona GiftApp' : 'How GiftApp works'}
+                    aria-label={language === 'es' ? 'Cómo funciona Givlyn' : 'How Givlyn works'}
                   >
                     {language === 'es' ? 'Cómo Funciona' : 'How It Works'}
                   </Link>

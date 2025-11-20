@@ -23,7 +23,7 @@ const HowItWorks = () => {
                 aria-label="Home"
               >
                 <Gift className="w-5 h-5 text-primary" />
-                <span className="font-semibold">GiftApp</span>
+                <span className="font-semibold">Givlyn</span>
               </Button>
               <Button 
                 variant="ghost" 

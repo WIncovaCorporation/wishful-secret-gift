@@ -1,4 +1,4 @@
-# Changelog - GiftApp MVP
+# Changelog - Givlyn MVP
 
 Todos los cambios notables en este proyecto serán documentados en este archivo.
 
@@ -185,5 +185,6 @@ y este proyecto adhiere a [Versionado Semántico](https://semver.org/lang/es/).
 
 ---
 
-**Mantenido por:** GiftApp Development Team  
-**Última actualización:** 2025-11-10
+**Mantenido por:** Givlyn Development Team  
+**Producto de:** Wincova Corporation  
+**Última actualización:** 2025-11-20

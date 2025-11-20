@@ -90,8 +90,8 @@ const Privacy = () => {
             <div className="bg-muted/50 border-l-4 border-primary p-6 rounded-lg mb-4">
               <p className="text-foreground mb-4">
                 {language === 'es'
-                  ? 'GiftApp participa en programas de afiliados con Amazon, Walmart, Target, Best Buy, Etsy y otros retailers. Cuando haces clic en un enlace de producto y realizas una compra, podemos recibir una pequeña comisión sin costo adicional para ti.'
-                  : 'GiftApp participates in affiliate programs with Amazon, Walmart, Target, Best Buy, Etsy, and other retailers. When you click on a product link and make a purchase, we may receive a small commission at no additional cost to you.'}
+                  ? 'Givlyn participa en programas de afiliados con Amazon, Walmart, Target, Best Buy, Etsy y otros retailers. Cuando haces clic en un enlace de producto y realizas una compra, podemos recibir una pequeña comisión sin costo adicional para ti.'
+                  : 'Givlyn participates in affiliate programs with Amazon, Walmart, Target, Best Buy, Etsy, and other retailers. When you click on a product link and make a purchase, we may receive a small commission at no additional cost to you.'}
               </p>
               <p className="text-foreground mb-4">
                 <strong>{language === 'es' ? 'Cómo funciona:' : 'How it works:'}</strong>
@@ -99,7 +99,7 @@ const Privacy = () => {
               <ul className="list-disc pl-6 text-foreground space-y-2 mb-4">
                 <li>{language === 'es' ? 'Tú pagas el mismo precio que pagarías comprando directamente en la tienda' : 'You pay the same price you would pay buying directly from the store'}</li>
                 <li>{language === 'es' ? 'La tienda nos compensa con una comisión (típicamente 3-10%) de su margen de ganancia' : 'The store compensates us with a commission (typically 3-10%) from their profit margin'}</li>
-                <li>{language === 'es' ? 'Usamos estas comisiones para mantener GiftApp 100% gratis para ti' : 'We use these commissions to keep GiftApp 100% free for you'}</li>
+                <li>{language === 'es' ? 'Usamos estas comisiones para mantener Givlyn 100% gratis para ti' : 'We use these commissions to keep Givlyn 100% free for you'}</li>
                 <li>{language === 'es' ? 'Nunca recomendamos productos basados en comisiones, sino en valor real para el usuario' : 'We never recommend products based on commissions, but on real value for the user'}</li>
               </ul>
               <p className="text-foreground">
@@ -148,7 +148,7 @@ const Privacy = () => {
             </div>
             <p className="text-foreground mt-4">
               {language === 'es' ? 'Para ejercer estos derechos, contacta: ' : 'To exercise these rights, contact: '}
-              <a href="mailto:privacy@giftapp.com" className="text-primary hover:underline">privacy@giftapp.com</a>
+              <a href="mailto:privacy@givlyn.com" className="text-primary hover:underline">privacy@givlyn.com</a>
             </p>
           </section>
 

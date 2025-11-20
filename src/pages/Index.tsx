@@ -52,7 +52,7 @@ const Index = () => {
             <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-warm rounded-xl flex items-center justify-center shadow-soft">
               <Gift className="w-4 h-4 sm:w-6 sm:h-6 text-primary-foreground" />
             </div>
-            <h1 className="text-base sm:text-lg font-bold">GiftApp</h1>
+            <h1 className="text-base sm:text-lg font-bold">Givlyn</h1>
           </div>
           
           {/* Botones con iconos en móvil, texto en desktop */}

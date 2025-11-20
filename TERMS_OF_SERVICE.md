@@ -147,7 +147,7 @@ Cualquier disputa será resuelta en los tribunales de [Ciudad, País].
 ## 16. Resolución de Disputas
 
 ### 16.1 Negociación Informal
-Antes de iniciar acciones legales, contacta a: legal@giftapp.com para intentar resolver la disputa informalmente.
+Antes de iniciar acciones legales, contacta a: legal@givlyn.com para intentar resolver la disputa informalmente.
 
 ### 16.2 Arbitraje
 Si la negociación falla, las disputas se resolverán mediante arbitraje vinculante, excepto cuando la ley local lo prohíba.
