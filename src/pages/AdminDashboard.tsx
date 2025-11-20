@@ -39,24 +39,20 @@ const AdminDashboard = () => {
   }
 
   const handleOpenBackend = () => {
-    // Intentar abrir el backend mediante postMessage
-    if (window.parent && window.parent !== window) {
-      window.parent.postMessage({ type: 'lov-open-backend' }, '*');
-    }
-    
-    toast.info("Abriendo base de datos...", {
-      description: "Si no se abre automáticamente, usa el icono de Cloud ☁️ en la barra superior"
+    toast.info("Para acceder a la base de datos:", {
+      description: "1. Haz clic en el icono ☁️ Cloud en la barra superior de Lovable\n2. O usa tu menú de perfil → Base de Datos",
+      duration: 8000
     });
   };
 
   const adminCards = [
     {
       title: "Base de Datos",
-      description: "Accede directamente a las tablas, datos y configuración de la base de datos",
+      description: "Usa el icono ☁️ Cloud en la barra superior o tu menú de perfil para acceder",
       icon: Database,
       color: "text-blue-500",
       action: "open-backend",
-      buttonText: "Abrir Base de Datos"
+      buttonText: "Ver Instrucciones"
     },
     {
       title: "Logs de Auditoría",
