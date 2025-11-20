@@ -246,6 +246,33 @@ export type Database = {
         }
         Relationships: []
       }
+      anonymous_message_limits: {
+        Row: {
+          created_at: string
+          id: string
+          last_reset_at: string
+          message_count: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_reset_at?: string
+          message_count?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_reset_at?: string
+          message_count?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       anonymous_messages: {
         Row: {
           created_at: string
@@ -894,6 +921,10 @@ export type Database = {
       can_add_participant: { Args: { _group_id: string }; Returns: boolean }
       can_create_group: { Args: { _user_id: string }; Returns: boolean }
       can_use_ai: { Args: { _user_id: string }; Returns: boolean }
+      check_anonymous_message_limit: {
+        Args: { p_user_id: string }
+        Returns: Json
+      }
       cleanup_old_rate_limits: { Args: never; Returns: undefined }
       get_products_by_category: {
         Args: { _category?: string; _limit?: number; _offset?: number }
@@ -922,6 +953,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      increment_message_count: {
+        Args: { p_user_id: string }
+        Returns: undefined
       }
       is_group_creator: {
         Args: { _group_id: string; _user_id: string }

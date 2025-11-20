@@ -18,6 +18,13 @@ interface Message {
   is_read: boolean;
 }
 
+interface RateLimitResponse {
+  allowed: boolean;
+  remaining: number;
+  message_count: number;
+  reset_at: string;
+}
+
 interface AnonymousChatProps {
   groupId: string;
   receiverId: string;
@@ -30,11 +37,43 @@ export const AnonymousChat = ({ groupId, receiverId, currentUserId }: AnonymousC
   const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [remainingMessages, setRemainingMessages] = useState<number>(5);
+  const [resetTime, setResetTime] = useState<string>("");
 
   useEffect(() => {
     loadMessages();
     subscribeToMessages();
+    checkMessageLimit();
   }, [groupId, receiverId]);
+
+  const checkMessageLimit = async () => {
+    try {
+      const { data, error } = await supabase.rpc('check_anonymous_message_limit', {
+        p_user_id: currentUserId
+      });
+
+      if (error) {
+        console.error("Error checking message limit:", error);
+        return;
+      }
+
+      if (data) {
+        const limitData = data as unknown as RateLimitResponse;
+        setRemainingMessages(limitData.remaining || 0);
+        if (limitData.reset_at) {
+          const resetDate = new Date(limitData.reset_at);
+          setResetTime(resetDate.toLocaleString('es-ES', {
+            hour: '2-digit',
+            minute: '2-digit',
+            day: 'numeric',
+            month: 'short'
+          }));
+        }
+      }
+    } catch (error) {
+      console.error("Error checking message limit:", error);
+    }
+  };
 
   const loadMessages = async () => {
     try {
@@ -86,6 +125,28 @@ export const AnonymousChat = ({ groupId, receiverId, currentUserId }: AnonymousC
   const handleSendMessage = async () => {
     if (!newMessage.trim()) return;
 
+    // Check rate limit before sending
+    const limitCheck = await supabase.rpc('check_anonymous_message_limit', {
+      p_user_id: currentUserId
+    });
+
+    if (limitCheck.error) {
+      toast.error("Error al verificar límite de mensajes");
+      return;
+    }
+
+    const limitData = limitCheck.data as unknown as RateLimitResponse;
+    
+    if (!limitData?.allowed) {
+      toast.error(`🚫 Has alcanzado el límite diario de 5 mensajes anónimos. Intenta nuevamente mañana.`, {
+        duration: 6000
+      });
+      toast.info(`⏰ El límite se reinicia a las: ${resetTime}`, {
+        duration: 6000
+      });
+      return;
+    }
+
     setSending(true);
     try {
       const { data, error } = await supabase
@@ -106,6 +167,14 @@ export const AnonymousChat = ({ groupId, receiverId, currentUserId }: AnonymousC
 
       console.log("Message inserted successfully:", data);
 
+      // Increment message count
+      await supabase.rpc('increment_message_count', {
+        p_user_id: currentUserId
+      });
+
+      // Update remaining messages
+      await checkMessageLimit();
+
       // Call edge function to send notification
       try {
         await supabase.functions.invoke('notify-anonymous-message', {
@@ -121,7 +190,7 @@ export const AnonymousChat = ({ groupId, receiverId, currentUserId }: AnonymousC
       }
 
       setNewMessage("");
-      toast.success("Mensaje enviado anónimamente");
+      toast.success(`✅ Mensaje enviado anónimamente (${remainingMessages - 1} mensajes restantes hoy)`);
     } catch (error: any) {
       console.error("Error sending message:", error);
       toast.error("Error al enviar mensaje. Por favor intenta de nuevo.");
@@ -194,28 +263,45 @@ export const AnonymousChat = ({ groupId, receiverId, currentUserId }: AnonymousC
         </div>
 
         {/* Input area */}
-        <div className="flex gap-2">
-          <Textarea
-            placeholder={t("chat.placeholder")}
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
-                e.preventDefault();
-                handleSendMessage();
-              }
-            }}
-            className="min-h-[60px] resize-none"
-            disabled={sending}
-          />
-          <Button
-            onClick={handleSendMessage}
-            disabled={!newMessage.trim() || sending}
-            size="icon"
-            className="h-[60px] w-[60px]"
-          >
-            <Send className="h-4 w-4" />
-          </Button>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between text-sm px-1">
+            <span className="text-muted-foreground">
+              Mensajes disponibles hoy:
+            </span>
+            <span className={`font-semibold ${remainingMessages <= 1 ? 'text-destructive' : 'text-primary'}`}>
+              {remainingMessages} / 5
+            </span>
+          </div>
+          {remainingMessages <= 2 && resetTime && (
+            <p className="text-xs text-muted-foreground px-1">
+              ⏰ Se reinicia: {resetTime}
+            </p>
+          )}
+          
+          <div className="flex gap-2">
+            <Textarea
+              placeholder={remainingMessages === 0 ? "Límite diario alcanzado" : t("chat.placeholder")}
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSendMessage();
+                }
+              }}
+              className="min-h-[60px] resize-none"
+              disabled={sending || remainingMessages === 0}
+            />
+            <Button
+              onClick={handleSendMessage}
+              disabled={!newMessage.trim() || sending || remainingMessages === 0}
+              size="icon"
+              className="h-[60px] w-[60px]"
+              title={remainingMessages === 0 ? "Límite diario alcanzado" : "Enviar mensaje"}
+            >
+              <Send className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
         <p className="text-xs text-muted-foreground italic">

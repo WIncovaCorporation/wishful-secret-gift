@@ -12,6 +12,7 @@ import { InstallPWA } from "@/components/InstallPWA";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import UpdatePassword from "./pages/UpdatePassword";
+import DeleteAccount from "./pages/DeleteAccount";
 import Dashboard from "./pages/Dashboard";
 import Lists from "./pages/Lists";
 import Groups from "./pages/Groups";
@@ -48,6 +49,7 @@ const App = () => (
                 <Route path="/" element={<Index />} />
                 <Route path="/auth" element={<Auth />} />
                 <Route path="/update-password" element={<UpdatePassword />} />
+                <Route path="/delete-account" element={<DeleteAccount />} />
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/lists" element={<Lists />} />
                 <Route path="/groups" element={<Groups />} />
