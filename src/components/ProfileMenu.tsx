@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { User as UserIcon, Upload, LogOut, Settings, Shield } from "lucide-react";
+import { User as UserIcon, Upload, LogOut, Settings, Shield, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate, Link } from "react-router-dom";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -166,7 +166,14 @@ export const ProfileMenu = ({ user }: ProfileMenuProps) => {
             </>
           )}
           
-          <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer text-destructive">
+          <DropdownMenuItem asChild>
+            <Link to="/delete-account" className="cursor-pointer flex items-center text-destructive">
+              <Trash2 className="mr-2 h-4 w-4" />
+              Eliminar Cuenta
+            </Link>
+          </DropdownMenuItem>
+          
+          <DropdownMenuItem onClick={handleSignOut} className="cursor-pointer">
             <LogOut className="mr-2 h-4 w-4" />
             Cerrar Sesión
           </DropdownMenuItem>
