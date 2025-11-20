@@ -14,6 +14,7 @@ import Footer from "@/components/Footer";
 import { useUserRole } from "@/hooks/useUserRole";
 import { UpgradePrompt } from "@/components/UpgradePrompt";
 import { OnboardingTour } from "@/components/OnboardingTour";
+import { WelcomeOnboarding } from "@/components/WelcomeOnboarding";
 import type { User } from "@supabase/supabase-js";
 
 const Dashboard = () => {
@@ -135,6 +136,7 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
+      <WelcomeOnboarding />
       <OnboardingTour />
       {/* Header */}
       <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-50">
