@@ -32,16 +32,34 @@ interface TemplateData {
   suggested_budget: string;
 }
 
-export const WelcomeOnboarding = () => {
+interface WelcomeOnboardingProps {
+  forceOpen?: boolean;
+  forceView?: OnboardingView;
+  onClose?: () => void;
+}
+
+export const WelcomeOnboarding = ({ 
+  forceOpen = false, 
+  forceView,
+  onClose 
+}: WelcomeOnboardingProps = {}) => {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState<OnboardingView>('initial');
+  const [view, setView] = useState<OnboardingView>(forceView || 'initial');
   const [tutorialStep, setTutorialStep] = useState(0);
 
   useEffect(() => {
-    checkOnboardingStatus();
-  }, []);
+    if (forceOpen) {
+      setOpen(true);
+      setLoading(false);
+      if (forceView) {
+        setView(forceView);
+      }
+    } else {
+      checkOnboardingStatus();
+    }
+  }, [forceOpen, forceView]);
 
   const checkOnboardingStatus = async () => {
     try {
@@ -92,8 +110,11 @@ export const WelcomeOnboarding = () => {
 
   const handleClose = async () => {
     setOpen(false);
-    await markOnboardingCompleted();
+    if (!forceOpen) {
+      await markOnboardingCompleted();
+    }
     analytics.trackEvent('onboarding_closed', { view, tutorialStep });
+    onClose?.();
   };
 
   const handleViewTutorial = () => {
@@ -123,7 +144,9 @@ export const WelcomeOnboarding = () => {
   };
 
   const handleSelectTemplate = async (templateType: string) => {
-    await markOnboardingCompleted();
+    if (!forceOpen) {
+      await markOnboardingCompleted();
+    }
     setOpen(false);
 
     const currentYear = new Date().getFullYear();
@@ -177,13 +200,19 @@ export const WelcomeOnboarding = () => {
         openDialog: true 
       } 
     });
+
+    // Llamar onClose si está definido (cuando se abre forzadamente)
+    onClose?.();
   };
 
   const handleExploreWithoutCreating = async () => {
     setOpen(false);
-    await markOnboardingCompleted();
+    if (!forceOpen) {
+      await markOnboardingCompleted();
+    }
     analytics.trackEvent('onboarding_explore_without_creating');
     navigate('/');
+    onClose?.();
   };
 
   if (loading) return null;

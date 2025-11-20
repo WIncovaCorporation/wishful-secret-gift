@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Users, Plus, Copy, Check, Trash2, Sparkles, Gift, Lock, Shield, Scale, AlertCircle, Calendar, DollarSign, Share2, Mail, MessageSquare } from "lucide-react";
+import { Users, Plus, Copy, Check, Trash2, Sparkles, Gift, Lock, Shield, Scale, AlertCircle, Calendar, DollarSign, Share2, Mail, MessageSquare, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import LanguageSelector from "@/components/LanguageSelector";
@@ -23,6 +23,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { HelpTooltip } from "@/components/HelpTooltip";
 import { EmptyStateCard } from "@/components/EmptyStateCard";
 import { GroupMembersList } from "@/components/GroupMembersList";
+import { WelcomeOnboarding } from "@/components/WelcomeOnboarding";
 import type { User } from "@supabase/supabase-js";
 
 interface Group {
@@ -66,6 +67,7 @@ const Groups = () => {
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [joinDialogOpen, setJoinDialogOpen] = useState(false);
+  const [showTemplateSelection, setShowTemplateSelection] = useState(false);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [joinCode, setJoinCode] = useState("");
   const [newGroup, setNewGroup] = useState({
@@ -110,6 +112,9 @@ const Groups = () => {
       
       // Abrir el diálogo de crear grupo
       setDialogOpen(true);
+      
+      // Cerrar el modal de selección de plantillas si estaba abierto
+      setShowTemplateSelection(false);
       
       // Limpiar el state para que no se ejecute múltiples veces
       navigate(location.pathname, { replace: true, state: {} });
@@ -646,8 +651,25 @@ const Groups = () => {
               </DialogTrigger>
               <DialogContent className="max-w-2xl">
                 <DialogHeader>
-                  <DialogTitle>Crear Nuevo Grupo</DialogTitle>
-                  <DialogDescription>Configura tu grupo de intercambio</DialogDescription>
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <DialogTitle>Crear Nuevo Grupo</DialogTitle>
+                      <DialogDescription>Configura tu grupo de intercambio</DialogDescription>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setDialogOpen(false);
+                        setShowTemplateSelection(true);
+                      }}
+                      className="gap-2 text-muted-foreground hover:text-foreground -mr-2"
+                    >
+                      <ArrowLeft className="w-4 h-4" />
+                      Cambiar plantilla
+                    </Button>
+                  </div>
                 </DialogHeader>
                 <form onSubmit={handleCreateGroup} className="space-y-4">
                   <div>
@@ -1081,6 +1103,13 @@ const Groups = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Onboarding modal para cambiar plantilla */}
+      <WelcomeOnboarding 
+        forceOpen={showTemplateSelection}
+        forceView="templates"
+        onClose={() => setShowTemplateSelection(false)}
+      />
 
       <Footer />
     </div>
