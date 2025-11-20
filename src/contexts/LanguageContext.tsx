@@ -117,6 +117,19 @@ const translations = {
     "tourCreateListStep": "Start here! Create your first gift list. Add products manually or search for ideas with AI. Decide if it's private or shared.",
     "tourStatsStep": "Here you'll see your progress: lists created, groups you participate in, and upcoming events. Your entire gift universe at a glance!",
     
+    // Welcome Onboarding
+    "onboarding.step1.title": "Welcome to Givlyn! 🎁",
+    "onboarding.step1.description": "The easiest way to organize gift exchanges and Secret Santa with your friends, family, and coworkers.",
+    "onboarding.step2.title": "Organize in 3 Steps",
+    "onboarding.step2.description": "It's simple and fun:",
+    "onboarding.step2.bullet1": "Create your gift exchange",
+    "onboarding.step2.bullet2": "Invite your friends",
+    "onboarding.step2.bullet3": "Discover who your Secret Santa is!",
+    "onboarding.step3.title": "Ready to Start?",
+    "onboarding.step3.description": "Create your first exchange in less than 2 minutes",
+    "onboarding.createExchange": "Create My First Exchange",
+    "onboarding.skipForNow": "Skip for Now",
+    
     // Groups & Secret Santa
     "groups.howItWorks": "How the Secret Santa Draw Works",
     "groups.howItWorksDesc": "100% transparent and fair algorithm",
@@ -354,6 +367,19 @@ const translations = {
     "tourActionsEvents": "🎉 Eventos: Planifica ocasiones especiales",
     "tourCreateListStep": "¡Empieza aquí! Crea tu primera lista de regalos. Puedes añadir productos manualmente o buscar ideas con IA. Decide si es privada o compartida.",
     "tourStatsStep": "Aquí verás tu progreso: listas creadas, grupos donde participas y eventos próximos. ¡Todo tu universo de regalos en un vistazo!",
+    
+    // Welcome Onboarding
+    "onboarding.step1.title": "¡Bienvenido a Givlyn! 🎁",
+    "onboarding.step1.description": "La forma más fácil de organizar intercambios de regalos y Secret Santa con tus amigos, familia y compañeros de trabajo.",
+    "onboarding.step2.title": "Organiza en 3 Pasos",
+    "onboarding.step2.description": "Es simple y divertido:",
+    "onboarding.step2.bullet1": "Crea tu intercambio de regalos",
+    "onboarding.step2.bullet2": "Invita a tus amigos",
+    "onboarding.step2.bullet3": "¡Descubre quién es tu Secret Santa!",
+    "onboarding.step3.title": "¿Listo para Empezar?",
+    "onboarding.step3.description": "Crea tu primer intercambio en menos de 2 minutos",
+    "onboarding.createExchange": "Crear Mi Primer Intercambio",
+    "onboarding.skipForNow": "Saltar por Ahora",
     
     // Grupos e Intercambio de Regalos
     "groups.howItWorks": "Cómo Funciona el Sorteo de Amigo Secreto",
