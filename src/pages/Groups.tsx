@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -56,6 +56,7 @@ interface GroupMember {
 
 const Groups = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useLanguage();
   const { isFree } = useUserRole();
   const { features, getLimit } = useSubscription();
@@ -90,6 +91,30 @@ const Groups = () => {
   useEffect(() => {
     checkAuth();
   }, []);
+
+  // Detectar si se viene desde el onboarding con datos de plantilla
+  useEffect(() => {
+    const state = location.state as any;
+    if (state?.templateData && state?.openDialog) {
+      // Pre-llenar el formulario con datos de la plantilla
+      setNewGroup({
+        name: state.templateData.name,
+        description: state.templateData.description,
+        min_budget: state.templateData.min_budget,
+        max_budget: state.templateData.max_budget,
+        exchange_date: state.templateData.exchange_date,
+        notification_mode: state.templateData.notification_mode,
+        organizer_message: "",
+        suggested_budget: state.templateData.suggested_budget,
+      });
+      
+      // Abrir el diálogo de crear grupo
+      setDialogOpen(true);
+      
+      // Limpiar el state para que no se ejecute múltiples veces
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [location]);
 
   const checkAuth = async () => {
     const { data: { session } } = await supabase.auth.getSession();
