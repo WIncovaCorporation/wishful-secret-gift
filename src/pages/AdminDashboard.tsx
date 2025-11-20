@@ -39,10 +39,7 @@ const AdminDashboard = () => {
   }
 
   const handleOpenBackend = () => {
-    toast.info("Usa el botón 'Abrir Backend' del chat para acceder a la base de datos", {
-      duration: 5000,
-      description: "El acceso directo a la base de datos se gestiona desde el panel de Lovable"
-    });
+    window.postMessage({ type: 'lov-open-backend' }, '*');
   };
 
   const adminCards = [
@@ -51,8 +48,8 @@ const AdminDashboard = () => {
       description: "Accede directamente a las tablas, datos y configuración de la base de datos",
       icon: Database,
       color: "text-blue-500",
-      action: "show-info",
-      buttonText: "Instrucciones de Acceso"
+      action: "open-backend",
+      buttonText: "Abrir Base de Datos"
     },
     {
       title: "Logs de Auditoría",
@@ -117,10 +114,9 @@ const AdminDashboard = () => {
                   <CardDescription>{card.description}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {card.action === "show-info" ? (
+                  {card.action === "open-backend" ? (
                     <Button 
                       className="w-full"
-                      variant="outline"
                       onClick={handleOpenBackend}
                     >
                       <Database className="mr-2 h-4 w-4" />
@@ -179,33 +175,6 @@ const AdminDashboard = () => {
           </Card>
         </div>
 
-        {/* Info Card */}
-        <div className="mt-6">
-          <Card className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
-            <CardContent className="pt-6">
-              <div className="flex items-start gap-3">
-                <Database className="h-5 w-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
-                <div className="flex-1">
-                  <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">
-                    🔓 Cómo Acceder a la Base de Datos
-                  </h3>
-                  <p className="text-sm text-blue-800 dark:text-blue-200 mb-3">
-                    Para acceder a la base de datos, usa uno de estos métodos:
-                  </p>
-                  <ol className="text-sm text-blue-800 dark:text-blue-200 space-y-2 list-decimal list-inside">
-                    <li><strong>Desde tu menú de perfil:</strong> Clic en tu avatar → "Base de Datos"</li>
-                    <li><strong>Desde el chat:</strong> Haz clic en el botón "Abrir Backend" que aparece en el chat</li>
-                    <li><strong>Desde la barra superior:</strong> Clic en el icono de "Cloud" (nube) en la barra de herramientas</li>
-                  </ol>
-                  <p className="text-sm text-blue-800 dark:text-blue-200 mt-3">
-                    Desde ahí podrás ver tablas, editar datos, crear nuevas tablas,
-                    configurar RLS (Row Level Security), gestionar funciones y triggers.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
       </div>
     </div>
   );
