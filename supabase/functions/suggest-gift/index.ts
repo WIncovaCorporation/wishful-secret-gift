@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.0';
 
 const allowedOrigins = [
   'https://lovable.dev',
@@ -22,8 +23,65 @@ serve(async (req) => {
   }
 
   try {
+    // Initialize Supabase client for rate limiting
+    const supabaseClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
+
+    // Get user ID from auth header
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: "Autenticación requerida" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(token);
+    
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ error: "Sesión inválida" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Check rate limit BEFORE processing
+    const { data: limitData, error: limitError } = await supabaseClient.rpc(
+      'check_ai_suggestion_limit',
+      { p_user_id: user.id }
+    );
+
+    if (limitError) {
+      console.error("Error checking AI suggestion limit:", limitError);
+      return new Response(
+        JSON.stringify({ error: "Error al verificar límite de sugerencias" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (!limitData || !limitData.allowed) {
+      const resetDate = limitData?.reset_at ? new Date(limitData.reset_at).toLocaleString('es-ES', {
+        hour: '2-digit',
+        minute: '2-digit',
+        day: 'numeric',
+        month: 'short'
+      }) : 'mañana';
+      
+      return new Response(
+        JSON.stringify({ 
+          error: "🚫 Has alcanzado el límite diario de 10 sugerencias de IA. Intenta nuevamente mañana.",
+          remaining: 0,
+          reset_at: resetDate
+        }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const { context, existingItems, budget } = await req.json();
-    console.log("Request received:", { context, existingItems, budget });
+    console.log("Request received:", { context, existingItems, budget, userId: user.id, remaining: limitData.remaining });
     
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     
@@ -142,7 +200,17 @@ Genera 5 sugerencias de regalos variadas y creativas ${budget ? `que se ajusten 
     const suggestions = JSON.parse(toolCall.function.arguments).suggestions;
     console.log("Generated suggestions:", suggestions.length);
 
-    return new Response(JSON.stringify({ suggestions }), {
+    // Increment AI suggestion count AFTER successful generation
+    await supabaseClient.rpc('increment_ai_suggestion_count', { p_user_id: user.id });
+    
+    const updatedLimit = await supabaseClient.rpc('check_ai_suggestion_limit', { p_user_id: user.id });
+    const remaining = updatedLimit.data?.remaining || 0;
+
+    return new Response(JSON.stringify({ 
+      suggestions,
+      remaining,
+      total_limit: 10
+    }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
 

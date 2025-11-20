@@ -189,6 +189,33 @@ export type Database = {
           },
         ]
       }
+      ai_suggestion_limits: {
+        Row: {
+          created_at: string
+          id: string
+          last_reset_at: string
+          suggestion_count: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_reset_at?: string
+          suggestion_count?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_reset_at?: string
+          suggestion_count?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       amazon_credentials: {
         Row: {
           access_key: string
@@ -921,6 +948,7 @@ export type Database = {
       can_add_participant: { Args: { _group_id: string }; Returns: boolean }
       can_create_group: { Args: { _user_id: string }; Returns: boolean }
       can_use_ai: { Args: { _user_id: string }; Returns: boolean }
+      check_ai_suggestion_limit: { Args: { p_user_id: string }; Returns: Json }
       check_anonymous_message_limit: {
         Args: { p_user_id: string }
         Returns: Json
@@ -953,6 +981,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      increment_ai_suggestion_count: {
+        Args: { p_user_id: string }
+        Returns: undefined
       }
       increment_message_count: {
         Args: { p_user_id: string }
