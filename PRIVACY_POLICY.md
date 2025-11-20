@@ -1,10 +1,11 @@
-# Política de Privacidad de GiftApp
+# Política de Privacidad de Givlyn
 
-**Última actualización:** 10 de noviembre de 2025
+**Última actualización:** 20 de noviembre de 2025  
+**Responsable del Tratamiento de Datos:** Wincova Corporation
 
 ## 1. Introducción
 
-Bienvenido a GiftApp. Nos comprometemos a proteger tu privacidad y tus datos personales. Esta Política de Privacidad explica cómo recopilamos, usamos, almacenamos y protegemos tu información de acuerdo con el RGPD (Reglamento General de Protección de Datos) y la CCPA (Ley de Privacidad del Consumidor de California).
+Bienvenido a Givlyn, un producto de Wincova Corporation. Nos comprometemos a proteger tu privacidad y tus datos personales. Esta Política de Privacidad explica cómo recopilamos, usamos, almacenamos y protegemos tu información de acuerdo con el RGPD (Reglamento General de Protección de Datos) y la CCPA (Ley de Privacidad del Consumidor de California).
 
 ## 2. Información que Recopilamos
 
@@ -111,13 +112,17 @@ Te notificaremos sobre cambios significativos en esta política por correo elect
 
 Para preguntas sobre privacidad o para ejercer tus derechos:
 
-**Email**: privacy@giftapp.com  
-**Responsable de Protección de Datos**: dpo@giftapp.com
+**Responsable del Tratamiento**: Wincova Corporation  
+**Email de Privacidad**: privacy@givlyn.com  
+**Email de Soporte**: support@givlyn.com  
+**Email General**: hello@givlyn.com  
+**Teléfono**: +1 615-728-9932
 
 **Dirección Postal**:  
-GiftApp Privacy Team  
-[Dirección completa]  
-[Ciudad, País, Código Postal]
+Wincova Corporation - Privacy Team  
+2615 Medical Center Parkway, Suite 1560  
+Murfreesboro, TN 37129  
+United States
 
 ## 14. Autoridad de Supervisión
 
@@ -125,5 +130,7 @@ Si resides en la UE, tienes derecho a presentar una queja ante tu autoridad de p
 
 ---
 
-**Versión**: 1.0  
-**Fecha de entrada en vigor**: 10 de noviembre de 2025
+**Versión**: 2.0  
+**Fecha de entrada en vigor**: 20 de noviembre de 2025  
+**Responsable del Tratamiento**: Wincova Corporation  
+**Marca**: Givlyn (givlyn.com)

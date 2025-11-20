@@ -1,14 +1,14 @@
-# Términos de Servicio de GiftApp
+# Términos de Servicio de Givlyn
 
-**Última actualización:** 10 de noviembre de 2025
+**Última actualización:** 20 de noviembre de 2025
 
 ## 1. Aceptación de los Términos
 
-Al acceder y usar GiftApp ("el Servicio"), aceptas estar sujeto a estos Términos de Servicio ("Términos"). Si no estás de acuerdo con alguna parte de estos términos, no puedes usar nuestro Servicio.
+Al acceder y usar Givlyn ("el Servicio"), operado por Wincova Corporation ("nosotros", "nuestro"), aceptas estar sujeto a estos Términos de Servicio ("Términos"). Si no estás de acuerdo con alguna parte de estos términos, no puedes usar nuestro Servicio.
 
 ## 2. Descripción del Servicio
 
-GiftApp es una plataforma web que permite a los usuarios:
+Givlyn es una plataforma web que permite a los usuarios:
 - Crear y gestionar listas de regalos
 - Organizar grupos de personas
 - Planificar eventos especiales
@@ -74,7 +74,7 @@ Eres responsable del contenido que publicas. No publicaremos ni eliminaremos con
 ## 7. Propiedad Intelectual
 
 ### 7.1 Nuestros Derechos
-El Servicio, su diseño, código, marca y contenido son propiedad de GiftApp y están protegidos por derechos de autor, marcas registradas y otras leyes.
+El Servicio, su diseño, código, marca y contenido son propiedad de Wincova Corporation y están protegidos por derechos de autor, marcas registradas y otras leyes. Givlyn es una marca de Wincova Corporation.
 
 ### 7.2 Marcas de Terceros
 Las marcas de productos y servicios mencionados pertenecen a sus respectivos propietarios.
@@ -176,13 +176,16 @@ Estos Términos, junto con la Política de Privacidad, constituyen el acuerdo co
 
 Para preguntas sobre estos Términos:
 
-**Email**: legal@giftapp.com  
-**Email de Soporte**: support@giftapp.com
+**Razón Social**: Wincova Corporation  
+**Email Legal**: legal@givlyn.com  
+**Email de Soporte**: support@givlyn.com  
+**Teléfono**: +1 615-728-9932
 
 **Dirección Postal**:  
-GiftApp Legal Team  
-[Dirección completa]  
-[Ciudad, País, Código Postal]
+Wincova Corporation  
+2615 Medical Center Parkway, Suite 1560  
+Murfreesboro, TN 37129  
+United States
 
 ## 22. Idioma
 
@@ -190,7 +193,9 @@ En caso de conflicto entre la versión en español y cualquier traducción, la v
 
 ---
 
-**Versión**: 1.0  
-**Fecha de entrada en vigor**: 10 de noviembre de 2025
+**Versión**: 2.0  
+**Fecha de entrada en vigor**: 20 de noviembre de 2025  
+**Entidad Legal**: Wincova Corporation  
+**Marca**: Givlyn (givlyn.com)
 
-Al usar GiftApp, confirmas que has leído, comprendido y aceptado estos Términos de Servicio.
+Al usar Givlyn, confirmas que has leído, comprendido y aceptado estos Términos de Servicio.

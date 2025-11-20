@@ -13,12 +13,17 @@ const Footer = () => {
           <div>
             <Link to="/" className="flex items-center gap-2 mb-4">
               <Gift className="h-6 w-6 text-primary" aria-hidden="true" />
-              <span className="text-xl font-bold text-foreground">GiftApp</span>
+              <span className="text-xl font-bold text-foreground">Givlyn</span>
             </Link>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground mb-4">
               {language === 'es'
                 ? 'La mejor manera de organizar tus regalos y celebraciones.'
                 : 'The best way to organize your gifts and celebrations.'}
+            </p>
+            <p className="text-xs text-muted-foreground italic">
+              {language === 'es'
+                ? 'Givlyn es un producto de Wincova Corporation'
+                : 'Givlyn is a product of Wincova Corporation'}
             </p>
           </div>
 
@@ -66,22 +71,40 @@ const Footer = () => {
               {language === 'es' ? 'Contacto' : 'Contact'}
             </h3>
             <ul className="space-y-2 text-sm text-muted-foreground">
+              <li className="flex flex-col gap-1">
+                <span className="font-medium text-foreground">
+                  {language === 'es' ? 'Dirección:' : 'Address:'}
+                </span>
+                <span>2615 Medical Center Parkway, Suite 1560</span>
+                <span>Murfreesboro, TN 37129</span>
+              </li>
               <li>
+                <span className="font-medium text-foreground">
+                  {language === 'es' ? 'Teléfono:' : 'Phone:'}
+                </span>{' '}
                 <a 
-                  href="mailto:support@giftapp.com" 
+                  href="tel:+16157289932" 
                   className="hover:text-primary transition-colors"
-                  aria-label={language === 'es' ? 'Enviar correo a soporte' : 'Send email to support'}
                 >
-                  support@giftapp.com
+                  +1 615-728-9932
                 </a>
               </li>
               <li>
                 <a 
-                  href="mailto:legal@giftapp.com" 
+                  href="mailto:hello@givlyn.com" 
                   className="hover:text-primary transition-colors"
-                  aria-label={language === 'es' ? 'Enviar correo a legal' : 'Send email to legal'}
+                  aria-label={language === 'es' ? 'Enviar correo' : 'Send email'}
                 >
-                  legal@giftapp.com
+                  hello@givlyn.com
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="mailto:support@givlyn.com" 
+                  className="hover:text-primary transition-colors"
+                  aria-label={language === 'es' ? 'Enviar correo a soporte' : 'Send email to support'}
+                >
+                  support@givlyn.com
                 </a>
               </li>
             </ul>
@@ -89,7 +112,7 @@ const Footer = () => {
         </div>
 
         <div className="mt-8 pt-8 border-t border-border text-center text-sm text-muted-foreground">
-          <p>© 2025 GiftApp. {language === 'es' ? 'Todos los derechos reservados.' : 'All rights reserved.'}</p>
+          <p>© 2025 Wincova Corporation. {language === 'es' ? 'Todos los derechos reservados.' : 'All rights reserved.'}</p>
         </div>
       </div>
     </footer>
