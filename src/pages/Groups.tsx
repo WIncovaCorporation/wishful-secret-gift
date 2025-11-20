@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Users, Plus, Copy, Check, Trash2, Sparkles, Gift, Lock, Shield, Scale, AlertCircle, Calendar, DollarSign, Share2, Mail, MessageSquare, ArrowLeft } from "lucide-react";
+import { Users, Plus, Copy, Check, Trash2, Sparkles, Gift, Lock, Shield, Scale, AlertCircle, Calendar, DollarSign, Share2, Mail, MessageSquare, ArrowLeft, Lightbulb } from "lucide-react";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import LanguageSelector from "@/components/LanguageSelector";
@@ -24,6 +24,9 @@ import { HelpTooltip } from "@/components/HelpTooltip";
 import { EmptyStateCard } from "@/components/EmptyStateCard";
 import { GroupMembersList } from "@/components/GroupMembersList";
 import { WelcomeOnboarding } from "@/components/WelcomeOnboarding";
+import { ContextualTooltip } from "@/components/ContextualTooltip";
+import { ConfettiCelebration } from "@/components/ConfettiCelebration";
+import { useTooltips } from "@/hooks/useTooltips";
 import type { User } from "@supabase/supabase-js";
 
 interface Group {
@@ -61,6 +64,7 @@ const Groups = () => {
   const { t } = useLanguage();
   const { isFree } = useUserRole();
   const { features, getLimit } = useSubscription();
+  const { shouldShowTooltip, markTooltipAsSeen } = useTooltips();
   const [user, setUser] = useState<User | null>(null);
   const [groups, setGroups] = useState<Group[]>([]);
   const [loading, setLoading] = useState(true);
@@ -68,6 +72,8 @@ const Groups = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [joinDialogOpen, setJoinDialogOpen] = useState(false);
   const [showTemplateSelection, setShowTemplateSelection] = useState(false);
+  const [showTooltip, setShowTooltip] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [joinCode, setJoinCode] = useState("");
   const [newGroup, setNewGroup] = useState({
@@ -93,6 +99,16 @@ const Groups = () => {
   useEffect(() => {
     checkAuth();
   }, []);
+
+  // Mostrar tooltip solo la primera vez que se abre el diálogo
+  useEffect(() => {
+    if (dialogOpen && shouldShowTooltip('create_exchange')) {
+      const timer = setTimeout(() => {
+        setShowTooltip(true);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [dialogOpen, shouldShowTooltip]);
 
   // Detectar si se viene desde el onboarding con datos de plantilla
   useEffect(() => {
@@ -308,6 +324,13 @@ const Groups = () => {
       if (memberError) throw memberError;
 
       toast.success("¡Grupo creado exitosamente!");
+      
+      // Mostrar confetti solo si es el primer grupo
+      const isFirstGroup = groups.length === 0;
+      if (isFirstGroup) {
+        setShowConfetti(true);
+      }
+      
       setDialogOpen(false);
       setNewGroup({
         name: "",
@@ -672,7 +695,7 @@ const Groups = () => {
                   </div>
                 </DialogHeader>
                 <form onSubmit={handleCreateGroup} className="space-y-4">
-                  <div>
+                  <div className="relative">
                     <Label htmlFor="group-name">Nombre del Grupo *</Label>
                     <Input
                       id="group-name"
@@ -680,6 +703,29 @@ const Groups = () => {
                       onChange={(e) => setNewGroup({ ...newGroup, name: e.target.value })}
                       placeholder="Ej: Oficina 2024, Familia Navidad"
                       required
+                    />
+                    
+                    {/* Tooltip contextual */}
+                    <ContextualTooltip
+                      show={showTooltip}
+                      onClose={() => {
+                        setShowTooltip(false);
+                        markTooltipAsSeen('create_exchange');
+                      }}
+                      position="bottom"
+                      content={
+                        <div className="space-y-2">
+                          <div className="flex items-start gap-2">
+                            <Lightbulb className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
+                            <div>
+                              <p className="font-medium text-sm">Dale un nombre que identifique la ocasión</p>
+                              <p className="text-xs text-gray-300 mt-1">
+                                Ejemplo: "Navidad Familia 2024" o "Cumple de Ana"
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      }
                     />
                   </div>
                   <div>
@@ -1109,6 +1155,12 @@ const Groups = () => {
         forceOpen={showTemplateSelection}
         forceView="templates"
         onClose={() => setShowTemplateSelection(false)}
+      />
+
+      {/* Confetti cuando se crea el primer intercambio */}
+      <ConfettiCelebration 
+        show={showConfetti}
+        onComplete={() => setShowConfetti(false)}
       />
 
       <Footer />
