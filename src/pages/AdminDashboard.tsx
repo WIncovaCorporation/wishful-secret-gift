@@ -39,7 +39,14 @@ const AdminDashboard = () => {
   }
 
   const handleOpenBackend = () => {
-    window.postMessage({ type: 'lov-open-backend' }, '*');
+    // Intentar abrir el backend mediante postMessage
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({ type: 'lov-open-backend' }, '*');
+    }
+    
+    toast.info("Abriendo base de datos...", {
+      description: "Si no se abre automáticamente, usa el icono de Cloud ☁️ en la barra superior"
+    });
   };
 
   const adminCards = [
