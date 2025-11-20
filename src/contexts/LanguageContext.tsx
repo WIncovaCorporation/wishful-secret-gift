@@ -119,14 +119,14 @@ const translations = {
     
     // Welcome Onboarding
     "onboarding.step1.title": "Welcome to Givlyn! 🎁",
-    "onboarding.step1.description": "The easiest way to organize gift exchanges and Secret Santa with your friends, family, and coworkers.",
+    "onboarding.step1.description": "The easiest way to organize gift exchanges for any occasion: birthdays, office events, family celebrations, and more.",
     "onboarding.step2.title": "Organize in 3 Steps",
     "onboarding.step2.description": "It's simple and fun:",
-    "onboarding.step2.bullet1": "Create your gift exchange",
-    "onboarding.step2.bullet2": "Invite your friends",
-    "onboarding.step2.bullet3": "Discover who your Secret Santa is!",
+    "onboarding.step2.bullet1": "Create your gift exchange (birthday, office, family, etc.)",
+    "onboarding.step2.bullet2": "Invite your participants",
+    "onboarding.step2.bullet3": "Discover who you'll be gifting to!",
     "onboarding.step3.title": "Ready to Start?",
-    "onboarding.step3.description": "Create your first exchange in less than 2 minutes",
+    "onboarding.step3.description": "Create your first gift exchange in less than 2 minutes",
     "onboarding.createExchange": "Create My First Exchange",
     "onboarding.skipForNow": "Skip for Now",
     
@@ -370,12 +370,12 @@ const translations = {
     
     // Welcome Onboarding
     "onboarding.step1.title": "¡Bienvenido a Givlyn! 🎁",
-    "onboarding.step1.description": "La forma más fácil de organizar intercambios de regalos y Secret Santa con tus amigos, familia y compañeros de trabajo.",
+    "onboarding.step1.description": "La forma más fácil de organizar intercambios de regalos para cualquier ocasión: cumpleaños, eventos de oficina, celebraciones familiares y más.",
     "onboarding.step2.title": "Organiza en 3 Pasos",
     "onboarding.step2.description": "Es simple y divertido:",
-    "onboarding.step2.bullet1": "Crea tu intercambio de regalos",
-    "onboarding.step2.bullet2": "Invita a tus amigos",
-    "onboarding.step2.bullet3": "¡Descubre quién es tu Secret Santa!",
+    "onboarding.step2.bullet1": "Crea tu intercambio de regalos (cumpleaños, oficina, familia, etc.)",
+    "onboarding.step2.bullet2": "Invita a tus participantes",
+    "onboarding.step2.bullet3": "¡Descubre a quién le vas a regalar!",
     "onboarding.step3.title": "¿Listo para Empezar?",
     "onboarding.step3.description": "Crea tu primer intercambio en menos de 2 minutos",
     "onboarding.createExchange": "Crear Mi Primer Intercambio",
