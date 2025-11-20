@@ -54,11 +54,16 @@ const AdminAuditLogs = () => {
   const fetchLogs = async () => {
     setLoading(true);
     try {
+      // Agregar timeout de 10 segundos
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
+
       let query = supabase
         .from('github_audit_logs')
         .select('*')
         .order('created_at', { ascending: false })
-        .limit(50);
+        .limit(50)
+        .abortSignal(controller.signal);
 
       if (filter !== 'all') {
         query = query.eq('status', filter);
@@ -66,11 +71,27 @@ const AdminAuditLogs = () => {
 
       const { data, error } = await query;
 
-      if (error) throw error;
-      setLogs(data || []);
+      clearTimeout(timeoutId);
+
+      if (error) {
+        console.error('Error fetching audit logs:', error);
+        if (error.code === 'PGRST116') {
+          toast.error("No tienes permisos para ver los logs de auditoría");
+        } else {
+          toast.error("Error al cargar los logs: " + error.message);
+        }
+        setLogs([]);
+      } else {
+        setLogs(data || []);
+      }
     } catch (error: any) {
       console.error('Error fetching audit logs:', error);
-      toast.error("Error al cargar los logs de auditoría");
+      if (error.name === 'AbortError') {
+        toast.error("La carga de logs tardó demasiado. Intenta de nuevo.");
+      } else {
+        toast.error("Error al cargar los logs de auditoría");
+      }
+      setLogs([]);
     } finally {
       setLoading(false);
     }
@@ -129,16 +150,29 @@ const AdminAuditLogs = () => {
     );
   };
 
-  if (roleLoading || loading) {
+  if (roleLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <RefreshCw className="h-8 w-8 animate-spin text-primary" />
+        <div className="text-center">
+          <p className="text-muted-foreground">Verificando permisos...</p>
+        </div>
       </div>
     );
   }
 
   if (!isAdmin) {
     return null;
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <RefreshCw className="h-8 w-8 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">Cargando logs de auditoría...</p>
+        </div>
+      </div>
+    );
   }
 
   return (

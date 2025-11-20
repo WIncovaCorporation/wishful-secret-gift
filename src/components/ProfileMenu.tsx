@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { User as UserIcon, Upload, LogOut, Settings, Shield, Trash2, Database } from "lucide-react";
+import { User as UserIcon, Upload, LogOut, Settings, Shield, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate, Link } from "react-router-dom";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -160,15 +160,6 @@ export const ProfileMenu = ({ user }: ProfileMenuProps) => {
                 <Link to="/admin" className="cursor-pointer flex items-center">
                   <Shield className="mr-2 h-4 w-4" />
                   Panel de Administración
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link to="/admin" className="cursor-pointer flex items-center" onClick={(e) => {
-                  e.preventDefault();
-                  window.postMessage({ type: 'lov-open-backend' }, '*');
-                }}>
-                  <Database className="mr-2 h-4 w-4" />
-                  Base de Datos
                 </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
