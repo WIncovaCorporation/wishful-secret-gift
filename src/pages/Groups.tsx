@@ -168,6 +168,76 @@ const Groups = () => {
     e.preventDefault();
     if (!user) return;
 
+    // Input validation
+    if (!newGroup.name.trim()) {
+      toast.error("El nombre del grupo es requerido");
+      return;
+    }
+
+    // Date validation
+    if (newGroup.exchange_date) {
+      const exchangeDate = new Date(newGroup.exchange_date);
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(0, 0, 0, 0);
+      
+      if (exchangeDate < tomorrow) {
+        toast.error("La fecha de intercambio debe ser al menos 1 día en el futuro");
+        return;
+      }
+    }
+
+    // Budget validation
+    const minBudget = newGroup.min_budget ? parseFloat(newGroup.min_budget) : null;
+    const maxBudget = newGroup.max_budget ? parseFloat(newGroup.max_budget) : null;
+    const suggestedBudget = newGroup.suggested_budget ? parseFloat(newGroup.suggested_budget) : null;
+
+    if (minBudget !== null) {
+      if (minBudget < 5) {
+        toast.error("El presupuesto mínimo debe ser al menos $5");
+        return;
+      }
+      if (minBudget > 10000) {
+        toast.error("El presupuesto mínimo no puede exceder $10,000");
+        return;
+      }
+    }
+
+    if (maxBudget !== null) {
+      if (maxBudget < 5) {
+        toast.error("El presupuesto máximo debe ser al menos $5");
+        return;
+      }
+      if (maxBudget > 10000) {
+        toast.error("El presupuesto máximo no puede exceder $10,000");
+        return;
+      }
+    }
+
+    if (minBudget !== null && maxBudget !== null && minBudget > maxBudget) {
+      toast.error("El presupuesto mínimo no puede ser mayor que el máximo");
+      return;
+    }
+
+    if (suggestedBudget !== null) {
+      if (suggestedBudget < 5) {
+        toast.error("El presupuesto sugerido debe ser al menos $5");
+        return;
+      }
+      if (suggestedBudget > 10000) {
+        toast.error("El presupuesto sugerido no puede exceder $10,000");
+        return;
+      }
+      if (minBudget !== null && suggestedBudget < minBudget) {
+        toast.error("El presupuesto sugerido debe ser mayor o igual al mínimo");
+        return;
+      }
+      if (maxBudget !== null && suggestedBudget > maxBudget) {
+        toast.error("El presupuesto sugerido debe ser menor o igual al máximo");
+        return;
+      }
+    }
+
     // Check limits for free users
     const groupLimit = getLimit('groups');
     if (isFree() && groups.length >= groupLimit) {

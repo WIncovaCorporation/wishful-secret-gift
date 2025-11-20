@@ -75,6 +75,8 @@ const Lists = () => {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [aiContext, setAiContext] = useState("");
   const [budget, setBudget] = useState("");
+  const [aiRemaining, setAiRemaining] = useState<number>(10);
+  const [aiTotalLimit] = useState<number>(10);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [smartOptions, setSmartOptions] = useState(getSmartOptions(""));
   const [mainCategory, setMainCategory] = useState("");
@@ -334,6 +336,16 @@ const Lists = () => {
 
       if (error) {
         console.error('Function invocation error:', error);
+        
+        // Handle rate limit error (429)
+        if (error.message?.includes('429') || error.message?.includes('límite')) {
+          toast.error("🚫 Has alcanzado el límite diario de 10 sugerencias de IA. Intenta nuevamente mañana.", {
+            duration: 6000
+          });
+          setAiRemaining(0);
+          return;
+        }
+        
         throw new Error("Error al conectar con el servicio de IA");
       }
 
@@ -342,6 +354,12 @@ const Lists = () => {
       }
 
       if (data.error) {
+        // Handle rate limit from response
+        if (data.error.includes('límite') || data.error.includes('🚫')) {
+          toast.error(data.error, { duration: 6000 });
+          setAiRemaining(data.remaining || 0);
+          return;
+        }
         throw new Error(data.error);
       }
 
@@ -351,7 +369,15 @@ const Lists = () => {
 
       setAiSuggestions(data.suggestions);
       setShowSuggestions(true);
-      toast.success("¡Sugerencias generadas!");
+      
+      // Update remaining count from response
+      if (typeof data.remaining === 'number') {
+        setAiRemaining(data.remaining);
+      }
+      
+      toast.success(`✅ ¡Sugerencias generadas! (${data.remaining || 0}/${aiTotalLimit} restantes hoy)`, {
+        duration: 5000
+      });
     } catch (error: any) {
       toast.error(error.message || "Error al generar sugerencias");
       console.error(error);
