@@ -97,8 +97,8 @@ const Terms = () => {
             </h2>
             <p className="text-foreground mb-4">
               {language === 'es'
-                ? 'GiftApp genera ingresos a través de enlaces de afiliados con retailers incluyendo Amazon, Walmart, Target, Best Buy, Etsy y otros. Cuando utilizas nuestro servicio de recomendación de productos y realizas una compra a través de estos enlaces, podemos recibir una comisión.'
-                : 'GiftApp generates revenue through affiliate links with retailers including Amazon, Walmart, Target, Best Buy, Etsy, and others. When you use our product recommendation service and make a purchase through these links, we may receive a commission.'}
+                ? 'Givlyn genera ingresos a través de enlaces de afiliados con retailers incluyendo Amazon, Walmart, Target, Best Buy, Etsy y otros. Cuando utilizas nuestro servicio de recomendación de productos y realizas una compra a través de estos enlaces, podemos recibir una comisión.'
+                : 'Givlyn generates revenue through affiliate links with retailers including Amazon, Walmart, Target, Best Buy, Etsy, and others. When you use our product recommendation service and make a purchase through these links, we may receive a commission.'}
             </p>
             <div className="mb-4">
               <h3 className="text-xl font-medium text-foreground mb-2">
@@ -114,8 +114,8 @@ const Terms = () => {
             </div>
             <p className="text-foreground">
               {language === 'es'
-                ? 'Al usar nuestro servicio de búsqueda y recomendación de productos, aceptas que GiftApp pueda ganar comisiones de tus compras. Este modelo nos permite ofrecer el servicio gratuitamente mientras mantenemos independencia editorial en nuestras recomendaciones.'
-                : 'By using our product search and recommendation service, you agree that GiftApp may earn commissions from your purchases. This model allows us to offer the service for free while maintaining editorial independence in our recommendations.'}
+                ? 'Al usar nuestro servicio de búsqueda y recomendación de productos, aceptas que Givlyn pueda ganar comisiones de tus compras. Este modelo nos permite ofrecer el servicio gratuitamente mientras mantenemos independencia editorial en nuestras recomendaciones.'
+                : 'By using our product search and recommendation service, you agree that Givlyn may earn commissions from your purchases. This model allows us to offer the service for free while maintaining editorial independence in our recommendations.'}
             </p>
           </section>
 

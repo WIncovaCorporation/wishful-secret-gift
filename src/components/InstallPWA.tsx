@@ -98,7 +98,7 @@ export const InstallPWA = () => {
         
         <div className="flex-1 min-w-0">
           <h3 className="font-semibold text-base mb-1">
-            {isIOS ? '📲 Instala GiftApp' : '🚀 Instala GiftApp'}
+            {isIOS ? '📲 Instala Givlyn' : '🚀 Instala Givlyn'}
           </h3>
           
           {isIOS ? (

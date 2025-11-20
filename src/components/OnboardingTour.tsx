@@ -8,7 +8,7 @@ import Joyride, { Step, CallBackProps, STATUS, ACTIONS, EVENTS } from 'react-joy
 import { useLanguage } from '@/contexts/LanguageContext';
 import { analytics } from '@/lib/analytics';
 
-const TOUR_COMPLETED_KEY = 'giftapp_tour_completed';
+const TOUR_COMPLETED_KEY = 'givlyn_tour_completed';
 
 interface OnboardingTourProps {
   run?: boolean;
@@ -34,7 +34,7 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ run = true, onCo
       content: (
         <div>
           <h2 className="text-xl font-bold mb-2">
-            {t('tourWelcome') || '¡Bienvenido a GiftApp! 🎁'}
+            {t('tourWelcome') || '¡Bienvenido a Givlyn! 🎁'}
           </h2>
           <p className="mb-3">
             {t('tourWelcomeMessage') || 'Organiza, comparte y coordina tus regalos de forma inteligente.'}
@@ -52,7 +52,7 @@ export const OnboardingTour: React.FC<OnboardingTourProps> = ({ run = true, onCo
       content: (
         <div>
           <p className="mb-2">
-            {t('tourActionsStep') || 'Estas son las 3 funciones principales de GiftApp:'}
+            {t('tourActionsStep') || 'Estas son las 3 funciones principales de Givlyn:'}
           </p>
           <ul className="list-disc pl-5 space-y-1 text-sm">
             <li>{t('tourActionsLists') || '📝 Listas: Organiza ideas de regalos'}</li>

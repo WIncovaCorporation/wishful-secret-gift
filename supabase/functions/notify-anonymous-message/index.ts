@@ -230,7 +230,11 @@ Deno.serve(async (req) => {
             </div>
             
             <div class="footer">
-              <p>GiftApp - Haciendo que regalar sea mágico otra vez ✨</p>
+              <p>Givlyn - Haciendo que regalar sea mágico otra vez ✨</p>
+              <p style="margin-top: 8px; font-size: 11px;">
+                Un producto de Wincova Corporation<br />
+                2615 Medical Center Parkway, Suite 1560, Murfreesboro, TN 37129
+              </p>
               <p style="margin-top: 8px;">
                 Este es un mensaje automático. Por favor no respondas a este email.
               </p>

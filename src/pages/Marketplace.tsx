@@ -143,7 +143,7 @@ export default function Marketplace() {
       window.open(data.affiliate_url, '_blank', 'noopener,noreferrer');
       
       toast.success('¡Enlace generado!', {
-        description: `Gracias por usar GiftApp. Ganamos ${(product.price * 0.04).toFixed(2)} USD si compras.`
+        description: `Gracias por usar Givlyn. Ganamos ${(product.price * 0.04).toFixed(2)} USD si compras.`
       });
     } catch (error) {
       console.error('Error generating link:', error);
@@ -298,10 +298,10 @@ export default function Marketplace() {
           <div className="flex items-start gap-4">
             <Sparkles className="w-6 h-6 text-primary shrink-0 mt-1" />
             <div>
-              <h3 className="font-semibold mb-2">Apoya a GiftApp</h3>
+              <h3 className="font-semibold mb-2">Apoya a Givlyn</h3>
               <p className="text-sm text-muted-foreground">
                 Cuando compras a través de nuestros enlaces, ganamos una pequeña comisión sin costo adicional para ti. 
-                ¡Gracias por apoyar el desarrollo de GiftApp!
+                ¡Gracias por apoyar el desarrollo de Givlyn!
               </p>
             </div>
           </div>

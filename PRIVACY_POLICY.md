@@ -63,7 +63,7 @@ Podemos compartir información con:
 - **Optar por no vender**: aunque no vendemos datos, tienes este derecho
 - **No discriminación**: no serás discriminado por ejercer tus derechos
 
-Para ejercer estos derechos, contacta: privacy@giftapp.com
+Para ejercer estos derechos, contacta: privacy@givlyn.com
 
 ## 7. Retención de Datos
 

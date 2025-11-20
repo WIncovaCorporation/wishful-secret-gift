@@ -145,7 +145,7 @@ const Dashboard = () => {
               <Gift className="w-6 h-6 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-xl font-bold">GiftApp</h1>
+              <h1 className="text-xl font-bold">Givlyn</h1>
               <p className="text-sm text-muted-foreground">{t("dashboard.welcomeBack")}</p>
             </div>
           </div>
@@ -162,7 +162,7 @@ const Dashboard = () => {
           <div className="mb-6">
             <UpgradePrompt
               variant="banner"
-              title="¡Desbloquea todo el potencial de GiftApp!"
+              title="¡Desbloquea todo el potencial de Givlyn!"
               description="Grupos y listas ilimitados, chat anónimo con tu asignado, sugerencias con IA y más."
               feature="premium_features"
               onDismiss={() => setShowFreeBanner(false)}
