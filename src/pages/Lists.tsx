@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from "@/components/ui/select";
-import { Gift, Plus, Trash2, ExternalLink, Sparkles, Loader2, Search, X, ShoppingBag, Store, RefreshCw, Edit } from "lucide-react";
+import { Gift, Plus, Trash2, ExternalLink, Sparkles, Loader2, Search, X, ShoppingBag, Store, RefreshCw, Edit, Lightbulb } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -23,6 +23,8 @@ import Footer from "@/components/Footer";
 import { HelpTooltip } from "@/components/HelpTooltip";
 import { EmptyStateCard } from "@/components/EmptyStateCard";
 import { AIProductExtractor } from "@/components/AIProductExtractor";
+import { ContextualTooltip } from "@/components/ContextualTooltip";
+import { useTooltips } from "@/hooks/useTooltips";
 import type { User } from "@supabase/supabase-js";
 
 interface GiftList {
@@ -52,12 +54,14 @@ const Lists = () => {
   const { t } = useLanguage();
   const { isFree } = useUserRole();
   const { features, getLimit } = useSubscription();
+  const { shouldShowTooltip, markTooltipAsSeen } = useTooltips();
   const [user, setUser] = useState<User | null>(null);
   const [lists, setLists] = useState<GiftList[]>([]);
   const [loading, setLoading] = useState(true);
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [itemDialogOpen, setItemDialogOpen] = useState(false);
+  const [showWishlistTooltip, setShowWishlistTooltip] = useState(false);
   const [selectedList, setSelectedList] = useState<string | null>(null);
   const [newList, setNewList] = useState({ name: "" });
   const [newItem, setNewItem] = useState({
@@ -101,6 +105,16 @@ const Lists = () => {
   useEffect(() => {
     checkAuth();
   }, []);
+
+  // Mostrar tooltip solo la primera vez que carga la página de wishlists
+  useEffect(() => {
+    if (!loading && lists.length >= 0 && shouldShowTooltip('wishlist')) {
+      const timer = setTimeout(() => {
+        setShowWishlistTooltip(true);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [loading, lists.length, shouldShowTooltip]);
 
   const checkAuth = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -907,9 +921,32 @@ const Lists = () => {
         }
         }}>
           <DialogContent className="max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
-            <DialogHeader>
+            <DialogHeader className="relative">
               <DialogTitle>Agregar Regalo a Mi Lista</DialogTitle>
               <DialogDescription>Elige cómo quieres agregar tu regalo</DialogDescription>
+              
+              {/* Tooltip contextual */}
+              <ContextualTooltip
+                show={showWishlistTooltip}
+                onClose={() => {
+                  setShowWishlistTooltip(false);
+                  markTooltipAsSeen('wishlist');
+                }}
+                position="bottom"
+                content={
+                  <div className="space-y-2">
+                    <div className="flex items-start gap-2">
+                      <Lightbulb className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-medium text-sm">Agrega 3-5 ideas de regalo</p>
+                        <p className="text-xs text-gray-300 mt-1">
+                          Tu lista es privada hasta que se haga el sorteo. Así quien te toque sabrá exactamente qué regalarte.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                }
+              />
             </DialogHeader>
 
             <div ref={formScrollRef} className="space-y-6 py-4 overflow-y-auto flex-1">

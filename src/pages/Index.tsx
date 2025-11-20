@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { Gift, Users, Sparkles, Shield, LogOut, User } from "lucide-react";
+import { Gift, Users, Sparkles, Shield, LogOut, User, Lightbulb } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import LanguageSelector from "@/components/LanguageSelector";
 import Footer from "@/components/Footer";
@@ -9,17 +9,29 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
 import { toast } from "sonner";
+import { ContextualTooltip } from "@/components/ContextualTooltip";
+import { useTooltips } from "@/hooks/useTooltips";
 
 const Index = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const { shouldShowTooltip, markTooltipAsSeen } = useTooltips();
   const [user, setUser] = useState<SupabaseUser | null>(null);
+  const [showDashboardTooltip, setShowDashboardTooltip] = useState(false);
 
   useEffect(() => {
     // Check current session
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       setUser(session?.user || null);
+      
+      // Mostrar tooltip solo si el usuario está autenticado y es su primera visita
+      if (session?.user && shouldShowTooltip('dashboard')) {
+        const timer = setTimeout(() => {
+          setShowDashboardTooltip(true);
+        }, 1000);
+        return () => clearTimeout(timer);
+      }
     };
     
     checkSession();
@@ -30,7 +42,7 @@ const Index = () => {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [shouldShowTooltip]);
 
   const handleSignOut = async () => {
     try {
@@ -167,12 +179,39 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-24 bg-card" aria-labelledby="features-heading">
+      {/* Features Section with Tooltip */}
+      <section className="py-24 bg-card/30" aria-label="Características principales">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 id="features-heading" className="text-4xl font-bold mb-4">{t("features.title")}</h2>
+          <div className="text-center mb-16 relative">
+            <h2 className="text-4xl font-bold mb-4">{t("features.title")}</h2>
             <p className="text-xl text-muted-foreground">{t("features.subtitle")}</p>
+            
+            {/* Tooltip contextual */}
+            {user && (
+              <ContextualTooltip
+                show={showDashboardTooltip}
+                onClose={() => {
+                  setShowDashboardTooltip(false);
+                  markTooltipAsSeen('dashboard');
+                }}
+                position="bottom"
+                content={
+                  <div className="space-y-2">
+                    <div className="flex items-start gap-2">
+                      <Sparkles className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-medium text-sm">¿Por qué usar Givlyn?</p>
+                        <ul className="text-xs text-gray-300 mt-2 space-y-1">
+                          <li>✅ Nunca más regalos equivocados</li>
+                          <li>✅ Sorteo justo y automático</li>
+                          <li>✅ Todos saben qué quieren los demás</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                }
+              />
+            )}
           </div>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
