@@ -145,9 +145,13 @@ Use search URLs only, never invent product codes.`
 
     const systemPrompt = systemPrompts[language as 'es' | 'en'] || systemPrompts.es;
 
+    console.log('🚀 Calling Gemini API...');
+    console.log('📝 Model: gemini-1.5-flash');
+    console.log('💬 Messages count:', messages.length);
+
     // Use stable model with better rate limits
     const response = await fetchWithRetry(
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse&key=' + geminiApiKey,
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:streamGenerateContent?alt=sse&key=' + geminiApiKey,
       {
       method: 'POST',
       headers: {
@@ -206,6 +210,14 @@ Use search URLs only, never invent product codes.`
       throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
     }
 
+    console.log('✅ Gemini response OK:', response.status);
+    console.log('📊 Content-Type:', response.headers.get('content-type'));
+    console.log('📦 Response has body:', !!response.body);
+    
+    if (!response.body) {
+      throw new Error('Gemini response has no body');
+    }
+    
     console.log('Gemini streaming response started');
 
     // Process and forward SSE stream with better error handling
@@ -218,28 +230,35 @@ Use search URLs only, never invent product codes.`
     (async () => {
       try {
         if (!reader) {
-          console.error('No reader available from Gemini response');
+          console.error('❌ No reader available from Gemini response');
           await writer.close();
           return;
         }
 
         let chunkCount = 0;
+        let totalBytes = 0;
         while (true) {
           const { done, value } = await reader.read();
           if (done) {
-            console.log(`Stream completed. Total chunks: ${chunkCount}`);
+            console.log(`✅ Stream completed. Total chunks: ${chunkCount}, Total bytes: ${totalBytes}`);
             await writer.close();
             break;
           }
 
           chunkCount++;
+          totalBytes += value.length;
           const chunk = decoder.decode(value, { stream: true });
-          console.log(`📦 Chunk ${chunkCount}: ${chunk.substring(0, 100)}`);
+          console.log(`📦 Chunk ${chunkCount} (${value.length} bytes): ${chunk.substring(0, 150)}`);
+          
+          // Verificar si el chunk contiene datos válidos
+          if (!chunk || chunk.trim().length === 0) {
+            console.warn(`⚠️ Chunk ${chunkCount} vacío o solo espacios`);
+          }
           
           await writer.write(new TextEncoder().encode(chunk));
         }
       } catch (error) {
-        console.error('Error forwarding stream:', error);
+        console.error('❌ Error forwarding stream:', error);
         await writer.close();
       }
     })();

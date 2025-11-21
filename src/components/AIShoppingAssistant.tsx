@@ -320,13 +320,13 @@ export const AIShoppingAssistant = () => {
         <Card className="fixed bottom-6 right-6 w-[380px] h-[600px] shadow-2xl z-50 flex flex-col">
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-primary to-primary/80 text-primary-foreground rounded-t-lg">
-            <div className="flex items-center gap-2">
-              <Bot className="h-5 w-5" />
-              <div>
-                <h3 className="font-semibold">{t("aiAssistant.title")}</h3>
-                <p className="text-xs opacity-90">Powered by Gemini 2.0 Flash</p>
-              </div>
+          <div className="flex items-center gap-2">
+            <Bot className="h-5 w-5" />
+            <div>
+              <h3 className="font-semibold">{t("aiAssistant.title")}</h3>
+              <p className="text-xs opacity-90">Powered by Gemini 1.5 Flash</p>
             </div>
+          </div>
             <Button
               variant="ghost"
               size="icon"
