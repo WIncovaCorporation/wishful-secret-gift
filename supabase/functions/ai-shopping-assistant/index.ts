@@ -144,7 +144,7 @@ Use search URLs only, never invent product codes.`
     const systemPrompt = systemPrompts[language as 'es' | 'en'] || systemPrompts.es;
 
     console.log('🚀 Calling Lovable AI Gateway...');
-    console.log('📝 Model: google/gemini-3-pro-preview');
+    console.log('📝 Model: google/gemini-2.5-flash');
     console.log('💬 Messages count:', messages.length);
 
     const response = await fetchWithRetry(
@@ -156,7 +156,7 @@ Use search URLs only, never invent product codes.`
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'google/gemini-3-pro-preview',
+          model: 'google/gemini-2.5-flash',
           messages: [
             { role: 'system', content: systemPrompt },
             ...messages.map((m: any) => ({ role: m.role, content: m.content }))
@@ -215,6 +215,7 @@ Use search URLs only, never invent product codes.`
     }
 
     const data = await response.json();
+    console.log('🧪 Raw AI response:', JSON.stringify(data).slice(0, 500));
     const textParts = data.choices?.[0]?.message?.content ?? '';
 
     console.log('✅ AI response length:', textParts.length);
