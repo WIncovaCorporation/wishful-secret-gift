@@ -306,7 +306,7 @@ export const AIShoppingAssistant = () => {
       {!isOpen && (
         <Button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-4 right-4 h-12 w-12 sm:h-14 sm:w-14 sm:bottom-6 sm:right-6 rounded-full shadow-lg z-50 bg-gradient-to-r from-primary to-primary/80 hover:scale-110 transition-all"
+          className="fixed bottom-4 right-4 h-12 w-12 rounded-full shadow-lg z-50 bg-gradient-to-r from-primary to-primary/80 hover:scale-110 transition-transform sm:bottom-6 sm:right-6 sm:h-14 sm:w-14"
           size="icon"
           aria-label={t("aiAssistant.title")}
         >
@@ -316,7 +316,7 @@ export const AIShoppingAssistant = () => {
 
       {/* Chat Window */}
       {isOpen && (
-        <Card className="fixed bottom-4 right-4 w-full max-w-[420px] h-[90vh] max-h-[700px] shadow-2xl z-50 flex flex-col sm:bottom-6 sm:right-6 sm:w-[400px] sm:h-[650px] md:w-[420px] mx-4 sm:mx-0">
+        <Card className="fixed bottom-0 right-0 left-0 w-full h-[100vh] shadow-2xl z-50 flex flex-col sm:bottom-4 sm:right-4 sm:left-auto sm:w-[400px] sm:h-[90vh] sm:max-h-[700px] sm:rounded-lg md:w-[420px] lg:bottom-6 lg:right-6">
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-primary to-primary/80 text-primary-foreground rounded-t-lg">
           <div className="flex items-center gap-2">
@@ -338,7 +338,7 @@ export const AIShoppingAssistant = () => {
 
           {/* Messages */}
           <ScrollArea className="flex-1 p-4">
-            <div className="space-y-4">
+            <div className="space-y-4 scroll-smooth">
               {messages.map((msg, idx) => (
                 <div
                   key={idx}
@@ -360,9 +360,60 @@ export const AIShoppingAssistant = () => {
                             : "bg-muted"
                         }`}
                       >
-                        <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">
-                          {renderMessageWithLinks(msg.content)}
-                        </p>
+                        {(() => {
+                          // Detectar opciones numeradas para convertirlas en botones
+                          const optionPattern = /^[0-9①-⑨][\.\)️⃣]\s*(.+)$/;
+                          const lines = msg.content.split('\n');
+                          const hasOptions = lines.some(line => optionPattern.test(line.trim()));
+                          
+                          if (hasOptions && msg.role === 'assistant') {
+                            const textBeforeOptions: string[] = [];
+                            const options: string[] = [];
+                            
+                            lines.forEach(line => {
+                              const match = line.trim().match(optionPattern);
+                              if (match) {
+                                options.push(match[1].trim());
+                              } else if (options.length === 0) {
+                                textBeforeOptions.push(line);
+                              }
+                            });
+                            
+                            return (
+                              <div className="space-y-3">
+                                {textBeforeOptions.length > 0 && (
+                                  <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">
+                                    {renderMessageWithLinks(textBeforeOptions.join('\n'))}
+                                  </p>
+                                )}
+                                {options.length > 0 && (
+                                  <div className="flex flex-col gap-2 mt-2">
+                                    {options.map((option, idx) => (
+                                      <Button
+                                        key={idx}
+                                        variant="outline"
+                                        className="w-full justify-start text-left h-auto py-2 px-3 text-sm whitespace-normal bg-background hover:bg-accent"
+                                        onClick={() => {
+                                          setInput(option);
+                                          setTimeout(() => handleSend(), 100);
+                                        }}
+                                      >
+                                        <span className="mr-2">{idx + 1}️⃣</span>
+                                        {option}
+                                      </Button>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          }
+                          
+                          return (
+                            <p className="text-sm whitespace-pre-wrap break-words leading-relaxed">
+                              {renderMessageWithLinks(msg.content)}
+                            </p>
+                          );
+                        })()}
                       </div>
                     )}
                     
@@ -393,7 +444,7 @@ export const AIShoppingAssistant = () => {
 
           {/* Quick Actions */}
           {messages.length === 1 && (
-            <div className="px-4 pb-3 space-y-2">
+            <div className="px-3 pb-3 sm:px-4 space-y-2">
               <p className="text-xs text-muted-foreground text-center mb-2">
                 {language === 'es' ? 'O prueba estos ejemplos:' : 'Or try these examples:'}
               </p>
@@ -401,7 +452,7 @@ export const AIShoppingAssistant = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="text-xs h-auto py-2 px-3 whitespace-normal text-left"
+                  className="w-full max-w-full whitespace-normal text-left h-auto py-3 px-4 text-sm"
                   onClick={() => setInput(language === 'es' ? 'Regalo para mi mamá que le gusta cocinar' : 'Gift for my mom who likes cooking')}
                 >
                   👩 {language === 'es' ? 'Mamá cocinera' : 'Mom who cooks'}
@@ -409,7 +460,7 @@ export const AIShoppingAssistant = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="text-xs h-auto py-2 px-3 whitespace-normal text-left"
+                  className="w-full max-w-full whitespace-normal text-left h-auto py-3 px-4 text-sm"
                   onClick={() => setInput(language === 'es' ? 'Cumpleaños hermana 25 años moderna $40' : 'Sister 25th birthday modern $40')}
                 >
                   🎂 {language === 'es' ? 'Hermana trendy' : 'Trendy sister'}
@@ -417,7 +468,7 @@ export const AIShoppingAssistant = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="text-xs h-auto py-2 px-3 whitespace-normal text-left"
+                  className="w-full max-w-full whitespace-normal text-left h-auto py-3 px-4 text-sm"
                   onClick={() => setInput(language === 'es' ? 'Regalo romántico para esposo aniversario' : 'Romantic gift for husband anniversary')}
                 >
                   💑 {language === 'es' ? 'Aniversario' : 'Anniversary'}
@@ -425,7 +476,7 @@ export const AIShoppingAssistant = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="text-xs h-auto py-2 px-3 whitespace-normal text-left"
+                  className="w-full max-w-full whitespace-normal text-left h-auto py-3 px-4 text-sm"
                   onClick={() => setInput(language === 'es' ? 'Juguete niño 8 años le gusta Lego' : 'Toy for 8 year old boy likes Lego')}
                 >
                   🧒 {language === 'es' ? 'Niño 8 años' : '8 year old boy'}
@@ -434,37 +485,74 @@ export const AIShoppingAssistant = () => {
             </div>
           )}
 
-          {messages.length > 1 && !isLoading && (
-            <div className="px-3 pb-3 flex flex-wrap gap-1.5">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setInput(language === 'es' ? 'Muéstrame más opciones similares' : 'Show me more similar options')}
-                className="text-xs px-2 py-1 h-7"
-              >
-                🎯 {language === 'es' ? 'Más como estos' : 'More like these'}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setInput(language === 'es' ? 'Opciones más económicas' : 'More affordable options')}
-                className="text-xs px-2 py-1 h-7"
-              >
-                💰 {language === 'es' ? 'Más baratos' : 'Cheaper'}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setInput(language === 'es' ? 'Algo más especial/premium' : 'Something more special/premium')}
-                className="text-xs px-2 py-1 h-7"
-              >
-                ✨ {language === 'es' ? 'Más especial' : 'More special'}
-              </Button>
-            </div>
-          )}
+          {messages.length > 1 && !isLoading && (() => {
+            const lastMessage = messages[messages.length - 1];
+            const hasProducts = lastMessage.products && lastMessage.products.length > 0;
+            
+            if (hasProducts) {
+              return (
+                <div className="px-3 pb-3 grid grid-cols-2 gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-xs h-8 whitespace-nowrap"
+                    onClick={() => setInput(language === 'es' ? 'Muéstrame opciones más económicas (menos de $20)' : 'Show me cheaper options (under $20)')}
+                  >
+                    💰 {language === 'es' ? 'Ver <$20' : 'See <$20'}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-xs h-8 whitespace-nowrap"
+                    onClick={() => setInput(language === 'es' ? 'Productos que llegan hoy mismo (pickup o same-day)' : 'Products available today (pickup or same-day)')}
+                  >
+                    ⚡ {language === 'es' ? 'Llega hoy' : 'Today'}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-xs h-8 whitespace-nowrap"
+                    onClick={() => setInput(language === 'es' ? 'Dame opciones en otra categoría' : 'Show me another category')}
+                  >
+                    🔄 {language === 'es' ? 'Otra categoría' : 'Different'}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-xs h-8 whitespace-nowrap"
+                    onClick={() => setInput(language === 'es' ? 'Muéstrame versiones más premium de estos productos' : 'Show me premium versions')}
+                  >
+                    ✨ {language === 'es' ? 'Premium' : 'Premium'}
+                  </Button>
+                </div>
+              );
+            } else if (messages.length <= 3) {
+              return (
+                <div className="px-3 pb-3 grid grid-cols-2 gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-xs h-8 whitespace-nowrap"
+                    onClick={() => setInput(language === 'es' ? 'Muéstrame los regalos más populares de este mes' : 'Show me most popular gifts this month')}
+                  >
+                    🎁 {language === 'es' ? 'Populares' : 'Popular'}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-xs h-8 whitespace-nowrap"
+                    onClick={() => setInput(language === 'es' ? 'Ofertas increíbles por menos de $20' : 'Great deals under $20')}
+                  >
+                    💰 {language === 'es' ? 'Ofertas <$20' : 'Deals <$20'}
+                  </Button>
+                </div>
+              );
+            }
+            return null;
+          })()}
 
           {/* Input */}
-          <div className="p-4 border-t space-y-3">
+          <div className="p-3 sm:p-4 border-t space-y-3">
             {/* AI Usage Counter */}
             {remaining !== null && (
               <div className="flex items-center justify-between text-xs">
