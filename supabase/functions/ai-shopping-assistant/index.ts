@@ -60,9 +60,7 @@ serve(async (req) => {
       console.log('AI usage:', limitData);
     }
 
-    console.log('Starting Gemini 2.5 Flash with language:', language);
-
-    // Retry logic with exponential backoff
+    console.log('Starting Gemini 3 Pro with language:', language);
     const fetchWithRetry = async (url: string, options: RequestInit, maxRetries = 3) => {
       for (let attempt = 0; attempt < maxRetries; attempt++) {
         try {
@@ -145,16 +143,12 @@ Use search URLs only, never invent product codes.`
 
     const systemPrompt = systemPrompts[language as 'es' | 'en'] || systemPrompts.es;
 
-    console.log('🚀 Calling Gemini API...');
-    console.log('📝 Model: gemini-1.5-flash');
-    console.log('💬 Messages count:', messages.length);
-
     console.log('🚀 Calling Gemini API (non-stream)...');
-    console.log('📝 Model: gemini-2.5-flash');
+    console.log('📝 Model: gemini-3-pro-preview');
     console.log('💬 Messages count:', messages.length);
 
     const response = await fetchWithRetry(
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + geminiApiKey,
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent?key=' + geminiApiKey,
       {
         method: 'POST',
         headers: {
@@ -177,6 +171,7 @@ Use search URLs only, never invent product codes.`
           generationConfig: {
             temperature: 0.9,
             maxOutputTokens: 500,
+            thinking_level: 'low', // Fast responses for shopping assistant
           },
         }),
       }
