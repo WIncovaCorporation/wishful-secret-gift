@@ -22,7 +22,11 @@ However, this guide will help you **replicate** the database schema and data to 
 
 ## Step-by-Step Migration
 
-### Step 1: Access Your Supabase SQL Editor
+### Step 1: Create the Schema
+
+First, you need to create all tables and database structure.
+
+### Step 1A: Access Your Supabase SQL Editor
 
 1. Go to https://supabase.com/dashboard
 2. Select your project `rgbddzfyznhogebfuhez`
@@ -47,7 +51,7 @@ This will create:
 
 **Expected Duration:** 30-60 seconds
 
-### Step 3: Verify the Migration
+### Step 3: Verify the Schema Migration
 
 Run this query to verify all tables were created:
 
@@ -60,23 +64,87 @@ ORDER BY table_name;
 
 You should see 24 tables listed.
 
-### Step 4: Data Migration (Optional)
+---
 
-If you need to copy existing data from Lovable Cloud to your external Supabase:
+## Step 2: Import the Data
 
-1. Use the Supabase Dashboard to export data from Lovable Cloud:
+Now that the schema is created, import the actual data.
+
+### Step 2A: Open the Data Export File
+
+1. Open the `database_data_export.sql` file from this repository
+2. This file contains INSERT statements for all existing data
+
+### Step 2B: Run the Data Import
+
+1. Go back to **SQL Editor** in your Supabase dashboard
+2. Click **New Query**
+3. Copy the **entire contents** of `database_data_export.sql`
+4. Paste into the SQL Editor
+5. Click **Run** button
+
+This will import:
+- 5 user profiles
+- 7 user roles
+- 3 subscription plans
+- 5 usage tracking records
+- 1 event
+- 2 groups
+- 3 group members
+- 3 gift lists
+- 8+ gift items
+- 2 gift exchanges
+- 2 anonymous messages
+- 9+ affiliate products
+- 5 affiliate configs
+- 6 gift cards
+
+**Expected Duration:** 10-20 seconds
+
+**Note:** Large tables like `ai_corrections` and `github_audit_logs` (100+ rows with complex JSONB) are not included. See Step 5 below for exporting those.
+
+### Step 2C: Verify the Data Import
+
+Run verification queries:
+
+```sql
+-- Check data counts
+SELECT 'profiles' as table_name, COUNT(*) as count FROM profiles
+UNION ALL
+SELECT 'groups', COUNT(*) FROM groups
+UNION ALL
+SELECT 'gift_lists', COUNT(*) FROM gift_lists
+UNION ALL
+SELECT 'affiliate_products', COUNT(*) FROM affiliate_products;
+```
+
+---
+
+### Step 3: Alternative Data Migration (CSV Export)
+
+If you prefer CSV export method or need to export large tables:
+
+1. **Export from Lovable Cloud** (current project):
+   - You can view your backend by clicking the backend button in Lovable
    - Go to **Table Editor**
    - For each table, click the **⋮** menu
    - Select **Export as CSV**
 
-2. Import into your external Supabase:
+2. **Import into your external Supabase:**
    - Go to your external project's **Table Editor**
    - Click the table name
    - Click **Insert** → **Import CSV**
 
-**Note:** For large datasets, consider using `pg_dump` and `pg_restore` for better performance.
+**Recommended for:**
+- Large tables (`ai_corrections`, `github_audit_logs`)
+- Tables with complex JSONB data
+- When you need the most recent data
 
-### Step 5: Configure Auth (Important!)
+**Note:** For very large datasets (1000+ rows), consider using `pg_dump` and `pg_restore` for better performance.
+
+---
+
+## Step 4: Configure Auth (Important!)
 
 Your external Supabase project needs auth configured for RLS policies to work:
 
@@ -85,7 +153,9 @@ Your external Supabase project needs auth configured for RLS policies to work:
 3. Configure **Site URL** and **Redirect URLs**
 4. Update any auth-related environment variables
 
-### Step 6: Test RLS Policies
+---
+
+## Step 5: Test RLS Policies
 
 Create a test user and verify RLS is working:
 
@@ -190,15 +260,23 @@ If you want to keep both databases in sync:
    - Complex conflict resolution needed
    - Consider using Lovable Cloud as single source of truth
 
+## Summary of Files
+
+This migration includes two SQL files:
+
+1. **`database_export.sql`** - Complete schema with tables, functions, RLS policies, triggers
+2. **`database_data_export.sql`** - All data as INSERT statements (NEW!)
+
 ## Next Steps
 
 After successful migration:
 
 1. ✅ Test authentication flow
 2. ✅ Verify RLS policies work as expected
-3. ✅ Import any necessary seed data
+3. ✅ Verify imported data is accessible
 4. ✅ Update application connection strings (if using external Supabase for other apps)
 5. ✅ Set up backups on external Supabase
+6. ✅ Export large tables (ai_corrections, github_audit_logs) via CSV if needed
 
 ## Support
 
