@@ -65,27 +65,32 @@ serve(async (req) => {
     }
 
     console.log('🤖 Starting Gemini 3 Pro via Lovable AI with language:', language);
-    const fetchWithRetry = async (url: string, options: RequestInit, maxRetries = 3) => {
+    const fetchWithRetry = async (url: string, options: RequestInit, maxRetries = 2) => {
       for (let attempt = 0; attempt < maxRetries; attempt++) {
         try {
           const response = await fetch(url, options);
           
-          if (response.status === 429 && attempt < maxRetries - 1) {
-            const waitTime = Math.pow(2, attempt) * 1000; // 1s, 2s, 4s
-            console.log(`Rate limit hit, retrying in ${waitTime}ms (attempt ${attempt + 1}/${maxRetries})`);
-            await new Promise(resolve => setTimeout(resolve, waitTime));
-            continue;
+          if (response.status === 429) {
+            if (attempt < maxRetries - 1) {
+              const waitTime = 5000 + (attempt * 5000); // 5s, 10s
+              console.log(`⏰ Rate limit, esperando ${waitTime/1000}s (intento ${attempt + 1}/${maxRetries})`);
+              await new Promise(resolve => setTimeout(resolve, waitTime));
+              continue;
+            }
+            
+            // Si ya agotamos reintentos, devolver 429 al frontend
+            return response;
           }
           
           return response;
         } catch (error) {
           if (attempt === maxRetries - 1) throw error;
-          const waitTime = Math.pow(2, attempt) * 1000;
-          console.log(`Request failed, retrying in ${waitTime}ms (attempt ${attempt + 1}/${maxRetries})`);
+          const waitTime = 3000 + (attempt * 2000);
+          console.log(`❌ Error de red, reintentando en ${waitTime/1000}s`);
           await new Promise(resolve => setTimeout(resolve, waitTime));
         }
       }
-      throw new Error('Max retries exceeded');
+      throw new Error('Máximo de reintentos excedido');
     };
 
     const systemPrompts = {
@@ -148,7 +153,7 @@ Use search URLs only, never invent product codes.`
     const systemPrompt = systemPrompts[language as 'es' | 'en'] || systemPrompts.es;
 
     console.log('🚀 Calling Google Gemini API directly...');
-    console.log('📝 Model: gemini-2.0-flash-exp');
+    console.log('📝 Model: gemini-2.5-flash');
     console.log('💬 Messages count:', messages.length);
 
     // Construir el historial de conversación en formato Gemini
@@ -168,7 +173,7 @@ Use search URLs only, never invent product codes.`
     ];
 
     const response = await fetchWithRetry(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${geminiApiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${geminiApiKey}`,
       {
         method: 'POST',
         headers: {
@@ -181,6 +186,7 @@ Use search URLs only, never invent product codes.`
             maxOutputTokens: 500,
           },
         }),
+        signal: AbortSignal.timeout(30000), // 30 segundos timeout
       }
     );
 

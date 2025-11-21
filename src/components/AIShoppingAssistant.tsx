@@ -251,7 +251,14 @@ export const AIShoppingAssistant = () => {
   };
 
   const handleSend = () => {
-    if (!input.trim() || isLoading) return;
+    if (!input.trim() || isLoading || isLimitReached) return;
+    
+    // Prevenir múltiples clicks
+    if (isLoading) {
+      toast.info('⏳ Procesando solicitud anterior...');
+      return;
+    }
+    
     streamChat(input);
   };
 
@@ -285,7 +292,7 @@ export const AIShoppingAssistant = () => {
             <Bot className="h-5 w-5" />
             <div>
               <h3 className="font-semibold">{t("aiAssistant.title")}</h3>
-              <p className="text-xs opacity-90">Powered by Gemini 2.0 Flash Exp</p>
+              <p className="text-xs opacity-90">Powered by Gemini 2.5 Flash</p>
             </div>
           </div>
             <Button
