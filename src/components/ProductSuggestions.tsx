@@ -3,7 +3,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ExternalLink, Star, Sparkles } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { ExternalLink, Star, Sparkles, Zap } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Product {
@@ -30,10 +31,31 @@ export function ProductSuggestions({
 }: ProductSuggestionsProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [aiRemaining, setAiRemaining] = useState<number | null>(null);
 
   useEffect(() => {
     loadSuggestions();
+    loadAIUsage();
   }, [category, searchQuery]);
+
+  const loadAIUsage = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: usage } = await supabase
+        .from('ai_usage_tracking')
+        .select('usage_count')
+        .eq('user_id', user.id)
+        .eq('feature_type', 'gift_suggestion')
+        .maybeSingle();
+
+      const usageCount = usage?.usage_count || 0;
+      setAiRemaining(Math.max(0, 10 - usageCount));
+    } catch (error) {
+      console.error('Error loading AI usage:', error);
+    }
+  };
 
   const loadSuggestions = async () => {
     setLoading(true);
@@ -105,10 +127,28 @@ export function ProductSuggestions({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <Sparkles className="w-5 h-5 text-primary" />
-        <h3 className="text-lg font-semibold">Sugerencias de Productos</h3>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Sparkles className="w-5 h-5 text-primary" />
+          <h3 className="text-lg font-semibold">Sugerencias de Productos</h3>
+        </div>
+        
+        {aiRemaining !== null && (
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Zap className="w-3.5 h-3.5" />
+            <span>Sugerencias IA: <span className={`font-semibold ${aiRemaining === 0 ? 'text-destructive' : 'text-primary'}`}>{aiRemaining}/10</span></span>
+          </div>
+        )}
       </div>
+
+      {aiRemaining === 0 && (
+        <Alert variant="destructive">
+          <AlertTitle>Límite de IA alcanzado</AlertTitle>
+          <AlertDescription>
+            Has usado tus 10 sugerencias de IA hoy. Se restablecerá mañana.
+          </AlertDescription>
+        </Alert>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {products.map((product) => (

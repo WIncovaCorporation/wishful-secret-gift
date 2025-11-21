@@ -3,11 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { MessageCircle, X, Send, Bot } from "lucide-react";
+import { MessageCircle, X, Send, Bot, Zap } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { ProductCard, ProductCardData } from "./ProductCard";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 // Parse products from AI message
 const parseProducts = (text: string): ProductCardData[] => {
@@ -79,6 +80,8 @@ export const AIShoppingAssistant = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [remaining, setRemaining] = useState<number | null>(null);
+  const [isLimitReached, setIsLimitReached] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
@@ -89,6 +92,34 @@ export const AIShoppingAssistant = () => {
       content: t("aiAssistant.initialMessage"),
     },
   ]);
+
+  // Load AI usage tracking when opening chat
+  useEffect(() => {
+    if (isOpen) {
+      loadAIUsage();
+    }
+  }, [isOpen]);
+
+  const loadAIUsage = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: usage } = await supabase
+        .from('ai_usage_tracking')
+        .select('usage_count')
+        .eq('user_id', user.id)
+        .eq('feature_type', 'shopping_assistant')
+        .maybeSingle();
+
+      const usageCount = usage?.usage_count || 0;
+      const remainingCount = Math.max(0, 10 - usageCount);
+      setRemaining(remainingCount);
+      setIsLimitReached(remainingCount === 0);
+    } catch (error) {
+      console.error('Error loading AI usage:', error);
+    }
+  };
 
   // Listen for external open requests
   useEffect(() => {
@@ -140,17 +171,23 @@ export const AIShoppingAssistant = () => {
       );
 
       if (!response.ok) {
-        const errorText = await response.text();
+        const errorData = await response.json().catch(() => ({}));
+        
+        // Handle 429 rate limit error
+        if (response.status === 429) {
+          setIsLimitReached(true);
+          setRemaining(0);
+          toast.error(errorData.error || "Límite diario alcanzado", {
+            description: errorData.reset_at 
+              ? `Se restablecerá: ${errorData.reset_at}`
+              : "Vuelve mañana o actualiza tu plan"
+          });
+          throw new Error(errorData.error || "Rate limit exceeded");
+        }
+        
         let errorMsg = language === 'en' 
           ? "Could not connect to the assistant. Please try again."
           : "No pude conectar con el asistente. Intenta de nuevo.";
-        
-        // Handle rate limit errors specifically
-        if (response.status === 429 || errorText.includes('429')) {
-          errorMsg = language === 'en'
-            ? "The AI assistant is currently busy. Please wait a moment and try again."
-            : "El asistente está ocupado. Por favor espera un momento e intenta de nuevo.";
-        }
         
         throw new Error(errorMsg);
       }
@@ -211,6 +248,8 @@ export const AIShoppingAssistant = () => {
       setMessages(newMessages);
     } finally {
       setIsLoading(false);
+      // Reload usage after successful chat
+      loadAIUsage();
     }
   };
 
@@ -249,7 +288,7 @@ export const AIShoppingAssistant = () => {
               <Bot className="h-5 w-5" />
               <div>
                 <h3 className="font-semibold">{t("aiAssistant.title")}</h3>
-                <p className="text-xs opacity-90">Powered by OpenAI GPT-4</p>
+                <p className="text-xs opacity-90">Powered by Gemini 2.0 Flash</p>
               </div>
             </div>
             <Button
@@ -318,19 +357,42 @@ export const AIShoppingAssistant = () => {
           </ScrollArea>
 
           {/* Input */}
-          <div className="p-4 border-t">
+          <div className="p-4 border-t space-y-3">
+            {/* AI Usage Counter */}
+            {remaining !== null && (
+              <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-1.5 text-muted-foreground">
+                  <Zap className="w-3.5 h-3.5" />
+                  <span>Búsquedas de IA hoy:</span>
+                </div>
+                <span className={`font-semibold ${remaining === 0 ? 'text-destructive' : 'text-primary'}`}>
+                  {remaining}/10
+                </span>
+              </div>
+            )}
+
+            {/* Rate Limit Alert */}
+            {isLimitReached && (
+              <Alert variant="destructive" className="py-2">
+                <AlertTitle className="text-sm font-semibold mb-1">Límite diario alcanzado</AlertTitle>
+                <AlertDescription className="text-xs">
+                  Has usado tus 10 búsquedas de hoy. Se restablecerá mañana a las 12:00 AM.
+                </AlertDescription>
+              </Alert>
+            )}
+            
             <div className="flex gap-2">
               <Input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder={t("aiAssistant.placeholder")}
-                disabled={isLoading}
+                placeholder={isLimitReached ? "Límite alcanzado" : t("aiAssistant.placeholder")}
+                disabled={isLoading || isLimitReached}
                 className="flex-1"
               />
               <Button
                 onClick={handleSend}
-                disabled={!input.trim() || isLoading}
+                disabled={!input.trim() || isLoading || isLimitReached}
                 size="icon"
               >
                 <Send className="h-4 w-4" />
