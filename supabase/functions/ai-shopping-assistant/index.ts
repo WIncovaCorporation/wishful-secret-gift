@@ -173,11 +173,15 @@ Use search URLs only, never invent product codes.`
       console.error('Gemini API error:', response.status, errorText);
       
       if (response.status === 429) {
+        const errorJson = JSON.parse(errorText);
+        const retryDelay = errorJson.error?.details?.find((d: any) => d['@type']?.includes('RetryInfo'))?.retryDelay;
+        
         return new Response(
           JSON.stringify({ 
-            error: '⏰ El servicio de IA está muy ocupado ahora. Por favor espera 1-2 minutos e intenta de nuevo.',
+            error: `⏰ Cuota de Gemini agotada. ${retryDelay ? `Reintentar en ${retryDelay}` : 'Espera 1 minuto'}`,
             code: 'RATE_LIMIT',
-            retry_after: 60
+            retry_after: 60,
+            details: 'Tu plan gratuito de Gemini se resetea cada minuto. Si necesitas más, activa facturación en console.cloud.google.com'
           }),
           { 
             status: 429, 

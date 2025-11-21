@@ -177,9 +177,9 @@ export const AIShoppingAssistant = () => {
         if (response.status === 429) {
           if (errorData.code === 'RATE_LIMIT') {
             // Gemini API rate limit - temporary
-            toast.error('⏰ El servicio está muy ocupado', {
-              description: 'Espera 1-2 minutos e intenta nuevamente',
-              duration: 5000
+            toast.error(errorData.error || '⏰ Cuota de Gemini agotada', {
+              description: errorData.details || 'Espera 1 minuto y reintenta',
+              duration: 8000
             });
           } else {
             // User daily limit
@@ -233,8 +233,9 @@ export const AIShoppingAssistant = () => {
 
             try {
               const parsed = JSON.parse(jsonStr);
-              // OpenAI format: choices[0].delta.content
-              const text = parsed.content;
+              
+              // Gemini format: candidates[0].content.parts[0].text
+              const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
               
               if (text) {
                 assistantMessage += text;
