@@ -1,145 +1,88 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Star, ExternalLink } from "lucide-react";
-import { AddToListDropdown } from "./AddToListDropdown";
-import { useState } from "react";
+import { ExternalLink, Heart } from "lucide-react";
+import { toast } from "sonner";
 
-export type ProductCardData = {
+export interface ProductCardData {
   name: string;
   price: string;
   store: string;
   link: string;
+  reason?: string;
   image?: string;
   rating?: number;
   reviewCount?: number;
-  reason?: string;
-};
+}
 
-type ProductCardProps = {
+interface ProductCardProps {
   product: ProductCardData;
-};
+}
 
-const storeColors: Record<string, string> = {
-  Amazon: "bg-[#FF9900] text-white",
-  Walmart: "bg-[#0071CE] text-white",
-  Target: "bg-[#CC0000] text-white",
-  "Best Buy": "bg-[#0046BE] text-white",
-  eBay: "bg-[#E53238] text-white",
-  Etsy: "bg-[#F1641E] text-white",
-  default: "bg-primary text-primary-foreground",
-};
 
 export const ProductCard = ({ product }: ProductCardProps) => {
-  const [isAdded, setIsAdded] = useState(false);
-  const storeColor = storeColors[product.store] || storeColors.default;
-
-  // Format price to ensure it has $ sign
-  const formatPrice = (price: string) => {
-    const cleanPrice = price.replace(/[^0-9.]/g, "");
-    return `$${cleanPrice}`;
+  const handleAddToList = () => {
+    toast.success(`"${product.name}" guardado`, {
+      description: 'Añadido a tus ideas de regalo',
+      duration: 2000,
+    });
   };
 
-  // Generate placeholder image if no image provided
-  const productImage = product.image || `https://placehold.co/150x150/e5e7eb/6b7280?text=${encodeURIComponent(product.name.slice(0, 20))}`;
-
-  const handleAddSuccess = () => {
-    setIsAdded(true);
-    setTimeout(() => setIsAdded(false), 3000);
+  // Store color mapping
+  const storeColors: Record<string, string> = {
+    amazon: "bg-orange-500",
+    walmart: "bg-blue-500",
+    target: "bg-red-500",
+    etsy: "bg-orange-600",
+    ebay: "bg-blue-600",
   };
+
+  const storeColor = storeColors[product.store.toLowerCase()] || "bg-primary";
 
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-all">
-      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 p-3 sm:p-4">
-        {/* Product Image - Centrada en móvil */}
-        <div className="flex-shrink-0 mx-auto sm:mx-0">
-          <img
-            src={productImage}
-            alt={product.name}
-            className="w-32 h-32 sm:w-36 sm:h-36 md:w-40 md:h-40 object-cover rounded-lg border border-border"
-            onError={(e) => {
-              e.currentTarget.src = `https://placehold.co/150x150/e5e7eb/6b7280?text=${encodeURIComponent(product.name.slice(0, 20))}`;
-            }}
-          />
-        </div>
-
-        {/* Product Info - Apilada en móvil */}
-        <div className="flex-1 flex flex-col gap-2 min-w-0">
-          {/* Product Name */}
-          <h4 className="font-semibold text-sm sm:text-base leading-tight line-clamp-2">
+    <Card className="overflow-hidden hover:shadow-md transition-shadow">
+      <div className="p-3 space-y-2">
+        {/* Header: Name + Price */}
+        <div className="flex items-start justify-between gap-2">
+          <h4 className="font-semibold text-sm leading-tight flex-1 line-clamp-2">
             {product.name}
           </h4>
+          <span className="text-primary font-bold text-lg whitespace-nowrap">
+            ${product.price}
+          </span>
+        </div>
 
-          {/* Price */}
-          <div className="text-xl sm:text-2xl font-bold text-primary">
-            {formatPrice(product.price)}
-          </div>
+        {/* Store Badge */}
+        <Badge className={`${storeColor} text-white text-xs`}>
+          {product.store}
+        </Badge>
 
-          {/* Rating */}
-          {product.rating && (
-            <div className="flex items-center gap-1 text-sm">
-              <div className="flex">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className={`w-4 h-4 ${
-                      i < Math.floor(product.rating!)
-                        ? "fill-yellow-400 text-yellow-400"
-                        : "fill-muted text-muted"
-                    }`}
-                  />
-                ))}
-              </div>
-              {product.reviewCount && (
-                <span className="text-muted-foreground">
-                  ({product.reviewCount})
-                </span>
-              )}
-            </div>
-          )}
+        {/* Reason */}
+        {product.reason && (
+          <p className="text-xs text-muted-foreground line-clamp-2">
+            ✨ {product.reason}
+          </p>
+        )}
 
-          {/* Store Badge */}
-          <div>
-            <Badge className={`${storeColor} rounded-full text-xs`}>
-              {product.store}
-            </Badge>
-          </div>
-
-          {/* Reason */}
-          {product.reason && (
-            <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2">
-              {product.reason}
-            </p>
-          )}
-
-          {/* Action Buttons - Stack en móvil */}
-          <div className="flex flex-col sm:flex-row gap-2 mt-auto pt-2">
-            <Button
-              variant="outline"
-              size="touch"
-              className="sm:size-sm flex-1"
-              onClick={() => window.open(product.link, "_blank")}
-            >
-              <ExternalLink className="w-4 h-4 mr-2" />
-              Ver en {product.store}
-            </Button>
-            
-            <div className="flex-1">
-              <AddToListDropdown
-                product={{
-                  id: "",
-                  name: product.name,
-                  description: product.reason || "",
-                  category: "general",
-                  price: parseFloat(product.price.replace(/[^0-9.]/g, "")),
-                  image_url: productImage,
-                  affiliate_link: product.link,
-                }}
-                isAdded={isAdded}
-                onSuccess={handleAddSuccess}
-              />
-            </div>
-          </div>
+        {/* Actions */}
+        <div className="flex gap-2 pt-1">
+          <Button
+            variant="default"
+            size="sm"
+            className="flex-1 h-8 text-xs"
+            onClick={() => window.open(product.link, '_blank')}
+          >
+            <ExternalLink className="h-3 w-3 mr-1" />
+            Ver en {product.store}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 w-8 p-0"
+            onClick={handleAddToList}
+          >
+            <Heart className="h-3 w-3" />
+          </Button>
         </div>
       </div>
     </Card>
