@@ -1,5 +1,5 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.0';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -13,55 +13,54 @@ serve(async (req) => {
 
   try {
     const { messages, language = 'es' } = await req.json();
-    const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
+    const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
-    if (!openaiApiKey) {
-      throw new Error('OPENAI_API_KEY not configured');
+    if (!geminiApiKey) {
+      throw new Error('GEMINI_API_KEY not configured');
     }
 
-    console.log('Starting OpenAI chat with language:', language);
+    // Initialize Supabase client for auth and rate limiting
+    const supabaseClient = createClient(supabaseUrl ?? '', supabaseServiceKey ?? '');
 
-    // TODO: Wincova catalog search - temporarily disabled until ecommerce is ready
-    // Infrastructure ready to reconnect when Wincova.com launches
-    const wincovaContext = '';
-    
-    // UNCOMMENT WHEN WINCOVA ECOMMERCE IS READY:
-    // const lastMessage = messages[messages.length - 1];
-    // const searchQuery = lastMessage?.role === 'user' ? lastMessage.content : '';
-    // let wincovaContext = '';
-    // if (searchQuery && supabaseUrl && supabaseServiceKey) {
-    //   console.log('Searching Wincova catalog for:', searchQuery);
-    //   try {
-    //     const wincovaSearchResponse = await fetch(`${supabaseUrl}/functions/v1/search-wincova-products`, {
-    //       method: 'POST',
-    //       headers: {
-    //         'Content-Type': 'application/json',
-    //         'Authorization': `Bearer ${supabaseServiceKey}`
-    //       },
-    //       body: JSON.stringify({
-    //         query: searchQuery
-    //       })
-    //     });
-    //
-    //     if (wincovaSearchResponse.ok) {
-    //       const wincovaData = await wincovaSearchResponse.json();
-    //       if (wincovaData.products && wincovaData.products.length > 0) {
-    //         wincovaContext = `\n\n🏪 **PRODUCTOS DISPONIBLES EN WINCOVA (RECOMIENDA ESTOS PRIMERO):**\n${
-    //           wincovaData.products.map((p: any) => 
-    //             `- ${p.name} ($${p.price} ${p.currency}) - ${p.link} - ${p.description || 'Disponible en Wincova con envío gratis'}`
-    //           ).join('\n')
-    //         }\n`;
-    //         console.log('Found', wincovaData.products.length, 'products in Wincova catalog');
-    //       } else {
-    //         console.log('No products found in Wincova catalog');
-    //       }
-    //     }
-    //   } catch (error) {
-    //     console.error('Error searching Wincova catalog:', error);
-    //   }
-    // }
+    // Get user ID from auth header (optional for this function)
+    const authHeader = req.headers.get('Authorization');
+    let userId: string | null = null;
+
+    if (authHeader) {
+      const token = authHeader.replace('Bearer ', '');
+      const { data: { user } } = await supabaseClient.auth.getUser(token);
+      userId = user?.id || null;
+    }
+
+    // Check rate limit if user is authenticated
+    if (userId) {
+      const { data: limitData } = await supabaseClient.rpc(
+        'check_and_increment_ai_usage',
+        { 
+          p_user_id: userId,
+          p_feature_type: 'shopping_assistant',
+          p_daily_limit: 10
+        }
+      );
+
+      if (!limitData?.allowed) {
+        const resetDate = limitData?.reset_date ? new Date(limitData.reset_date).toLocaleDateString('es-ES') : 'mañana';
+        return new Response(
+          JSON.stringify({ 
+            error: `🚫 Has alcanzado el límite diario de 10 búsquedas de IA. Intenta nuevamente ${resetDate}.`,
+            remaining: 0,
+            reset_at: resetDate
+          }),
+          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.log('AI usage:', limitData);
+    }
+
+    console.log('Starting Gemini 2.5 Flash chat with language:', language);
 
     const systemPrompts = {
       es: `Eres "GiftBot", el asistente de compras AI más avanzado del mundo especializado en encontrar los mejores regalos en Amazon, Walmart, Target, Etsy y eBay.
@@ -90,8 +89,6 @@ serve(async (req) => {
 - For unique and personalized gifts
 - Handmade and vintage products
 
-**NOTE:** Wincova catalog coming soon with free shipping and better prices.
-
 🧠 RECOMMENDATION STRATEGY:
 
 **ALWAYS recommend products in EVERY response** (2-3 minimum)
@@ -119,13 +116,6 @@ serve(async (req) => {
 - Usa "tú" SIEMPRE
 - Emojis con propósito 🎁
 
-🥇 ESTRATEGIA DE RECOMENDACIÓN:
-
-**SIEMPRE recomienda productos inmediatamente**
-- En cuanto el usuario mencione para quién es el regalo, sugiere 2-3 productos
-- Usa el formato [PRODUCTO] estructurado
-- Después puedes hacer 1-2 preguntas para refinar opciones
-
 💡 INTELIGENCIA DE MARKETPLACE:
 
 **AMAZON** - Para: Electrónicos, tech, libros, variedad masiva
@@ -143,67 +133,22 @@ Formato: https://www.etsy.com/search?q=[término+específico]
 **EBAY** - Para: Coleccionables, vintage, ediciones especiales, raros
 Formato: https://www.ebay.com/sch/i.html?_nkw=[término+específico]
 
-🎯 ESTRATEGIA DE SELECCIÓN DE TIENDA:
+🎯 FORMATO DE RESPUESTA CON PRODUCTOS:
 
-1. **Analiza contexto**:
-   - Presupuesto bajo → Walmart
-   - Tech/gadgets → Amazon
-   - Único/especial → Etsy
-   - Estilo/moda → Target
-   - Coleccionable → eBay
+Cuando recomiendes productos, SIEMPRE usa este formato EXACTO:
 
-2. **Formato de respuesta con productos**:
-   Cuando recomiendes productos, SIEMPRE usa este formato EXACTO:
+[PRODUCTO]
+nombre: [Nombre descriptivo del producto]
+precio: [Precio estimado en USD, ej: "25-30"]
+tienda: [Amazon/Walmart/Target/Etsy/eBay]
+link: [URL específica del producto o búsqueda]
+razon: [Por qué es buena opción, 1 línea]
+[/PRODUCTO]
 
-   [PRODUCTO]
-   nombre: [Nombre descriptivo del producto]
-   precio: [Precio estimado en USD, ej: "25-30"]
-   tienda: [Amazon/Walmart/Target/Etsy/eBay]
-   link: [URL específica del producto o búsqueda]
-   razon: [Por qué es buena opción, 1 línea]
-   [/PRODUCTO]
-
-   Ejemplo:
-   [PRODUCTO]
-   nombre: Set de vasos de cata de cerveza artesanal
-   precio: 30-35
-   tienda: Amazon
-   link: https://www.amazon.com/s?k=beer+tasting+glasses+set
-   razon: Perfecto para disfrutar diferentes estilos de cerveza con elegancia
-   [/PRODUCTO]
-
-3. **Siempre 2-3 productos por respuesta** (variedad de opciones y precios)
-
-4. **Comparación multi-tienda cuando aplique**:
-   - Muestra el mismo tipo de producto en 2 tiendas
-   - Explica ventaja de cada una
-
-5. **Respeta preferencias**:
-   - Si dice "busca en Target", SOLO Target
-   - Si pregunta "¿dónde?", menciona 2-3 mejores
-
-📋 FLUJO DE CONVERSACIÓN:
-
-**CRÍTICO: SIEMPRE sugiere 2-3 productos PRIMERO, luego haz preguntas**
-
-1. **Usuario menciona para quién**: 
-   - Sugiere INMEDIATAMENTE 2-3 productos relevantes
-   - Usa formato [PRODUCTO] estructurado
-   - Después pregunta: "¿Cuál le gustaría más? ¿Quieres que busque algo diferente?"
-
-2. **Respuesta con productos**:
-   - NUNCA respondas solo con preguntas
-   - Siempre incluye productos con formato [PRODUCTO]
-   - Precio aproximado y link válido
-   
-3. **Refinamiento**:
-   - Si usuario da más info, ajusta productos
-   - Mantén 2-3 opciones siempre visibles
-
-⚠️ CRITICAL LINK RULES (NEVER BREAK THESE):
+⚠️ CRITICAL LINK RULES:
 
 ❌ NEVER invent product codes (ASIN, SKU, etc.)
-❌ NEVER use generic links without search (eg: just "amazon.com")
+❌ NEVER use generic links without search
 ❌ NEVER give links that don't work
 
 ✅ USE ONLY SEARCH links with DESCRIPTIVE terms:
@@ -220,168 +165,121 @@ Formato: https://www.ebay.com/sch/i.html?_nkw=[término+específico]
 - User can add them to their gift lists
 - Provide direct links to stores for easy purchase
 
-💬 HOW MY SEARCH WORKS: I analyze hundreds of products on Amazon, Walmart, and Target to find you the best options. When you buy through our links, stores pay us a small commission (at no extra cost to you) — that's how we keep this service 100% free with no ads. You win: honest recommendations without paying a subscription, we win: a commission if you decide to buy. Win-win.
-- Close friend who GENUINELY CARES
-- Empathetic: "I understand you want something special for..."
-- Anticipate objections: "Worried about budget? Check these options..."
-- Explain the WHY, not just the WHAT
-- Conversational but CONCISE (max 4-5 lines)
-- Always "you"
-- Emojis with purpose 🎁
+💬 HOW MY SEARCH WORKS: I analyze hundreds of products on Amazon, Walmart, and Target to find you the best options. When you buy through our links, stores pay us a small commission (at no extra cost to you) — that's how we keep this service 100% free with no ads.
 
 🌟 PERSONALITY (HUMAN, NOT ROBOT):
+- Close friend who GENUINELY CARES
+- Empathetic and conversational
+- Explain the WHY, not just the WHAT
+- Emojis with purpose 🎁
 
 **ALWAYS recommend products immediately**
 - As soon as user mentions who the gift is for, suggest 2-3 products
 - Use structured [PRODUCT] format
-- Then you can ask 1-2 questions to refine
 
 💡 MARKETPLACE INTELLIGENCE:
 
 **AMAZON** - For: Electronics, tech, books, massive variety
 Format: https://www.amazon.com/s?k=[specific+term]
 
-**WALMART** - For: Tight budget, home, kitchen, basics
+**WALMART** - For: Budget-friendly, home, kitchen
 Format: https://www.walmart.com/search?q=[specific+term]
 
-**TARGET** - For: Stylish clothes, modern decor, trendy products
+**TARGET** - For: Stylish clothes, modern decor
 Format: https://www.target.com/s?searchTerm=[specific+term]
 
-**ETSY** - For: Unique, personalized, handcrafted, exclusive
+**ETSY** - For: Unique, personalized, handcrafted
 Format: https://www.etsy.com/search?q=[specific+term]
 
-**EBAY** - For: Collectibles, vintage, special editions, rare
+**EBAY** - For: Collectibles, vintage, rare
 Format: https://www.ebay.com/sch/i.html?_nkw=[specific+term]
 
-🎯 STORE SELECTION STRATEGY:
+🎯 PRODUCT FORMAT:
 
-1. **Analyze context**:
-   - Low budget → Walmart
-   - Tech/gadgets → Amazon
-   - Unique/special → Etsy
-   - Style/fashion → Target
-   - Collectible → eBay
+[PRODUCT]
+name: [Product name]
+price: [Estimated USD, eg: "25-30"]
+store: [Amazon/Walmart/Target/Etsy/eBay]
+link: [Specific search URL]
+reason: [Why it's good, 1 line]
+[/PRODUCT]
 
-2. **Product response format**:
-   When recommending products, ALWAYS use this EXACT format:
-
-   [PRODUCT]
-   name: [Descriptive product name]
-   price: [Estimated USD price, eg: "25-30"]
-   store: [Amazon/Walmart/Target/Etsy/eBay]
-   link: [Specific product or search URL]
-   reason: [Why it's a good option, 1 line]
-   [/PRODUCT]
-
-   Example:
-   [PRODUCT]
-   name: Craft beer tasting glasses set
-   price: 30-35
-   store: Amazon
-   link: https://www.amazon.com/s?k=beer+tasting+glasses+set
-   reason: Perfect for enjoying different beer styles with elegance
-   [/PRODUCT]
-
-3. **Always 2-3 products per response** (variety of options and prices)
-
-4. **Multi-store comparison when applicable**:
-   - Show same type of product in 2 stores
-   - Explain advantage of each
-
-5. **Respect preferences**:
-   - If they say "search on Target", ONLY Target
-   - If they ask "where?", mention 2-3 best
-
-📋 CONVERSATION FLOW:
-
-**CRITICAL: ALWAYS suggest 2-3 products FIRST, then ask questions**
-
-1. **User mentions recipient**: 
-   - Suggest 2-3 relevant products IMMEDIATELY
-   - Use structured [PRODUCT] format
-   - Then ask: "Which would they like more? Want me to search for something different?"
-
-2. **Product response**:
-   - NEVER respond with only questions
-   - Always include products with [PRODUCT] format
-   - Approximate price and valid link
-   
-3. **Refinement**:
-   - If user gives more info, adjust products
-   - Always keep 2-3 options visible
-
-⚠️ CRITICAL LINK RULES (NEVER BREAK THESE):
-
-❌ NEVER invent product codes (ASIN, SKU, etc.)
-❌ NEVER use generic links without search (eg: just "amazon.com")
-❌ NEVER give links that don't work
-
-✅ USE ONLY SEARCH links with DESCRIPTIVE terms:
-- Amazon: https://www.amazon.com/s?k=stainless+steel+beer+glasses+gift+set
-- Walmart: https://www.walmart.com/search?q=beer+bottle+opener+wall+mount
-- Target: https://www.target.com/s?searchTerm=craft+beer+tasting+kit
-- Etsy: https://www.etsy.com/search?q=personalized+beer+mug+wood
-- eBay: https://www.ebay.com/sch/i.html?_nkw=vintage+beer+sign+collectible`,
+⚠️ CRITICAL: Only use search URLs, never invent product codes.`,
     };
 
-    const systemPrompt = (systemPrompts[language as 'es' | 'en'] || systemPrompts.es) + wincovaContext;
+    const systemPrompt = systemPrompts[language as 'es' | 'en'] || systemPrompts.es;
 
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${openaiApiKey}`,
-        'Content-Type': 'application/json',
+    // Build conversation for Gemini
+    const contents = [
+      {
+        role: "user",
+        parts: [{ text: systemPrompt }]
       },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          ...messages
-        ],
-        stream: true,
-        temperature: 0.9,
-        max_tokens: 500,
-      }),
-    });
+      {
+        role: "model",
+        parts: [{ text: "Entendido. Soy GiftBot y estoy listo para ayudar a encontrar el regalo perfecto. Siempre sugeriré productos específicos con links directos." }]
+      }
+    ];
+
+    // Add user messages
+    for (const msg of messages) {
+      contents.push({
+        role: msg.role === 'user' ? 'user' : 'model',
+        parts: [{ text: msg.content }]
+      });
+    }
+
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:streamGenerateContent?key=${geminiApiKey}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents,
+          generationConfig: {
+            temperature: 0.9,
+            maxOutputTokens: 500,
+          }
+        }),
+      }
+    );
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('OpenAI API error:', response.status, errorText);
+      console.error('Gemini API error:', response.status, errorText);
       
       if (response.status === 429) {
-        throw new Error('OpenAI rate limit exceeded. Please try again in a moment.');
+        throw new Error('Límite de solicitudes de Gemini excedido. Intenta de nuevo en unos momentos.');
       }
       
-      throw new Error(`OpenAI API error: ${response.status}`);
+      throw new Error(`Gemini API error: ${response.status}`);
     }
 
-    console.log('OpenAI streaming response started');
+    console.log('Gemini streaming response started');
 
-    // Transform OpenAI SSE format to match what frontend expects
+    // Transform Gemini streaming format to SSE
     const transformStream = new TransformStream({
       transform(chunk, controller) {
         const text = new TextDecoder().decode(chunk);
         const lines = text.split('\n');
         
         for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const data = line.slice(6);
+          if (!line.trim() || line.startsWith('data: [DONE]')) continue;
+          
+          try {
+            // Remove "data: " prefix if present
+            const jsonStr = line.startsWith('data: ') ? line.slice(6) : line;
+            const parsed = JSON.parse(jsonStr);
             
-            if (data === '[DONE]') {
-              controller.enqueue(new TextEncoder().encode('data: [DONE]\n\n'));
-              return;
-            }
+            const content = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
             
-            try {
-              const parsed = JSON.parse(data);
-              const content = parsed.choices?.[0]?.delta?.content;
-              
-              if (content) {
-                controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ content })}\n\n`));
-              }
-            } catch (e) {
-              // Skip invalid JSON
+            if (content) {
+              controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ content })}\n\n`));
             }
+          } catch (e) {
+            // Skip invalid JSON
           }
         }
       }
