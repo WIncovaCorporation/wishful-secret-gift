@@ -208,8 +208,43 @@ Use search URLs only, never invent product codes.`
 
     console.log('Gemini streaming response started');
 
-    // Return SSE stream directly
-    return new Response(response.body, {
+    // Process and forward SSE stream with better error handling
+    const { readable, writable } = new TransformStream();
+    const writer = writable.getWriter();
+    const reader = response.body?.getReader();
+    const decoder = new TextDecoder();
+
+    // Start forwarding stream
+    (async () => {
+      try {
+        if (!reader) {
+          console.error('No reader available from Gemini response');
+          await writer.close();
+          return;
+        }
+
+        let chunkCount = 0;
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) {
+            console.log(`Stream completed. Total chunks: ${chunkCount}`);
+            await writer.close();
+            break;
+          }
+
+          chunkCount++;
+          const chunk = decoder.decode(value, { stream: true });
+          console.log(`📦 Chunk ${chunkCount}: ${chunk.substring(0, 100)}`);
+          
+          await writer.write(new TextEncoder().encode(chunk));
+        }
+      } catch (error) {
+        console.error('Error forwarding stream:', error);
+        await writer.close();
+      }
+    })();
+
+    return new Response(readable, {
       headers: {
         ...corsHeaders,
         'Content-Type': 'text/event-stream',
