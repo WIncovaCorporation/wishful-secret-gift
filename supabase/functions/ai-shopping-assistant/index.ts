@@ -195,7 +195,7 @@ Use search URLs only, never invent product codes.`
           contents,
           generationConfig: {
             temperature: 0.9,
-            maxOutputTokens: 500,
+            maxOutputTokens: 2000,
           },
         }),
         signal: AbortSignal.timeout(30000), // 30 segundos timeout
@@ -250,12 +250,36 @@ Use search URLs only, never invent product codes.`
     }
 
     const data = await response.json();
-    console.log('🧪 Raw Gemini response:', JSON.stringify(data).slice(0, 500));
+    console.log('🧪 Raw Gemini response:', JSON.stringify(data, null, 2));
+    console.log('🧪 Candidates:', data.candidates);
+    console.log('🧪 Content:', data.candidates?.[0]?.content);
+    console.log('🧪 Parts:', data.candidates?.[0]?.content?.parts);
+    console.log('🧪 Text:', data.candidates?.[0]?.content?.parts?.[0]?.text);
+    console.log('🧪 Finish Reason:', data.candidates?.[0]?.finishReason);
     
     // Extraer texto de la respuesta de Gemini
     let textParts = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
 
-    console.log('✅ AI response length:', textParts.length);
+    console.log('✅ Extracted text length:', textParts.length);
+    console.log('✅ Extracted text preview:', textParts.substring(0, 200));
+
+    if (!textParts || textParts.trim() === '') {
+      console.error('❌ EMPTY RESPONSE FROM GEMINI');
+      console.error('❌ Full data:', JSON.stringify(data, null, 2));
+      console.error('❌ Finish Reason:', data.candidates?.[0]?.finishReason);
+      return new Response(
+        JSON.stringify({
+          error: 'Gemini devolvió una respuesta vacía. Verifica los logs del edge function.',
+          code: 'EMPTY_RESPONSE',
+          finishReason: data.candidates?.[0]?.finishReason,
+          debug: data,
+        }),
+        {
+          status: 500,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
+      );
+    }
 
     // POST-PROCESS: Inject affiliate tags into product links (si están configurados)
     if (textParts && textParts.includes('[PRODUCT]')) {
