@@ -211,75 +211,36 @@ export const AIShoppingAssistant = () => {
         throw new Error(errorMsg);
       }
 
-      const reader = response.body?.getReader();
-      const decoder = new TextDecoder();
-      let assistantMessage = "";
-      let buffer = "";
+      const data = await response.json().catch(() => null);
 
-      setMessages([...newMessages, { role: "assistant", content: "" }]);
-
-      while (reader) {
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split("\n");
-        buffer = lines.pop() || "";
-
-        for (const line of lines) {
-          if (line.startsWith("data: ")) {
-            const jsonStr = line.slice(6).trim();
-            if (jsonStr === "[DONE]") continue;
-
-            try {
-              const parsed = JSON.parse(jsonStr);
-              
-              // Gemini SSE format: candidates[0].content.parts[0].text
-              const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
-              
-              // Debug logging
-              if (!text) {
-                console.log("📦 Parsed data without text:", JSON.stringify(parsed).substring(0, 200));
-              } else {
-                console.log("✅ Received text chunk:", text.substring(0, 50));
-              }
-              
-              if (text) {
-                assistantMessage += text;
-                const products = parseProducts(assistantMessage);
-                const cleanContent = removeProductTags(assistantMessage);
-                
-                setMessages([
-                  ...newMessages,
-                  { 
-                    role: "assistant", 
-                    content: cleanContent || assistantMessage,
-                    products: products.length > 0 ? products : undefined,
-                  },
-                ]);
-              }
-            } catch (e) {
-              console.error("❌ Error parsing SSE chunk:", e);
-              console.error("📄 Raw line:", line);
-            }
-          }
-        }
-      }
-      
-      // Verificar si no se recibió ninguna respuesta
-      if (!assistantMessage.trim()) {
-        console.error("⚠️ No se recibió texto del asistente");
-        toast.error("No se recibió respuesta del asistente", {
-          description: "Por favor intenta de nuevo",
+      if (!data || !data.message) {
+        console.error('⚠️ No se recibió texto del asistente o formato inesperado', data);
+        toast.error('No se recibió respuesta del asistente', {
+          description: 'Por favor intenta de nuevo',
         });
+        setMessages(newMessages);
+        return;
       }
+
+      const fullText = data.message as string;
+      const products = parseProducts(fullText);
+      const cleanContent = removeProductTags(fullText);
+
+      setMessages([
+        ...newMessages,
+        {
+          role: 'assistant',
+          content: cleanContent || fullText,
+          products: products.length > 0 ? products : undefined,
+        },
+      ]);
     } catch (error) {
-      console.error("Chat error:", error);
-      const errorMsg = error instanceof Error ? error.message : (
-        language === 'en' 
-          ? "Could not connect to the assistant. Please try again."
-          : "No pude conectar con el asistente. Intenta de nuevo."
-      );
+      console.error('Chat error:', error);
+      const errorMsg = error instanceof Error
+        ? error.message
+        : language === 'en'
+          ? 'Could not connect to the assistant. Please try again.'
+          : 'No pude conectar con el asistente. Intenta de nuevo.';
       toast.error(errorMsg);
       setMessages(newMessages);
     } finally {
@@ -324,7 +285,7 @@ export const AIShoppingAssistant = () => {
             <Bot className="h-5 w-5" />
             <div>
               <h3 className="font-semibold">{t("aiAssistant.title")}</h3>
-              <p className="text-xs opacity-90">Powered by Gemini 1.5 Flash</p>
+              <p className="text-xs opacity-90">Powered by Gemini 2.5 Flash</p>
             </div>
           </div>
             <Button
