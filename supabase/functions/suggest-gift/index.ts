@@ -48,31 +48,30 @@ serve(async (req) => {
       );
     }
 
-    // Check rate limit BEFORE processing
+    // Check and increment rate limit using new system
     const { data: limitData, error: limitError } = await supabaseClient.rpc(
-      'check_ai_suggestion_limit',
-      { p_user_id: user.id }
+      'check_and_increment_ai_usage',
+      { 
+        p_user_id: user.id,
+        p_feature_type: 'gift_suggestion',
+        p_daily_limit: 10
+      }
     );
 
     if (limitError) {
-      console.error("Error checking AI suggestion limit:", limitError);
+      console.error("Error checking AI usage limit:", limitError);
       return new Response(
         JSON.stringify({ error: "Error al verificar límite de sugerencias" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    if (!limitData || !limitData.allowed) {
-      const resetDate = limitData?.reset_at ? new Date(limitData.reset_at).toLocaleString('es-ES', {
-        hour: '2-digit',
-        minute: '2-digit',
-        day: 'numeric',
-        month: 'short'
-      }) : 'mañana';
+    if (!limitData?.allowed) {
+      const resetDate = limitData?.reset_date ? new Date(limitData.reset_date).toLocaleDateString('es-ES') : 'mañana';
       
       return new Response(
         JSON.stringify({ 
-          error: "🚫 Has alcanzado el límite diario de 10 sugerencias de IA. Intenta nuevamente mañana.",
+          error: limitData?.message || "🚫 Has alcanzado el límite diario de 10 sugerencias de IA. Intenta nuevamente mañana.",
           remaining: 0,
           reset_at: resetDate
         }),
@@ -200,15 +199,9 @@ Genera 5 sugerencias de regalos variadas y creativas ${budget ? `que se ajusten 
     const suggestions = JSON.parse(toolCall.function.arguments).suggestions;
     console.log("Generated suggestions:", suggestions.length);
 
-    // Increment AI suggestion count AFTER successful generation
-    await supabaseClient.rpc('increment_ai_suggestion_count', { p_user_id: user.id });
-    
-    const updatedLimit = await supabaseClient.rpc('check_ai_suggestion_limit', { p_user_id: user.id });
-    const remaining = updatedLimit.data?.remaining || 0;
-
     return new Response(JSON.stringify({ 
       suggestions,
-      remaining,
+      remaining: limitData.remaining,
       total_limit: 10
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

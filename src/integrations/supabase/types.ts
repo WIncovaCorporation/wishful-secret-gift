@@ -216,6 +216,36 @@ export type Database = {
         }
         Relationships: []
       }
+      ai_usage_tracking: {
+        Row: {
+          created_at: string
+          feature_type: string
+          id: string
+          last_reset_date: string
+          updated_at: string
+          usage_count: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          feature_type?: string
+          id?: string
+          last_reset_date?: string
+          updated_at?: string
+          usage_count?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          feature_type?: string
+          id?: string
+          last_reset_date?: string
+          updated_at?: string
+          usage_count?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       amazon_credentials: {
         Row: {
           access_key: string
@@ -952,6 +982,14 @@ export type Database = {
       can_create_group: { Args: { _user_id: string }; Returns: boolean }
       can_use_ai: { Args: { _user_id: string }; Returns: boolean }
       check_ai_suggestion_limit: { Args: { p_user_id: string }; Returns: Json }
+      check_and_increment_ai_usage: {
+        Args: {
+          p_daily_limit?: number
+          p_feature_type: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       check_anonymous_message_limit: {
         Args: { p_user_id: string }
         Returns: Json
