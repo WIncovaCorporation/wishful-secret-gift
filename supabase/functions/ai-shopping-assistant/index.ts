@@ -34,8 +34,18 @@ serve(async (req) => {
       userId = user?.id || null;
     }
 
-    // Check rate limit if user is authenticated
+    // Check if user is admin (admins have unlimited AI usage)
+    let isAdmin = false;
     if (userId) {
+      const { data: userRoles } = await supabaseClient.rpc('get_user_roles', {
+        _user_id: userId
+      });
+      isAdmin = userRoles?.some((r: any) => r.role === 'admin') || false;
+      console.log('👤 User ID:', userId, '| Is Admin:', isAdmin);
+    }
+
+    // Check rate limit only for non-admin users
+    if (userId && !isAdmin) {
       const { data: limitData, error: limitError } = await supabaseClient.rpc(
         'check_and_increment_ai_usage',
         {
@@ -61,7 +71,9 @@ serve(async (req) => {
         );
       }
 
-      console.log('AI usage:', limitData);
+      console.log('📊 AI usage:', limitData);
+    } else if (isAdmin) {
+      console.log('✨ ADMIN MODE: Unlimited AI usage enabled');
     }
 
     console.log('🤖 Starting Gemini 3 Pro via Lovable AI with language:', language);
@@ -241,9 +253,78 @@ Use search URLs only, never invent product codes.`
     console.log('🧪 Raw Gemini response:', JSON.stringify(data).slice(0, 500));
     
     // Extraer texto de la respuesta de Gemini
-    const textParts = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
+    let textParts = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
 
     console.log('✅ AI response length:', textParts.length);
+
+    // POST-PROCESS: Inject affiliate tags into product links (si están configurados)
+    if (textParts && textParts.includes('[PRODUCT]')) {
+      console.log('💰 Checking for affiliate configs...');
+      
+      const { data: affiliateConfigs } = await supabaseClient
+        .from('affiliate_config')
+        .select('*')
+        .eq('is_active', true);
+
+      if (affiliateConfigs && affiliateConfigs.length > 0) {
+        console.log('✅ Active affiliate configs found:', affiliateConfigs.length);
+        
+        // Replace links in product blocks with affiliate-tagged versions
+        const productRegex = /link:\s*(https?:\/\/[^\s\n]+)/gi;
+        
+        textParts = textParts.replace(productRegex, (match: string, url: string) => {
+          let modifiedUrl = url;
+          
+          // Detect store from URL
+          const storeName = 
+            url.includes('amazon.com') ? 'amazon' :
+            url.includes('walmart.com') ? 'walmart' :
+            url.includes('target.com') ? 'target' :
+            url.includes('etsy.com') ? 'etsy' :
+            url.includes('ebay.com') ? 'ebay' : null;
+          
+          if (storeName) {
+            const config = affiliateConfigs.find(c => c.store_name === storeName);
+            
+            if (config && config.affiliate_id) {
+              switch (storeName) {
+                case 'amazon':
+                  modifiedUrl = url.includes('?') 
+                    ? `${url}&tag=${config.affiliate_id}`
+                    : `${url}?tag=${config.affiliate_id}`;
+                  break;
+                case 'walmart':
+                  modifiedUrl = url.includes('?')
+                    ? `${url}&wmlspartner=${config.affiliate_id}`
+                    : `${url}?wmlspartner=${config.affiliate_id}`;
+                  break;
+                case 'target':
+                  modifiedUrl = url.includes('?')
+                    ? `${url}&afid=${config.affiliate_id}`
+                    : `${url}?afid=${config.affiliate_id}`;
+                  break;
+                case 'etsy':
+                  modifiedUrl = url.includes('?')
+                    ? `${url}&ref=${config.affiliate_id}`
+                    : `${url}?ref=${config.affiliate_id}`;
+                  break;
+                case 'ebay':
+                  modifiedUrl = url.includes('?')
+                    ? `${url}&mkcid=${config.affiliate_id}`
+                    : `${url}?mkcid=${config.affiliate_id}`;
+                  break;
+              }
+              
+              console.log(`✅ Affiliate tag injected: ${storeName} -> ${config.affiliate_id.substring(0, 10)}...`);
+            }
+          }
+          
+          return `link: ${modifiedUrl}`;
+        });
+      } else {
+        console.log('ℹ️ No active affiliate configs - using plain links');
+      }
+    }
 
     return new Response(
       JSON.stringify({
