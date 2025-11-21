@@ -62,6 +62,30 @@ serve(async (req) => {
 
     console.log('Starting Gemini 2.5 Flash with language:', language);
 
+    // Retry logic with exponential backoff
+    const fetchWithRetry = async (url: string, options: RequestInit, maxRetries = 3) => {
+      for (let attempt = 0; attempt < maxRetries; attempt++) {
+        try {
+          const response = await fetch(url, options);
+          
+          if (response.status === 429 && attempt < maxRetries - 1) {
+            const waitTime = Math.pow(2, attempt) * 1000; // 1s, 2s, 4s
+            console.log(`Rate limit hit, retrying in ${waitTime}ms (attempt ${attempt + 1}/${maxRetries})`);
+            await new Promise(resolve => setTimeout(resolve, waitTime));
+            continue;
+          }
+          
+          return response;
+        } catch (error) {
+          if (attempt === maxRetries - 1) throw error;
+          const waitTime = Math.pow(2, attempt) * 1000;
+          console.log(`Request failed, retrying in ${waitTime}ms (attempt ${attempt + 1}/${maxRetries})`);
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+        }
+      }
+      throw new Error('Max retries exceeded');
+    };
+
     const systemPrompts = {
       es: `Eres "GiftBot", el asistente de compras AI más avanzado del mundo especializado en encontrar los mejores regalos en Amazon, Walmart, Target, Etsy y eBay.
 
@@ -121,34 +145,61 @@ Use search URLs only, never invent product codes.`
 
     const systemPrompt = systemPrompts[language as 'es' | 'en'] || systemPrompts.es;
 
-    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:streamGenerateContent?alt=sse&key=' + geminiApiKey, {
+    // Use stable model with better rate limits
+    const response = await fetchWithRetry(
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:streamGenerateContent?alt=sse&key=' + geminiApiKey,
+      {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        contents: [
-          {
-            role: 'user',
-            parts: [{ text: systemPrompt + '\n\nConversación:\n' + messages.map((m: any) => `${m.role}: ${m.content}`).join('\n') }]
-          }
-        ],
-        generationConfig: {
-          temperature: 0.9,
-          maxOutputTokens: 500,
-        },
-      }),
-    });
+        body: JSON.stringify({
+          contents: [
+            {
+              role: 'user',
+              parts: [{ text: systemPrompt + '\n\nConversación:\n' + messages.map((m: any) => `${m.role}: ${m.content}`).join('\n') }]
+            }
+          ],
+          generationConfig: {
+            temperature: 0.9,
+            maxOutputTokens: 500,
+          },
+        }),
+      }
+    );
 
     if (!response.ok) {
       const errorText = await response.text();
       console.error('Gemini API error:', response.status, errorText);
       
       if (response.status === 429) {
-        throw new Error('Límite de solicitudes de Gemini excedido. Intenta de nuevo en unos momentos.');
+        return new Response(
+          JSON.stringify({ 
+            error: '⏰ El servicio de IA está muy ocupado ahora. Por favor espera 1-2 minutos e intenta de nuevo.',
+            code: 'RATE_LIMIT',
+            retry_after: 60
+          }),
+          { 
+            status: 429, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
       }
       
-      throw new Error(`Gemini API error: ${response.status}`);
+      if (response.status === 403) {
+        return new Response(
+          JSON.stringify({ 
+            error: '🔑 API key de Gemini inválida o sin permisos. Contacta al administrador.',
+            code: 'INVALID_API_KEY'
+          }),
+          { 
+            status: 403, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      }
+      
+      throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
     }
 
     console.log('Gemini streaming response started');

@@ -171,18 +171,37 @@ export const AIShoppingAssistant = () => {
       );
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        const errorData = await response.json().catch(() => ({ error: 'Error desconocido' }));
         
         // Handle 429 rate limit error
         if (response.status === 429) {
-          setIsLimitReached(true);
-          setRemaining(0);
-          toast.error(errorData.error || "Límite diario alcanzado", {
-            description: errorData.reset_at 
-              ? `Se restablecerá: ${errorData.reset_at}`
-              : "Vuelve mañana o actualiza tu plan"
-          });
+          if (errorData.code === 'RATE_LIMIT') {
+            // Gemini API rate limit - temporary
+            toast.error('⏰ El servicio está muy ocupado', {
+              description: 'Espera 1-2 minutos e intenta nuevamente',
+              duration: 5000
+            });
+          } else {
+            // User daily limit
+            setIsLimitReached(true);
+            setRemaining(0);
+            toast.error(errorData.error || "Límite diario alcanzado", {
+              description: errorData.reset_at 
+                ? `Se restablecerá: ${errorData.reset_at}`
+                : "Vuelve mañana o actualiza tu plan",
+              duration: 5000
+            });
+          }
           throw new Error(errorData.error || "Rate limit exceeded");
+        }
+        
+        // Handle 403 invalid API key
+        if (response.status === 403) {
+          toast.error('Error de configuración', {
+            description: errorData.error || 'Contacta al administrador',
+            duration: 6000
+          });
+          throw new Error(errorData.error || "Invalid API key");
         }
         
         let errorMsg = language === 'en' 
