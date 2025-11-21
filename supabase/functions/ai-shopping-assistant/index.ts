@@ -13,12 +13,12 @@ serve(async (req) => {
 
   try {
     const { messages, language = 'es' } = await req.json();
-    const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
+    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
-    if (!geminiApiKey) {
-      throw new Error('GEMINI_API_KEY not configured');
+    if (!lovableApiKey) {
+      throw new Error('LOVABLE_API_KEY not configured');
     }
 
     // Initialize Supabase client for auth and rate limiting
@@ -60,7 +60,7 @@ serve(async (req) => {
       console.log('AI usage:', limitData);
     }
 
-    console.log('Starting Gemini 3 Pro with language:', language);
+    console.log('🤖 Starting Gemini 3 Pro via Lovable AI with language:', language);
     const fetchWithRetry = async (url: string, options: RequestInit, maxRetries = 3) => {
       for (let attempt = 0; attempt < maxRetries; attempt++) {
         try {
@@ -143,60 +143,40 @@ Use search URLs only, never invent product codes.`
 
     const systemPrompt = systemPrompts[language as 'es' | 'en'] || systemPrompts.es;
 
-    console.log('🚀 Calling Gemini API (non-stream)...');
-    console.log('📝 Model: gemini-3-pro-preview');
+    console.log('🚀 Calling Lovable AI Gateway...');
+    console.log('📝 Model: google/gemini-3-pro-preview');
     console.log('💬 Messages count:', messages.length);
 
     const response = await fetchWithRetry(
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent?key=' + geminiApiKey,
+      'https://ai.gateway.lovable.dev/v1/chat/completions',
       {
         method: 'POST',
         headers: {
+          'Authorization': `Bearer ${lovableApiKey}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          contents: [
-            {
-              role: 'user',
-              parts: [
-                {
-                  text:
-                    systemPrompt +
-                    '\n\nConversación:\n' +
-                    messages.map((m: any) => `${m.role}: ${m.content}`).join('\n'),
-                },
-              ],
-            },
+          model: 'google/gemini-3-pro-preview',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            ...messages.map((m: any) => ({ role: m.role, content: m.content }))
           ],
-          generationConfig: {
-            temperature: 0.9,
-            maxOutputTokens: 500,
-            thinking_level: 'low', // Fast responses for shopping assistant
-          },
+          temperature: 0.9,
+          max_tokens: 500,
         }),
       }
     );
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Gemini API error:', response.status, errorText);
+      console.error('❌ Lovable AI error:', response.status, errorText);
 
       if (response.status === 429) {
-        const errorJson = JSON.parse(errorText);
-        const retryDelay = errorJson.error?.details?.find((d: any) =>
-          d['@type']?.includes('RetryInfo'),
-        )?.retryDelay;
-
         return new Response(
           JSON.stringify({
-            error:
-              `⏰ Cuota de Gemini agotada. ${
-                retryDelay ? `Reintentar en ${retryDelay}` : 'Espera 1 minuto'
-              }`,
+            error: '⏰ Límite de Lovable AI alcanzado. Espera 1 minuto.',
             code: 'RATE_LIMIT',
             retry_after: 60,
-            details:
-              'Tu plan gratuito de Gemini se resetea cada minuto. Si necesitas más, activa facturación en console.cloud.google.com',
           }),
           {
             status: 429,
@@ -205,11 +185,23 @@ Use search URLs only, never invent product codes.`
         );
       }
 
+      if (response.status === 402) {
+        return new Response(
+          JSON.stringify({
+            error: '💳 Créditos de Lovable AI agotados. Recarga en Settings → Workspace → Usage.',
+            code: 'INSUFFICIENT_CREDITS',
+          }),
+          {
+            status: 402,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          },
+        );
+      }
+
       if (response.status === 403) {
         return new Response(
           JSON.stringify({
-            error:
-              '🔑 API key de Gemini inválida o sin permisos. Contacta al administrador.',
+            error: '🔑 API key de Lovable AI inválida. Contacta al administrador.',
             code: 'INVALID_API_KEY',
           }),
           {
@@ -219,16 +211,13 @@ Use search URLs only, never invent product codes.`
         );
       }
 
-      throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
+      throw new Error(`Lovable AI error: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
-    const textParts =
-      data.candidates?.[0]?.content?.parts
-        ?.map((p: any) => p.text || '')
-        .join('') ?? '';
+    const textParts = data.choices?.[0]?.message?.content ?? '';
 
-    console.log('✅ Gemini text length:', textParts.length);
+    console.log('✅ AI response length:', textParts.length);
 
     return new Response(
       JSON.stringify({
