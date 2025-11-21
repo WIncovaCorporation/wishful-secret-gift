@@ -13,12 +13,12 @@ serve(async (req) => {
 
   try {
     const { messages, language = 'es' } = await req.json();
-    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
+    const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
-    if (!lovableApiKey) {
-      throw new Error('LOVABLE_API_KEY not configured');
+    if (!geminiApiKey) {
+      throw new Error('GEMINI_API_KEY not configured');
     }
 
     // Initialize Supabase client for auth and rate limiting
@@ -60,7 +60,7 @@ serve(async (req) => {
       console.log('AI usage:', limitData);
     }
 
-    console.log('Starting Lovable AI (Gemini 2.5 Flash) with language:', language);
+    console.log('Starting Gemini 2.5 Flash with language:', language);
 
     const systemPrompts = {
       es: `Eres "GiftBot", el asistente de compras AI más avanzado del mundo especializado en encontrar los mejores regalos en Amazon, Walmart, Target, Etsy y eBay.
@@ -121,39 +121,37 @@ Use search URLs only, never invent product codes.`
 
     const systemPrompt = systemPrompts[language as 'es' | 'en'] || systemPrompts.es;
 
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+    const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:streamGenerateContent?alt=sse&key=' + geminiApiKey, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${lovableApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          ...messages
+        contents: [
+          {
+            role: 'user',
+            parts: [{ text: systemPrompt + '\n\nConversación:\n' + messages.map((m: any) => `${m.role}: ${m.content}`).join('\n') }]
+          }
         ],
-        stream: true,
-        temperature: 0.9,
-        max_tokens: 500,
+        generationConfig: {
+          temperature: 0.9,
+          maxOutputTokens: 500,
+        },
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Lovable AI gateway error:', response.status, errorText);
+      console.error('Gemini API error:', response.status, errorText);
       
       if (response.status === 429) {
-        throw new Error('Límite de solicitudes excedido. Intenta de nuevo en unos momentos.');
-      }
-      if (response.status === 402) {
-        throw new Error('Créditos insuficientes. Por favor, recarga tu cuenta Lovable.');
+        throw new Error('Límite de solicitudes de Gemini excedido. Intenta de nuevo en unos momentos.');
       }
       
-      throw new Error(`AI gateway error: ${response.status}`);
+      throw new Error(`Gemini API error: ${response.status}`);
     }
 
-    console.log('Lovable AI streaming response started');
+    console.log('Gemini streaming response started');
 
     // Return SSE stream directly
     return new Response(response.body, {
