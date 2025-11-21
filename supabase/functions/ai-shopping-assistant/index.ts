@@ -36,24 +36,28 @@ serve(async (req) => {
 
     // Check rate limit if user is authenticated
     if (userId) {
-      const { data: limitData } = await supabaseClient.rpc(
+      const { data: limitData, error: limitError } = await supabaseClient.rpc(
         'check_and_increment_ai_usage',
-        { 
+        {
           p_user_id: userId,
           p_feature_type: 'shopping_assistant',
-          p_daily_limit: 10
-        }
+          p_daily_limit: 10,
+        },
       );
 
-      if (!limitData?.allowed) {
-        const resetDate = limitData?.reset_date ? new Date(limitData.reset_date).toLocaleDateString('es-ES') : 'mañana';
+      if (limitError) {
+        console.error('AI usage limit check error:', limitError);
+      } else if (limitData && limitData.allowed === false) {
+        const resetDate = limitData.reset_date
+          ? new Date(limitData.reset_date).toLocaleDateString('es-ES')
+          : 'mañana';
         return new Response(
-          JSON.stringify({ 
+          JSON.stringify({
             error: `🚫 Has alcanzado el límite diario de 10 búsquedas de IA. Intenta nuevamente ${resetDate}.`,
-            remaining: 0,
-            reset_at: resetDate
+            remaining: limitData.remaining ?? 0,
+            reset_at: resetDate,
           }),
-          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
         );
       }
 
