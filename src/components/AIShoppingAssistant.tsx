@@ -93,18 +93,19 @@ export const AIShoppingAssistant = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [remaining, setRemaining] = useState<number | null>(null);
   const [isLimitReached, setIsLimitReached] = useState(false);
+  const [flowProgress, setFlowProgress] = useState({ current: 0, total: 0 });
   const scrollRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   // Initialize messages with current language
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: "assistant",
-      content: language === 'es' 
-        ? "¡Hola! Soy tu asistente de regalos 🎁\n\nCuéntame: ¿para quién buscas regalo?\n\nPuedes decir algo como:\n• \"Regalo para mi mamá\"\n• \"Cumpleaños de mi hermana, le gusta yoga, $30\"\n• \"Aniversario para mi esposo\""
-        : "Hi! I'm your gift assistant 🎁\n\nTell me: who are you looking for a gift for?\n\nYou can say something like:\n• \"Gift for my mom\"\n• \"Sister's birthday, she likes yoga, $30\"\n• \"Anniversary for my husband\"",
-    },
-  ]);
+  const initialMessage = {
+    role: "assistant" as const,
+    content: language === 'es' 
+      ? "🎁 Encuentra el regalo perfecto al MEJOR PRECIO\n\n✨ Comparamos Amazon, Walmart, Target, Etsy y eBay para que ahorres\n\n¿Qué necesitas hoy?"
+      : "🎁 Find the perfect gift at the BEST PRICE\n\n✨ We compare Amazon, Walmart, Target, Etsy and eBay to save you money\n\nWhat do you need today?",
+  };
+  
+  const [messages, setMessages] = useState<Message[]>([initialMessage]);
 
   // Load AI usage tracking when opening chat
   useEffect(() => {
@@ -159,14 +160,14 @@ export const AIShoppingAssistant = () => {
 
   // Update initial message when language changes
   useEffect(() => {
-    setMessages([
-      {
-        role: "assistant",
-        content: language === 'es' 
-          ? "¡Hola! Soy tu asistente de regalos 🎁\n\nCuéntame: ¿para quién buscas regalo?\n\nPuedes decir algo como:\n• \"Regalo para mi mamá\"\n• \"Cumpleaños de mi hermana, le gusta yoga, $30\"\n• \"Aniversario para mi esposo\""
-          : "Hi! I'm your gift assistant 🎁\n\nTell me: who are you looking for a gift for?\n\nYou can say something like:\n• \"Gift for my mom\"\n• \"Sister's birthday, she likes yoga, $30\"\n• \"Anniversary for my husband\"",
-      },
-    ]);
+    const newInitialMessage = {
+      role: "assistant" as const,
+      content: language === 'es' 
+        ? "🎁 Encuentra el regalo perfecto al MEJOR PRECIO\n\n✨ Comparamos Amazon, Walmart, Target, Etsy y eBay para que ahorres\n\n¿Qué necesitas hoy?"
+        : "🎁 Find the perfect gift at the BEST PRICE\n\n✨ We compare Amazon, Walmart, Target, Etsy and eBay to save you money\n\nWhat do you need today?",
+    };
+    setMessages([newInitialMessage]);
+    setFlowProgress({ current: 0, total: 0 });
   }, [language]);
 
   // Auto-scroll to bottom when messages change
@@ -281,8 +282,10 @@ export const AIShoppingAssistant = () => {
     }
   };
 
-  const handleSend = () => {
-    if (!input.trim() || isLoading || isLimitReached) return;
+  const handleSend = (messageOverride?: string) => {
+    const messageToSend = messageOverride || input;
+    
+    if (!messageToSend.trim() || isLoading || isLimitReached) return;
     
     // Prevenir múltiples clicks
     if (isLoading) {
@@ -290,7 +293,7 @@ export const AIShoppingAssistant = () => {
       return;
     }
     
-    streamChat(input);
+    streamChat(messageToSend);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -442,88 +445,158 @@ export const AIShoppingAssistant = () => {
             </div>
           </ScrollArea>
 
-          {/* Quick Actions */}
-          {messages.length === 1 && (
-            <div className="px-3 pb-3 sm:px-4 space-y-2">
-              <p className="text-xs text-muted-foreground text-center mb-2">
-                {language === 'es' ? 'O prueba estos ejemplos:' : 'Or try these examples:'}
-              </p>
-              <div className="grid grid-cols-2 gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full max-w-full whitespace-normal text-left h-auto py-3 px-4 text-sm"
-                  onClick={() => setInput(language === 'es' ? 'Regalo para mi mamá que le gusta cocinar' : 'Gift for my mom who likes cooking')}
-                >
-                  👩 {language === 'es' ? 'Mamá cocinera' : 'Mom who cooks'}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full max-w-full whitespace-normal text-left h-auto py-3 px-4 text-sm"
-                  onClick={() => setInput(language === 'es' ? 'Cumpleaños hermana 25 años moderna $40' : 'Sister 25th birthday modern $40')}
-                >
-                  🎂 {language === 'es' ? 'Hermana trendy' : 'Trendy sister'}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full max-w-full whitespace-normal text-left h-auto py-3 px-4 text-sm"
-                  onClick={() => setInput(language === 'es' ? 'Regalo romántico para esposo aniversario' : 'Romantic gift for husband anniversary')}
-                >
-                  💑 {language === 'es' ? 'Aniversario' : 'Anniversary'}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full max-w-full whitespace-normal text-left h-auto py-3 px-4 text-sm"
-                  onClick={() => setInput(language === 'es' ? 'Juguete niño 8 años le gusta Lego' : 'Toy for 8 year old boy likes Lego')}
-                >
-                  🧒 {language === 'es' ? 'Niño 8 años' : '8 year old boy'}
-                </Button>
+          {/* Main Flow Buttons */}
+          {messages.length === 1 && !isLoading && (
+            <div className="px-4 pb-4 space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-300">
+              <Button
+                variant="default"
+                className="w-full h-auto py-4 px-4 flex flex-col items-start gap-1 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 shadow-md"
+                onClick={() => handleSend('__FLOW_1_GIFT__')}
+              >
+                <span className="text-lg font-semibold">🎁 {language === 'es' ? 'REGALO PARA ALGUIEN' : 'GIFT FOR SOMEONE'}</span>
+                <span className="text-xs opacity-90 font-normal">
+                  {language === 'es' ? 'Cumpleaños, aniversario, ocasión especial' : 'Birthday, anniversary, special occasion'}
+                </span>
+              </Button>
+              
+              <Button
+                variant="default"
+                className="w-full h-auto py-4 px-4 flex flex-col items-start gap-1 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 shadow-md"
+                onClick={() => handleSend('__FLOW_2_FORME__')}
+              >
+                <span className="text-lg font-semibold">🛍️ {language === 'es' ? 'COMPRAR PARA MÍ' : 'SHOP FOR MYSELF'}</span>
+                <span className="text-xs opacity-90 font-normal">
+                  {language === 'es' ? 'Encuentra el mejor precio en lo que buscas' : 'Find the best price on what you need'}
+                </span>
+              </Button>
+              
+              <Button
+                variant="default"
+                className="w-full h-auto py-4 px-4 flex flex-col items-start gap-1 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 shadow-md"
+                onClick={() => handleSend('__FLOW_3_SECRET__')}
+              >
+                <span className="text-lg font-semibold">🎅 {language === 'es' ? 'AMIGO SECRETO' : 'SECRET SANTA'}</span>
+                <span className="text-xs opacity-90 font-normal">
+                  {language === 'es' ? 'Tengo lista o ayúdame a elegir' : 'I have a list or help me choose'}
+                </span>
+              </Button>
+              
+              <Button
+                variant="outline"
+                className="w-full h-auto py-4 px-4 flex flex-col items-start gap-1 hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 hover:bg-primary/10 hover:border-primary"
+                onClick={() => handleSend('__FLOW_4_LINK__')}
+              >
+                <span className="text-lg font-semibold">🔗 {language === 'es' ? 'TENGO UN LINK' : 'I HAVE A LINK'}</span>
+                <span className="text-xs opacity-90 font-normal">
+                  {language === 'es' ? 'Compara precio de algo que viste online' : 'Compare price of something you saw online'}
+                </span>
+              </Button>
+              
+              <div className="flex items-center gap-2 text-xs text-muted-foreground pt-2">
+                <div className="flex-1 border-t"></div>
+                <span>{language === 'es' ? 'o escribe tu búsqueda' : 'or write your search'}</span>
+                <div className="flex-1 border-t"></div>
               </div>
             </div>
           )}
 
+          {/* Progress and Back Button */}
+          {messages.length > 2 && flowProgress.total > 0 && (
+            <div className="px-4 pb-2 flex items-center justify-between">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-xs h-7"
+                onClick={() => {
+                  setMessages(prev => prev.slice(0, -2));
+                  setFlowProgress(prev => ({ ...prev, current: Math.max(0, prev.current - 1) }));
+                }}
+                disabled={isLoading || messages.length <= 2}
+              >
+                ⬅️ {language === 'es' ? 'Atrás' : 'Back'}
+              </Button>
+              
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">
+                  {language === 'es' ? 'Paso' : 'Step'} {flowProgress.current} {language === 'es' ? 'de' : 'of'} {flowProgress.total}
+                </span>
+                <div className="flex gap-1">
+                  {Array.from({ length: flowProgress.total }).map((_, i) => (
+                    <div
+                      key={i}
+                      className={`h-1.5 w-6 rounded-full transition-all duration-300 ${
+                        i < flowProgress.current ? 'bg-primary' : 'bg-muted'
+                      }`}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Contextual Quick Actions */}
           {messages.length > 1 && !isLoading && (() => {
             const lastMessage = messages[messages.length - 1];
             const hasProducts = lastMessage.products && lastMessage.products.length > 0;
             
             if (hasProducts) {
               return (
-                <div className="px-3 pb-3 grid grid-cols-2 gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="text-xs h-8 whitespace-nowrap"
-                    onClick={() => setInput(language === 'es' ? 'Muéstrame opciones más económicas (menos de $20)' : 'Show me cheaper options (under $20)')}
-                  >
-                    💰 {language === 'es' ? 'Ver <$20' : 'See <$20'}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="text-xs h-8 whitespace-nowrap"
-                    onClick={() => setInput(language === 'es' ? 'Productos que llegan hoy mismo (pickup o same-day)' : 'Products available today (pickup or same-day)')}
-                  >
-                    ⚡ {language === 'es' ? 'Llega hoy' : 'Today'}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="text-xs h-8 whitespace-nowrap"
-                    onClick={() => setInput(language === 'es' ? 'Dame opciones en otra categoría' : 'Show me another category')}
-                  >
-                    🔄 {language === 'es' ? 'Otra categoría' : 'Different'}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="text-xs h-8 whitespace-nowrap"
-                    onClick={() => setInput(language === 'es' ? 'Muéstrame versiones más premium de estos productos' : 'Show me premium versions')}
-                  >
-                    ✨ {language === 'es' ? 'Premium' : 'Premium'}
-                  </Button>
+                <div className="px-4 pb-3 space-y-2">
+                  <p className="text-xs font-semibold text-muted-foreground">
+                    {language === 'es' ? '¿Qué quieres hacer ahora?' : 'What would you like to do now?'}
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="h-auto py-3 flex flex-col gap-1 items-center hover:scale-[1.02] active:scale-[0.98] transition-all"
+                      onClick={() => {
+                        toast.info(language === 'es' ? 'Comparando precios...' : 'Comparing prices...');
+                      }}
+                    >
+                      <span className="text-lg">💳</span>
+                      <span className="text-xs">{language === 'es' ? 'Comparar precios' : 'Compare prices'}</span>
+                    </Button>
+                    
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-auto py-3 flex flex-col gap-1 items-center hover:scale-[1.02] active:scale-[0.98] transition-all"
+                      onClick={() => handleSend(language === 'es' ? 'Muéstrame opciones más económicas (menos de $20)' : 'Show me cheaper options (under $20)')}
+                    >
+                      <span className="text-lg">💰</span>
+                      <span className="text-xs">{language === 'es' ? 'Ver más baratos' : 'See cheaper'}</span>
+                    </Button>
+                    
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-auto py-3 flex flex-col gap-1 items-center hover:scale-[1.02] active:scale-[0.98] transition-all"
+                      onClick={() => handleSend(language === 'es' ? 'Dame opciones en otra categoría diferente' : 'Show me a different category')}
+                    >
+                      <span className="text-lg">🔄</span>
+                      <span className="text-xs">{language === 'es' ? 'Cambiar categoría' : 'Change category'}</span>
+                    </Button>
+                    
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-auto py-3 flex flex-col gap-1 items-center hover:scale-[1.02] active:scale-[0.98] transition-all"
+                      onClick={() => {
+                        const newInitialMessage = {
+                          role: "assistant" as const,
+                          content: language === 'es' 
+                            ? "🎁 Encuentra el regalo perfecto al MEJOR PRECIO\n\n✨ Comparamos Amazon, Walmart, Target, Etsy y eBay para que ahorres\n\n¿Qué necesitas hoy?"
+                            : "🎁 Find the perfect gift at the BEST PRICE\n\n✨ We compare Amazon, Walmart, Target, Etsy and eBay to save you money\n\nWhat do you need today?",
+                        };
+                        setMessages([newInitialMessage]);
+                        setFlowProgress({ current: 0, total: 0 });
+                      }}
+                    >
+                      <span className="text-lg">🎁</span>
+                      <span className="text-xs">{language === 'es' ? 'Nuevo regalo' : 'New gift'}</span>
+                    </Button>
+                  </div>
                 </div>
               );
             } else if (messages.length <= 3) {
@@ -533,7 +606,7 @@ export const AIShoppingAssistant = () => {
                     variant="outline"
                     size="sm"
                     className="text-xs h-8 whitespace-nowrap"
-                    onClick={() => setInput(language === 'es' ? 'Muéstrame los regalos más populares de este mes' : 'Show me most popular gifts this month')}
+                    onClick={() => handleSend(language === 'es' ? 'Muéstrame los regalos más populares de este mes' : 'Show me most popular gifts this month')}
                   >
                     🎁 {language === 'es' ? 'Populares' : 'Popular'}
                   </Button>
@@ -541,7 +614,7 @@ export const AIShoppingAssistant = () => {
                     variant="outline"
                     size="sm"
                     className="text-xs h-8 whitespace-nowrap"
-                    onClick={() => setInput(language === 'es' ? 'Ofertas increíbles por menos de $20' : 'Great deals under $20')}
+                    onClick={() => handleSend(language === 'es' ? 'Ofertas increíbles por menos de $20' : 'Great deals under $20')}
                   >
                     💰 {language === 'es' ? 'Ofertas <$20' : 'Deals <$20'}
                   </Button>
@@ -592,7 +665,7 @@ export const AIShoppingAssistant = () => {
                 className="flex-1"
               />
               <Button
-                onClick={handleSend}
+                onClick={() => handleSend()}
                 disabled={!input.trim() || isLoading || isLimitReached}
                 size="icon"
               >
