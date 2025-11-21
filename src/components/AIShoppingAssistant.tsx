@@ -105,6 +105,22 @@ export const AIShoppingAssistant = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      // Check if user is admin
+      const { data: userRoles } = await supabase.rpc('get_user_roles', {
+        _user_id: user.id
+      });
+      
+      const isAdmin = userRoles?.some((r: any) => r.role === 'admin') || false;
+
+      // Admins have unlimited usage
+      if (isAdmin) {
+        setRemaining(999);
+        setIsLimitReached(false);
+        console.log('✨ ADMIN MODE: Unlimited AI searches');
+        return;
+      }
+
+      // Regular users: check usage
       const { data: usage } = await supabase
         .from('ai_usage_tracking')
         .select('usage_count')
@@ -369,9 +385,15 @@ export const AIShoppingAssistant = () => {
                   <Zap className="w-3.5 h-3.5" />
                   <span>Búsquedas de IA hoy:</span>
                 </div>
-                <span className={`font-semibold ${remaining === 0 ? 'text-destructive' : 'text-primary'}`}>
-                  {remaining}/10
-                </span>
+                {remaining === 999 ? (
+                  <span className="font-bold text-primary flex items-center gap-1">
+                    ✨ Admin: Ilimitado
+                  </span>
+                ) : (
+                  <span className={`font-semibold ${remaining === 0 ? 'text-destructive' : 'text-primary'}`}>
+                    {remaining}/10
+                  </span>
+                )}
               </div>
             )}
 

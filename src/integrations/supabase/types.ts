@@ -64,6 +64,39 @@ export type Database = {
           },
         ]
       }
+      affiliate_config: {
+        Row: {
+          affiliate_id: string | null
+          commission_rate: number | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          notes: string | null
+          store_name: string
+          updated_at: string | null
+        }
+        Insert: {
+          affiliate_id?: string | null
+          commission_rate?: number | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          notes?: string | null
+          store_name: string
+          updated_at?: string | null
+        }
+        Update: {
+          affiliate_id?: string | null
+          commission_rate?: number | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          notes?: string | null
+          store_name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       affiliate_products: {
         Row: {
           affiliate_link: string
@@ -1009,6 +1042,7 @@ export type Database = {
           reviews_count: number
         }[]
       }
+      get_user_email: { Args: { user_uuid: string }; Returns: string }
       get_user_features: { Args: { _user_id: string }; Returns: Json }
       get_user_roles: {
         Args: { _user_id: string }
@@ -1031,6 +1065,7 @@ export type Database = {
         Args: { p_user_id: string }
         Returns: undefined
       }
+      is_admin: { Args: never; Returns: boolean }
       is_group_creator: {
         Args: { _group_id: string; _user_id: string }
         Returns: boolean
