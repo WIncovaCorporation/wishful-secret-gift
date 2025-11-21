@@ -302,17 +302,17 @@ export const AIShoppingAssistant = () => {
       {!isOpen && (
         <Button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg z-50 bg-gradient-to-r from-primary to-primary/80 hover:scale-110 transition-all"
+          className="fixed bottom-4 right-4 h-12 w-12 sm:h-14 sm:w-14 sm:bottom-6 sm:right-6 rounded-full shadow-lg z-50 bg-gradient-to-r from-primary to-primary/80 hover:scale-110 transition-all"
           size="icon"
           aria-label={t("aiAssistant.title")}
         >
-          <Bot className="h-7 w-7" />
+          <Bot className="h-6 w-6 sm:h-7 sm:w-7" />
         </Button>
       )}
 
       {/* Chat Window */}
       {isOpen && (
-        <Card className="fixed bottom-6 right-6 w-[380px] h-[600px] shadow-2xl z-50 flex flex-col">
+        <Card className="fixed bottom-4 right-4 w-full max-w-[420px] h-[90vh] max-h-[700px] shadow-2xl z-50 flex flex-col sm:bottom-6 sm:right-6 sm:w-[400px] sm:h-[650px] md:w-[420px] mx-4 sm:mx-0">
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-primary to-primary/80 text-primary-foreground rounded-t-lg">
           <div className="flex items-center gap-2">
@@ -363,7 +363,7 @@ export const AIShoppingAssistant = () => {
                     )}
                     
                     {msg.products && msg.products.length > 0 && (
-                      <div className="space-y-4">
+                      <div className="space-y-2">
                         {msg.products.map((product, pidx) => (
                           <ProductCard key={pidx} product={product} />
                         ))}
@@ -389,12 +389,12 @@ export const AIShoppingAssistant = () => {
 
           {/* Quick Actions */}
           {messages.length > 1 && !isLoading && (
-            <div className="px-4 pb-3 flex flex-wrap gap-2">
+            <div className="px-3 pb-3 flex flex-wrap gap-1.5">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setInput('Muéstrame más opciones similares')}
-                className="text-xs"
+                className="text-xs px-2 py-1 h-7"
               >
                 🎯 Más como estos
               </Button>
@@ -402,7 +402,7 @@ export const AIShoppingAssistant = () => {
                 variant="outline"
                 size="sm"
                 onClick={() => setInput('Opciones más económicas')}
-                className="text-xs"
+                className="text-xs px-2 py-1 h-7"
               >
                 💰 Más baratos
               </Button>
@@ -410,7 +410,7 @@ export const AIShoppingAssistant = () => {
                 variant="outline"
                 size="sm"
                 onClick={() => setInput('Algo más especial/premium')}
-                className="text-xs"
+                className="text-xs px-2 py-1 h-7"
               >
                 ✨ Más especial
               </Button>
