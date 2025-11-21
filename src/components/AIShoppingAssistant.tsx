@@ -44,9 +44,20 @@ const parseProducts = (text: string): ProductCardData[] => {
   return products;
 };
 
-// Remove product tags from text for display
-const removeProductTags = (text: string): string => {
-  return text.replace(/\[PRODUCT\][\s\S]*?\[\/PRODUCT\]/g, "").trim();
+// Remove product tags AND long explanatory text after products
+const cleanAssistantMessage = (text: string): string => {
+  // Remove product blocks
+  let cleaned = text.replace(/\[PRODUCT\][\s\S]*?\[\/PRODUCT\]/g, '').trim();
+  
+  // If message has products, keep only intro (before first product) and outro (after last product)
+  const lines = cleaned.split('\n').filter(line => line.trim());
+  
+  // Keep max 5 lines of text to avoid walls of text
+  if (lines.length > 5) {
+    return lines.slice(0, 2).join('\n') + '\n\n' + lines.slice(-3).join('\n');
+  }
+  
+  return cleaned;
 };
 
 // Function to render text with links as plain text (not clickable)
@@ -240,7 +251,7 @@ export const AIShoppingAssistant = () => {
 
       const fullText = data.message as string;
       const products = parseProducts(fullText);
-      const cleanContent = removeProductTags(fullText);
+      const cleanContent = cleanAssistantMessage(fullText);
 
       setMessages([
         ...newMessages,
@@ -375,6 +386,36 @@ export const AIShoppingAssistant = () => {
               <div ref={messagesEndRef} />
             </div>
           </ScrollArea>
+
+          {/* Quick Actions */}
+          {messages.length > 1 && !isLoading && (
+            <div className="px-4 pb-3 flex flex-wrap gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setInput('Muéstrame más opciones similares')}
+                className="text-xs"
+              >
+                🎯 Más como estos
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setInput('Opciones más económicas')}
+                className="text-xs"
+              >
+                💰 Más baratos
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setInput('Algo más especial/premium')}
+                className="text-xs"
+              >
+                ✨ Más especial
+              </Button>
+            </div>
+          )}
 
           {/* Input */}
           <div className="p-4 border-t space-y-3">
