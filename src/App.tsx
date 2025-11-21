@@ -9,6 +9,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ScrollToTop } from "@/components/ScrollToTop";
 import { AIShoppingAssistant } from "@/components/AIShoppingAssistant";
 import { InstallPWA } from "@/components/InstallPWA";
+import { DebugPanel } from "@/components/DebugPanel";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import UpdatePassword from "./pages/UpdatePassword";
@@ -47,6 +48,7 @@ const App = () => (
             <AnalyticsProvider>
               <AIShoppingAssistant />
               <InstallPWA />
+              <DebugPanel />
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/auth" element={<Auth />} />

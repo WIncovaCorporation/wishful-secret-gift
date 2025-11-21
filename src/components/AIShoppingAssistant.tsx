@@ -234,8 +234,15 @@ export const AIShoppingAssistant = () => {
             try {
               const parsed = JSON.parse(jsonStr);
               
-              // Gemini format: candidates[0].content.parts[0].text
+              // Gemini SSE format: candidates[0].content.parts[0].text
               const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
+              
+              // Debug logging
+              if (!text) {
+                console.log("📦 Parsed data without text:", JSON.stringify(parsed).substring(0, 200));
+              } else {
+                console.log("✅ Received text chunk:", text.substring(0, 50));
+              }
               
               if (text) {
                 assistantMessage += text;
@@ -252,10 +259,19 @@ export const AIShoppingAssistant = () => {
                 ]);
               }
             } catch (e) {
-              console.error("Parse error:", e, "Line:", line);
+              console.error("❌ Error parsing SSE chunk:", e);
+              console.error("📄 Raw line:", line);
             }
           }
         }
+      }
+      
+      // Verificar si no se recibió ninguna respuesta
+      if (!assistantMessage.trim()) {
+        console.error("⚠️ No se recibió texto del asistente");
+        toast.error("No se recibió respuesta del asistente", {
+          description: "Por favor intenta de nuevo",
+        });
       }
     } catch (error) {
       console.error("Chat error:", error);

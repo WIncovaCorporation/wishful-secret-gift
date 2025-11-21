@@ -5,6 +5,56 @@ Todos los cambios notables en este proyecto serán documentados en este archivo.
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.0.0/),
 y este proyecto adhiere a [Versionado Semántico](https://semver.org/lang/es/).
 
+## [1.0.1] - 2025-11-21
+
+### 🔍 Sistema de Debugging y Corrección Automática
+
+#### Added - Características Nuevas
+- ✨ **DebugPanel** - Panel visual de debugging en modo desarrollo
+  - Intercepta todos los console.log, warn, error
+  - Muestra logs en tiempo real con timestamps
+  - Auto-apertura cuando hay errores
+  - Contador de errores y advertencias
+  - Panel minimizable/ocultable
+  - Solo visible en desarrollo
+- ✨ **Logging mejorado** con convenciones de emojis:
+  - 📦 Datos recibidos
+  - ✅ Operaciones exitosas
+  - ❌ Errores críticos
+  - ⚠️ Advertencias
+  - 🔄 Procesamiento en curso
+- 📚 **Documentación completa** del sistema de debugging:
+  - `docs/ERROR_DETECTION_SYSTEM.md` - Guía completa
+  - `docs/SISTEMA_DEBUGGING_IMPLEMENTADO.md` - Estado actual
+  - Flujos de trabajo establecidos
+  - Checklist de debugging
+  - Errores comunes y soluciones
+
+#### Fixed - Correcciones
+- 🐛 Mejorado parsing del streaming de Gemini AI
+  - Mejor manejo de formato SSE
+  - Logging detallado de chunks recibidos
+  - Detección de respuestas vacías
+  - Toast de error cuando no se recibe respuesta
+
+#### Improved - Mejoras
+- 🔧 Edge function `ai-shopping-assistant`:
+  - Logging de cada chunk procesado
+  - Contador de chunks totales
+  - Mejor manejo de errores en streaming
+  - Transform stream con logging
+- 🔧 Cliente AIShoppingAssistant:
+  - Validación de respuestas completas
+  - Logging de datos parseados
+  - Detección de chunks sin texto
+  - Mensajes de error más descriptivos
+
+#### Documentation
+- 📝 Sistema completo de convenciones de logging
+- 📝 Template de commits estandarizado
+- 📝 Guía de mejores prácticas
+- 📝 Checklist de calidad de código
+
 ## [1.0.0] - 2025-11-10
 
 ### 🎉 Release Inicial - MVP Listo para Staging
