@@ -100,7 +100,9 @@ export const AIShoppingAssistant = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "assistant",
-      content: t("aiAssistant.initialMessage"),
+      content: language === 'es' 
+        ? "¡Hola! Soy tu asistente de regalos 🎁\n\nCuéntame: ¿para quién buscas regalo?\n\nPuedes decir algo como:\n• \"Regalo para mi mamá\"\n• \"Cumpleaños de mi hermana, le gusta yoga, $30\"\n• \"Aniversario para mi esposo\""
+        : "Hi! I'm your gift assistant 🎁\n\nTell me: who are you looking for a gift for?\n\nYou can say something like:\n• \"Gift for my mom\"\n• \"Sister's birthday, she likes yoga, $30\"\n• \"Anniversary for my husband\"",
     },
   ]);
 
@@ -160,10 +162,12 @@ export const AIShoppingAssistant = () => {
     setMessages([
       {
         role: "assistant",
-        content: t("aiAssistant.initialMessage"),
+        content: language === 'es' 
+          ? "¡Hola! Soy tu asistente de regalos 🎁\n\nCuéntame: ¿para quién buscas regalo?\n\nPuedes decir algo como:\n• \"Regalo para mi mamá\"\n• \"Cumpleaños de mi hermana, le gusta yoga, $30\"\n• \"Aniversario para mi esposo\""
+          : "Hi! I'm your gift assistant 🎁\n\nTell me: who are you looking for a gift for?\n\nYou can say something like:\n• \"Gift for my mom\"\n• \"Sister's birthday, she likes yoga, $30\"\n• \"Anniversary for my husband\"",
       },
     ]);
-  }, [language, t]);
+  }, [language]);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -388,31 +392,73 @@ export const AIShoppingAssistant = () => {
           </ScrollArea>
 
           {/* Quick Actions */}
+          {messages.length === 1 && (
+            <div className="px-4 pb-3 space-y-2">
+              <p className="text-xs text-muted-foreground text-center mb-2">
+                {language === 'es' ? 'O prueba estos ejemplos:' : 'Or try these examples:'}
+              </p>
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-xs h-auto py-2 px-3 whitespace-normal text-left"
+                  onClick={() => setInput(language === 'es' ? 'Regalo para mi mamá que le gusta cocinar' : 'Gift for my mom who likes cooking')}
+                >
+                  👩 {language === 'es' ? 'Mamá cocinera' : 'Mom who cooks'}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-xs h-auto py-2 px-3 whitespace-normal text-left"
+                  onClick={() => setInput(language === 'es' ? 'Cumpleaños hermana 25 años moderna $40' : 'Sister 25th birthday modern $40')}
+                >
+                  🎂 {language === 'es' ? 'Hermana trendy' : 'Trendy sister'}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-xs h-auto py-2 px-3 whitespace-normal text-left"
+                  onClick={() => setInput(language === 'es' ? 'Regalo romántico para esposo aniversario' : 'Romantic gift for husband anniversary')}
+                >
+                  💑 {language === 'es' ? 'Aniversario' : 'Anniversary'}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-xs h-auto py-2 px-3 whitespace-normal text-left"
+                  onClick={() => setInput(language === 'es' ? 'Juguete niño 8 años le gusta Lego' : 'Toy for 8 year old boy likes Lego')}
+                >
+                  🧒 {language === 'es' ? 'Niño 8 años' : '8 year old boy'}
+                </Button>
+              </div>
+            </div>
+          )}
+
           {messages.length > 1 && !isLoading && (
             <div className="px-3 pb-3 flex flex-wrap gap-1.5">
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setInput('Muéstrame más opciones similares')}
+                onClick={() => setInput(language === 'es' ? 'Muéstrame más opciones similares' : 'Show me more similar options')}
                 className="text-xs px-2 py-1 h-7"
               >
-                🎯 Más como estos
+                🎯 {language === 'es' ? 'Más como estos' : 'More like these'}
               </Button>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setInput('Opciones más económicas')}
+                onClick={() => setInput(language === 'es' ? 'Opciones más económicas' : 'More affordable options')}
                 className="text-xs px-2 py-1 h-7"
               >
-                💰 Más baratos
+                💰 {language === 'es' ? 'Más baratos' : 'Cheaper'}
               </Button>
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setInput('Algo más especial/premium')}
+                onClick={() => setInput(language === 'es' ? 'Algo más especial/premium' : 'Something more special/premium')}
                 className="text-xs px-2 py-1 h-7"
               >
-                ✨ Más especial
+                ✨ {language === 'es' ? 'Más especial' : 'More special'}
               </Button>
             </div>
           )}
