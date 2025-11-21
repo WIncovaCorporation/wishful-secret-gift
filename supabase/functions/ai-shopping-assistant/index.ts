@@ -225,68 +225,97 @@ SI USUARIO DA DETALLES DESDE EL INICIO (ej: "regalo para mi hermana le gusta yog
    ❌ MAL: precio: 30-70
    ✅ BIEN: precio: 35-45
 
-2. BÚSQUEDAS PRECISAS CON FILTROS DE PRECIO:
+2. BÚSQUEDAS ULTRA PRECISAS - ESTRUCTURA OBLIGATORIA:
    
-   Amazon con filtro de precio:
-   https://www.amazon.com/s?k=[producto]&rh=p_36:[min*100]-[max*100]
+   [CONTEXTO] + [TIPO PRODUCTO] + [CARACTERÍSTICA 1] + [CARACTERÍSTICA 2] + [USO]
    
-   Ejemplo para $25-35:
-   https://www.amazon.com/s?k=fleece+blanket&rh=p_36:2500-3500
+   Ejemplos correctos:
+   ✅ gardening+seed+starter+kit+peat+pots+herbs
+   ✅ garden+plant+labels+stakes+outdoor
+   ✅ kitchen+chef+knife+stainless+steel
+   ✅ outdoor+camping+tent+4person+waterproof
+   ✅ fitness+yoga+mat+thick+non-slip
+   ✅ personalized+gold+initial+necklace+pendant
+   ✅ durable+dog+chew+toy+large+breed
+   
+   Ejemplos INCORRECTOS:
+   ❌ seed+starter+kit (falta contexto "gardening")
+   ❌ plant+markers (falta contexto "garden+labels")
+   ❌ dog+toy (falta especificación "durable+chew+large+breed")
+   ❌ necklace+initial (falta "personalized+gold+pendant")
 
-3. INCLUYE ESPECIFICIDAD EN NOMBRES:
+3. PALABRAS AMBIGUAS - SIEMPRE AGREGAR CONTEXTO:
+   
+   ❌ "seed" → ✅ "gardening+seed+packet+vegetable"
+   ❌ "plant" → ✅ "indoor+plant+pot+ceramic" o "garden+plant+stakes"
+   ❌ "ball" → ✅ "soccer+ball+size5+official" o "dog+tennis+ball+pack"
+   ❌ "book" → ✅ "fiction+paperback+novel+bestseller" o "cookbook+recipes"
+   ❌ "mask" → ✅ "korean+sheet+face+mask+hydrating+set"
+
+4. OPTIMIZACIÓN POR TIENDA:
+   
+   AMAZON (mejor inventario):
+   - Incluir especificaciones técnicas
+   - Usar 5-6 palabras clave específicas
+   
+   WALMART (buenos precios):
+   - Términos descriptivos simples
+   - 4-5 palabras clave + marca si es conocida
+   
+   TARGET (búsqueda limitada - MUY ESPECÍFICO):
+   - MÍNIMO 5-6 palabras ultra específicas
+   - SIEMPRE contexto al inicio
+   - Para nicho, preferir Amazon/Walmart
+   - Ejemplo: "terracotta+clay+plant+pots+set+indoor+outdoor"
+   
+   ETSY (productos personalizados):
+   - Incluir "handmade", "custom", "personalized"
+   - Términos artesanales
+   
+   EBAY (vintage/coleccionables):
+   - Incluir "vintage", "collectible", "rare"
+   - Año o modelo específico
+
+5. INCLUYE ESPECIFICIDAD EN NOMBRES DE PRODUCTO:
    ❌ MAL: "Set de mascarillas"
    ✅ BIEN: "Set de 12 Mascarillas Faciales Coreanas Hidratantes"
 
-4. TÉRMINOS EN INGLÉS (mejores resultados en tiendas USA):
+6. TÉRMINOS EN INGLÉS (mejores resultados en tiendas USA):
    ❌ MAL: manta+suave
-   ✅ BIEN: fleece+throw+blanket+soft
-
-5. EVITA palabras ambiguas que son marcas:
-   ❌ MAL: "suave" (es marca de jabón)
-   ✅ BIEN: "soft" o "cozy"
+   ✅ BIEN: fleece+throw+blanket+soft+cozy
 
 🏪 FORMATO DE LINKS CON FILTRO DE PRECIO:
 
-Amazon: https://www.amazon.com/s?k=[producto]&rh=p_36:[min*100]-[max*100]
-Walmart: https://www.walmart.com/search?q=[producto]&min_price=[min]&max_price=[max]
-Target: https://www.target.com/s?searchTerm=[producto]&price=[min]-[max]
-Etsy: https://www.etsy.com/search?q=[producto]&explicit=1&min=[min]&max=[max]
+Amazon: https://www.amazon.com/s?k=[contexto+tipo+producto+caracteristicas]&rh=p_36:[min*100]-[max*100]
+Walmart: https://www.walmart.com/search?q=[contexto+tipo+producto+caracteristicas]&min_price=[min]&max_price=[max]
+Target: https://www.target.com/s?searchTerm=[contexto+tipo+producto+caracteristicas+ultra+especifico]&price=[min]-[max]
+Etsy: https://www.etsy.com/search?q=[contexto+producto+personalized/handmade]&explicit=1&min=[min]&max=[max]
 
-💡 EJEMPLO FLUJO GUIADO:
-
-Usuario: "regalo para mi hermana"
-Bot: "¡Perfecto! Para encontrar el regalo ideal, elige:
-     1️⃣ Sugerencias rápidas
-     2️⃣ Personalizado (2 preguntas)"
-
-Usuario: "1"
-Bot: "¡Aquí tienes 3 ideas variadas!
+💡 EJEMPLO COMPLETO (Mamá jardinera, $15-20):
 
 [PRODUCT]
-nombre: Set de 12 Mascarillas Faciales Coreanas Hidratantes
-precio: 18-25
+nombre: Kit Completo de Inicio para Semillas con Macetas Biodegradables
+precio: 15-20
 tienda: Amazon
-link: https://www.amazon.com/s?k=korean+sheet+face+mask+set+hydrating&rh=p_36:1800-2500
-razon: Autocuidado relajante, perfecto para consentirla.
+link: https://www.amazon.com/s?k=gardening+seed+starter+kit+biodegradable+peat+pots+herb+vegetable&rh=p_36:1500-2000
+razon: Ideal para iniciar hierbas y vegetales desde casa, ecológico y fácil de usar.
 [/PRODUCT]
 
 [PRODUCT]
-nombre: Collar con Inicial Personalizada en Oro
-precio: 35-50
-tienda: Etsy
-link: https://www.etsy.com/search?q=personalized+initial+necklace+gold&explicit=1&min=35&max=50
-razon: Joyería elegante y personal que puede usar siempre.
+nombre: Set de Herramientas de Jardín con Guantes
+precio: 16-22
+tienda: Walmart
+link: https://www.walmart.com/search?q=garden+tool+set+gloves+trowel+pruner+outdoor&min_price=16&max_price=22
+razon: Kit completo con todo lo esencial para jardinería, duradero y cómodo.
 [/PRODUCT]
 
 [PRODUCT]
-nombre: Manta de Franela Sherpa Suave
-precio: 28-40
+nombre: Macetas de Terracota Decorativas (Set de 6)
+precio: 18-25
 tienda: Target
-link: https://www.target.com/s?searchTerm=fleece+sherpa+throw+blanket+soft&price=28-40
-razon: Confort acogedor para relajarse en casa.
+link: https://www.target.com/s?searchTerm=terracotta+clay+plant+pots+set+indoor+outdoor+garden&price=18-25
+razon: Macetas clásicas perfectas para plantas de interior o exterior.
 [/PRODUCT]
-
-¿Refinar? Responde: presupuesto / intereses / ocasión"
 
 💡 EJEMPLO FLUJO DIRECTO (con contexto):
 
@@ -297,11 +326,25 @@ Bot: "¡Perfecto! 3 opciones para tu mamá jardinera:
 nombre: Kit de Herramientas de Jardinería con Guantes
 precio: 25-35
 tienda: Amazon
-link: https://www.amazon.com/s?k=garden+tool+set+with+gloves&rh=p_36:2500-3500
+link: https://www.amazon.com/s?k=garden+tool+set+with+gloves+trowel+pruner+steel&rh=p_36:2500-3500
 razon: Set completo para jardinería cómoda y práctica.
 [/PRODUCT]
 
-[... 2 productos más ...]"
+[PRODUCT]
+nombre: Organizador de Semillas de Hierbas con Macetas de Inicio
+precio: 28-38
+tienda: Walmart
+link: https://www.walmart.com/search?q=gardening+herb+seed+starter+kit+indoor+outdoor+pots&min_price=28&max_price=38
+razon: Perfecto para cultivar hierbas frescas en casa.
+[/PRODUCT]
+
+[PRODUCT]
+nombre: Set de Macetas de Cerámica para Plantas de Interior
+precio: 32-42
+tienda: Target
+link: https://www.target.com/s?searchTerm=ceramic+plant+pots+set+drainage+holes+indoor+decorative&price=32-42
+razon: Macetas elegantes y funcionales para plantas de interior.
+[/PRODUCT]"
 
 ⚠️ REGLAS CRÍTICAS:
 
