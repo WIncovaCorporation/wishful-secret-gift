@@ -13,12 +13,12 @@ serve(async (req) => {
 
   try {
     const { messages, language = 'es' } = await req.json();
-    const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
+    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
-    if (!geminiApiKey) {
-      throw new Error('GEMINI_API_KEY not configured');
+    if (!lovableApiKey) {
+      throw new Error('LOVABLE_API_KEY not configured');
     }
 
     // Initialize Supabase client for auth and rate limiting
@@ -60,7 +60,7 @@ serve(async (req) => {
       console.log('AI usage:', limitData);
     }
 
-    console.log('Starting Gemini 2.5 Flash chat with language:', language);
+    console.log('Starting Lovable AI (Gemini 2.5 Flash) with language:', language);
 
     const systemPrompts = {
       es: `Eres "GiftBot", el asistente de compras AI más avanzado del mundo especializado en encontrar los mejores regalos en Amazon, Walmart, Target, Etsy y eBay.
@@ -70,72 +70,35 @@ serve(async (req) => {
 - El usuario podrá agregarlos a su lista de regalos
 - Proporciona links directos a las tiendas para facilitar la compra
 
-💬 CÓMO FUNCIONA MI BÚSQUEDA: Analizo cientos de productos en Amazon, Walmart y Target para encontrarte las mejores opciones. Cuando compras a través de nuestros links, las tiendas nos pagan una pequeña comisión (sin costo extra para ti) — así mantenemos este servicio 100% gratis y sin anuncios. Tú ganas: recomendaciones honestas sin pagar suscripción, nosotros ganamos: una comisión si decides comprar. Win-win.
-
-💰 ESTRATEGIA DE MAXIMIZACIÓN DE REVENUE:
-
-**PRIORITY 1: Amazon (Commission 4-10% + 24h Cookie)**
-- First choice for most products
-- Emphasize reviews and delivery speed
-- ALWAYS mention: "Available with Prime shipping"
-- Subtle urgency mention: "🔥 Great selection with fast delivery"
-
-**PRIORITY 2: Walmart, Target (Commission 1-4%)**
-- Excellent price-quality ratio
-- Local pickup availability
-- Good deals and discounts
-
-**PRIORITY 3: Etsy, eBay**
-- For unique and personalized gifts
-- Handmade and vintage products
+💬 CÓMO FUNCIONA MI BÚSQUEDA: Analizo cientos de productos en Amazon, Walmart y Target para encontrarte las mejores opciones. Cuando compras a través de nuestros links, las tiendas nos pagan una pequeña comisión (sin costo extra para ti) — así mantenemos este servicio 100% gratis y sin anuncios.
 
 🧠 RECOMMENDATION STRATEGY:
 
 **ALWAYS recommend products in EVERY response** (2-3 minimum)
 - Even if you don't have all info, suggest something based on what you know
-- Example: User says "my cousin" → Suggest popular products for men immediately
 - Use [PRODUCT] format ALWAYS when recommending something
 - Después de sugerir, puedes hacer 1-2 preguntas para refinar
 
 **NUNCA hagas solo preguntas sin productos**
-- ❌ MAL: "¿Qué le gusta a Ricardo?" (sin productos)
-- ✅ BIEN: Sugieres 3 productos + "¿Cuál de estos le gustaría más a Ricardo?"
-
-**VELOCIDAD es clave:**
-- Primera mención → Productos inmediatamente
-- "Mi primo" → Gadgets tech, herramientas, ropa
-- "Mi mamá" → Spa, cocina, decoración
-- "Mi novia" → Joyería, belleza, experiencias
-
-🌟 PERSONALIDAD (HUMANO, NO ROBOT):
-- Amigo cercano que SE PREOCUPA genuinamente
-- Empático: "Entiendo que quieres algo especial para..."
-- Anticipa objeciones: "¿Preocupado por el presupuesto? Mira estas opciones..."
-- Explica el POR QUÉ, no solo el QUÉ
-- Conversacional pero CONCISO (máximo 4-5 líneas)
-- Usa "tú" SIEMPRE
-- Emojis con propósito 🎁
 
 💡 INTELIGENCIA DE MARKETPLACE:
 
 **AMAZON** - Para: Electrónicos, tech, libros, variedad masiva
 Formato: https://www.amazon.com/s?k=[término+específico]
 
-**WALMART** - Para: Presupuesto ajustado, hogar, cocina, básicos
+**WALMART** - Para: Presupuesto ajustado, hogar, cocina
 Formato: https://www.walmart.com/search?q=[término+específico]
 
-**TARGET** - Para: Ropa estilo, decoración moderna, productos trendy
+**TARGET** - Para: Ropa estilo, decoración moderna
 Formato: https://www.target.com/s?searchTerm=[término+específico]
 
-**ETSY** - Para: Únicos, personalizados, artesanías, exclusivos
+**ETSY** - Para: Únicos, personalizados, artesanías
 Formato: https://www.etsy.com/search?q=[término+específico]
 
-**EBAY** - Para: Coleccionables, vintage, ediciones especiales, raros
+**EBAY** - Para: Coleccionables, vintage, raros
 Formato: https://www.ebay.com/sch/i.html?_nkw=[término+específico]
 
 🎯 FORMATO DE RESPUESTA CON PRODUCTOS:
-
-Cuando recomiendes productos, SIEMPRE usa este formato EXACTO:
 
 [PRODUCTO]
 nombre: [Nombre descriptivo del producto]
@@ -146,148 +109,54 @@ razon: [Por qué es buena opción, 1 línea]
 [/PRODUCTO]
 
 ⚠️ CRITICAL LINK RULES:
-
 ❌ NEVER invent product codes (ASIN, SKU, etc.)
-❌ NEVER use generic links without search
-❌ NEVER give links that don't work
-
-✅ USE ONLY SEARCH links with DESCRIPTIVE terms:
-- Amazon: https://www.amazon.com/s?k=stainless+steel+beer+glasses+gift+set
-- Walmart: https://www.walmart.com/search?q=beer+bottle+opener+wall+mount
-- Target: https://www.target.com/s?searchTerm=craft+beer+tasting+kit
-- Etsy: https://www.etsy.com/search?q=personalized+beer+mug+wood
-- eBay: https://www.ebay.com/sch/i.html?_nkw=vintage+beer+sign+collectible`,
+✅ USE ONLY SEARCH links with DESCRIPTIVE terms`,
       
-      en: `You are "GiftBot", the world's most advanced AI shopping assistant specialized in finding the perfect gifts on Amazon, Walmart, Target, Etsy, and eBay.
+      en: `You are "GiftBot", the world's most advanced AI shopping assistant.
 
-🎯 YOUR MAIN GOAL: Help find the perfect gift
-- Present products in structured format with complete data
-- User can add them to their gift lists
-- Provide direct links to stores for easy purchase
+**ALWAYS recommend products immediately** using [PRODUCT] format.
 
-💬 HOW MY SEARCH WORKS: I analyze hundreds of products on Amazon, Walmart, and Target to find you the best options. When you buy through our links, stores pay us a small commission (at no extra cost to you) — that's how we keep this service 100% free with no ads.
-
-🌟 PERSONALITY (HUMAN, NOT ROBOT):
-- Close friend who GENUINELY CARES
-- Empathetic and conversational
-- Explain the WHY, not just the WHAT
-- Emojis with purpose 🎁
-
-**ALWAYS recommend products immediately**
-- As soon as user mentions who the gift is for, suggest 2-3 products
-- Use structured [PRODUCT] format
-
-💡 MARKETPLACE INTELLIGENCE:
-
-**AMAZON** - For: Electronics, tech, books, massive variety
-Format: https://www.amazon.com/s?k=[specific+term]
-
-**WALMART** - For: Budget-friendly, home, kitchen
-Format: https://www.walmart.com/search?q=[specific+term]
-
-**TARGET** - For: Stylish clothes, modern decor
-Format: https://www.target.com/s?searchTerm=[specific+term]
-
-**ETSY** - For: Unique, personalized, handcrafted
-Format: https://www.etsy.com/search?q=[specific+term]
-
-**EBAY** - For: Collectibles, vintage, rare
-Format: https://www.ebay.com/sch/i.html?_nkw=[specific+term]
-
-🎯 PRODUCT FORMAT:
-
-[PRODUCT]
-name: [Product name]
-price: [Estimated USD, eg: "25-30"]
-store: [Amazon/Walmart/Target/Etsy/eBay]
-link: [Specific search URL]
-reason: [Why it's good, 1 line]
-[/PRODUCT]
-
-⚠️ CRITICAL: Only use search URLs, never invent product codes.`,
+Use search URLs only, never invent product codes.`
     };
 
     const systemPrompt = systemPrompts[language as 'es' | 'en'] || systemPrompts.es;
 
-    // Build conversation for Gemini
-    const contents = [
-      {
-        role: "user",
-        parts: [{ text: systemPrompt }]
+    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${lovableApiKey}`,
+        'Content-Type': 'application/json',
       },
-      {
-        role: "model",
-        parts: [{ text: "Entendido. Soy GiftBot y estoy listo para ayudar a encontrar el regalo perfecto. Siempre sugeriré productos específicos con links directos." }]
-      }
-    ];
-
-    // Add user messages
-    for (const msg of messages) {
-      contents.push({
-        role: msg.role === 'user' ? 'user' : 'model',
-        parts: [{ text: msg.content }]
-      });
-    }
-
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:streamGenerateContent?key=${geminiApiKey}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents,
-          generationConfig: {
-            temperature: 0.9,
-            maxOutputTokens: 500,
-          }
-        }),
-      }
-    );
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          ...messages
+        ],
+        stream: true,
+        temperature: 0.9,
+        max_tokens: 500,
+      }),
+    });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Gemini API error:', response.status, errorText);
+      console.error('Lovable AI gateway error:', response.status, errorText);
       
       if (response.status === 429) {
-        throw new Error('Límite de solicitudes de Gemini excedido. Intenta de nuevo en unos momentos.');
+        throw new Error('Límite de solicitudes excedido. Intenta de nuevo en unos momentos.');
+      }
+      if (response.status === 402) {
+        throw new Error('Créditos insuficientes. Por favor, recarga tu cuenta Lovable.');
       }
       
-      throw new Error(`Gemini API error: ${response.status}`);
+      throw new Error(`AI gateway error: ${response.status}`);
     }
 
-    console.log('Gemini streaming response started');
+    console.log('Lovable AI streaming response started');
 
-    // Transform Gemini streaming format to SSE
-    const transformStream = new TransformStream({
-      transform(chunk, controller) {
-        const text = new TextDecoder().decode(chunk);
-        const lines = text.split('\n');
-        
-        for (const line of lines) {
-          if (!line.trim() || line.startsWith('data: [DONE]')) continue;
-          
-          try {
-            // Remove "data: " prefix if present
-            const jsonStr = line.startsWith('data: ') ? line.slice(6) : line;
-            const parsed = JSON.parse(jsonStr);
-            
-            const content = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
-            
-            if (content) {
-              controller.enqueue(new TextEncoder().encode(`data: ${JSON.stringify({ content })}\n\n`));
-            }
-          } catch (e) {
-            // Skip invalid JSON
-          }
-        }
-      }
-    });
-
-    const stream = response.body?.pipeThrough(transformStream);
-
-    return new Response(stream, {
+    // Return SSE stream directly
+    return new Response(response.body, {
       headers: {
         ...corsHeaders,
         'Content-Type': 'text/event-stream',
