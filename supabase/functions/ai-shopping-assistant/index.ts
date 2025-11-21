@@ -13,12 +13,12 @@ serve(async (req) => {
 
   try {
     const { messages, language = 'es' } = await req.json();
-    const lovableApiKey = Deno.env.get('LOVABLE_API_KEY');
+    const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
 
-    if (!lovableApiKey) {
-      throw new Error('LOVABLE_API_KEY not configured');
+    if (!geminiApiKey) {
+      throw new Error('GEMINI_API_KEY not configured');
     }
 
     // Initialize Supabase client for auth and rate limiting
@@ -143,38 +143,51 @@ Use search URLs only, never invent product codes.`
 
     const systemPrompt = systemPrompts[language as 'es' | 'en'] || systemPrompts.es;
 
-    console.log('🚀 Calling Lovable AI Gateway...');
-    console.log('📝 Model: google/gemini-2.5-flash');
+    console.log('🚀 Calling Google Gemini API directly...');
+    console.log('📝 Model: gemini-2.0-flash-exp');
     console.log('💬 Messages count:', messages.length);
 
+    // Construir el historial de conversación en formato Gemini
+    const contents = [
+      {
+        parts: [{ text: systemPrompt }],
+        role: 'user'
+      },
+      {
+        parts: [{ text: 'Entendido, soy GiftBot y ayudaré con recomendaciones de productos.' }],
+        role: 'model'
+      },
+      ...messages.map((m: any) => ({
+        parts: [{ text: m.content }],
+        role: m.role === 'user' ? 'user' : 'model'
+      }))
+    ];
+
     const response = await fetchWithRetry(
-      'https://ai.gateway.lovable.dev/v1/chat/completions',
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${geminiApiKey}`,
       {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${lovableApiKey}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'google/gemini-2.5-flash',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            ...messages.map((m: any) => ({ role: m.role, content: m.content }))
-          ],
-          temperature: 0.9,
-          max_tokens: 500,
+          contents,
+          generationConfig: {
+            temperature: 0.9,
+            maxOutputTokens: 500,
+          },
         }),
       }
     );
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('❌ Lovable AI error:', response.status, errorText);
+      console.error('❌ Gemini API error:', response.status, errorText);
 
       if (response.status === 429) {
         return new Response(
           JSON.stringify({
-            error: '⏰ Límite de Lovable AI alcanzado. Espera 1 minuto.',
+            error: '⏰ Límite de API alcanzado. Espera 1 minuto e intenta de nuevo.',
             code: 'RATE_LIMIT',
             retry_after: 60,
           }),
@@ -185,14 +198,14 @@ Use search URLs only, never invent product codes.`
         );
       }
 
-      if (response.status === 402) {
+      if (response.status === 400) {
         return new Response(
           JSON.stringify({
-            error: '💳 Créditos de Lovable AI agotados. Recarga en Settings → Workspace → Usage.',
-            code: 'INSUFFICIENT_CREDITS',
+            error: '🚫 Error en la petición a Gemini API. Verifica tu API key.',
+            code: 'INVALID_REQUEST',
           }),
           {
-            status: 402,
+            status: 400,
             headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           },
         );
@@ -201,7 +214,7 @@ Use search URLs only, never invent product codes.`
       if (response.status === 403) {
         return new Response(
           JSON.stringify({
-            error: '🔑 API key de Lovable AI inválida. Contacta al administrador.',
+            error: '🔑 API key de Gemini inválida o sin permisos.',
             code: 'INVALID_API_KEY',
           }),
           {
@@ -211,12 +224,14 @@ Use search URLs only, never invent product codes.`
         );
       }
 
-      throw new Error(`Lovable AI error: ${response.status} - ${errorText}`);
+      throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
-    console.log('🧪 Raw AI response:', JSON.stringify(data).slice(0, 500));
-    const textParts = data.choices?.[0]?.message?.content ?? '';
+    console.log('🧪 Raw Gemini response:', JSON.stringify(data).slice(0, 500));
+    
+    // Extraer texto de la respuesta de Gemini
+    const textParts = data.candidates?.[0]?.content?.parts?.[0]?.text ?? '';
 
     console.log('✅ AI response length:', textParts.length);
 
