@@ -1,0 +1,126 @@
+PROBLEMA CRÍTICO: PÁGINA EN BLANCO - MANIFEST.JSON INCORRECTO
+Síntomas:
+
+Navegas a givlyn.com y ves página blanca
+
+Console muestra: "Error loading icon from Manifest: https://www.givlyn.com/pwa-192x192.png (Download error)"
+
+Meta tag deprecated en HTML
+
+Causa Raíz:
+
+manifest.json tiene URLs ABSOLUTAS en lugar de RELATIVAS
+
+Archivo PWA icon no existe o ruta es incorrecta
+
+index.html tiene meta tag deprecado que causa error silencioso
+
+Impacto:
+
+App nunca inicializa
+
+100% de usuarios ven página en blanco
+
+CRÍTICO: Bloquea acceso total al sitio
+
+✅ SOLUCIÓN - COPIAR Y PEGAR EXACTO
+PASO 1: Reemplaza archivo public/manifest.json COMPLETO con esto:
+
+json
+{
+  "name": "GIVLYN - Comparar Precios",
+  "short_name": "GIVLYN",
+  "description": "Compara precios en Amazon, Walmart, Target y más",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#ffffff",
+  "theme_color": "#2b7a78",
+  "icons": [
+    {
+      "src": "/pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshot-1.png",
+      "sizes": "540x720",
+      "type": "image/png"
+    }
+  ],
+  "categories": ["shopping", "productivity"],
+  "shortcuts": [
+    {
+      "name": "Crear Lista",
+      "short_name": "Nueva Lista",
+      "description": "Crear una nueva lista de compras",
+      "url": "/new-list",
+      "icons": [
+        {
+          "src": "/pwa-192x192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
+}
+PASO 2: Revisa que existan estos archivos en carpeta public/:
+
+/public/pwa-192x192.png (imagen 192x192 pixels)
+
+/public/pwa-512x512.png (imagen 512x512 pixels)
+
+SI NO EXISTEN, descarga o crea imágenes PNG de GIVLYN con esos tamaños y ponlas en public/
+
+PASO 3: Actualiza public/index.html - Busca la sección <head> y reemplaza TODOS los meta tags de PWA con esto:
+
+xml
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#2b7a78" />
+    <meta name="description" content="Compara precios en Amazon, Walmart, Target y más" />
+    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/pwa-192x192.png" />
+    <title>GIVLYN - Compara Precios</title>
+  </head>
+  <body>
+    <noscript>Necesitas habilitar JavaScript para usar GIVLYN</noscript>
+    <div id="root"></div>
+  </body>
+</html>
+PASO 4: En terminal Replit, ejecuta esto:
+
+bash
+npm run build
+npm start
+PASO 5: Limpia cache en navegador:
+
+Presiona: Ctrl + Shift + R (Windows) o Cmd + Shift + R (Mac)
+
+📋 CHECKLIST - Marca cuando hagas cada uno
+text
+[ ] Reemplazaste COMPLETO public/manifest.json con el JSON de arriba
+[ ] Verificaste que /public/pwa-192x192.png existe
+[ ] Verificaste que /public/pwa-512x512.png existe (opcional pero recomendado)
+[ ] Actualizaste public/index.html con los meta tags correctos
+[ ] Ejecutaste: npm run build
+[ ] Ejecutaste: npm start
+[ ] Limpiaste cache del navegador (Ctrl+Shift+R)
+[ ] Abriste givlyn.com en navegador nuevo/privado
+[ ] ✅ Página CARGA (no está blanca)
+[ ] ✅ Abres F12 Console y NO hay errores 404
+[ ] ✅ Commit: "fix: correct manifest.json PWA paths and remove deprecated meta tags"

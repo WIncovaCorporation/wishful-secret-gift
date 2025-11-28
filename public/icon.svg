@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" fill="#2b7a78"/>
+  <g transform="translate(76.8, 76.8)">
+    <!-- Gift box -->
+    <rect x="51.2" y="128" width="256" height="204.8" fill="#ffffff" rx="15.36"/>
+    <!-- Ribbon vertical -->
+    <rect x="153.6" y="128" width="51.2" height="204.8" fill="#dc3545"/>
+    <!-- Ribbon horizontal -->
+    <rect x="51.2" y="204.8" width="256" height="51.2" fill="#dc3545"/>
+    <!-- Bow -->
+    <ellipse cx="128" cy="102.4" rx="40.96" ry="30.72" fill="#dc3545"/>
+    <ellipse cx="230.4" cy="102.4" rx="40.96" ry="30.72" fill="#dc3545"/>
+    <circle cx="179.2" cy="112.64" r="20.48" fill="#dc3545"/>
+  </g>
+</svg>

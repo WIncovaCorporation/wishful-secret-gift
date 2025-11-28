@@ -219,8 +219,8 @@ const Auth = () => {
   };
 
   const PasswordInput = ({ id, value, onChange, placeholder }: { id: string; value: string; onChange: (e: React.ChangeEvent<HTMLInputElement>) => void; placeholder: string }) => (
-    <div className="relative">
-      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+    <div className="relative w-full overflow-hidden box-border">
+      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
       <Input
         id={id}
         type={showPassword ? "text" : "password"}
@@ -229,13 +229,13 @@ const Auth = () => {
         onChange={onChange}
         required
         minLength={8}
-        className="pl-10 pr-10 h-12"
+        className="pl-10 pr-10 h-12 w-full max-w-full"
         autoComplete="current-password"
       />
       <button
         type="button"
         onClick={() => setShowPassword(!showPassword)}
-        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors z-10"
         tabIndex={-1}
       >
         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -278,11 +278,11 @@ const Auth = () => {
                       Te enviaremos un enlace para crear una nueva contraseña
                     </p>
                   </div>
-                  <form onSubmit={handleResetPassword} className="space-y-4">
-                    <div className="space-y-2">
+                  <form onSubmit={handleResetPassword} className="space-y-4 w-full overflow-hidden">
+                    <div className="space-y-2 w-full">
                       <Label htmlFor="reset-email">{t("auth.email")}</Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <div className="relative w-full overflow-hidden box-border">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
                         <Input
                           id="reset-email"
                           type="email"
@@ -292,7 +292,7 @@ const Auth = () => {
                           onChange={(e) => setResetEmail(e.target.value)}
                           required
                           autoComplete="email"
-                          className="pl-10 h-12"
+                          className="pl-10 h-12 w-full max-w-full"
                         />
                       </div>
                     </div>
@@ -359,11 +359,11 @@ const Auth = () => {
                         </div>
                       </div>
 
-                      <form onSubmit={handleSignIn} className="space-y-4">
-                        <div className="space-y-2">
+                      <form onSubmit={handleSignIn} className="space-y-4 w-full overflow-hidden">
+                        <div className="space-y-2 w-full">
                           <Label htmlFor="signin-email">{t("auth.email")}</Label>
-                          <div className="relative">
-                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <div className="relative w-full overflow-hidden box-border">
+                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
                             <Input
                               id="signin-email"
                               type="email"
@@ -372,7 +372,7 @@ const Auth = () => {
                               value={email}
                               onChange={(e) => setEmail(e.target.value)}
                               required
-                              className="pl-10 h-12"
+                              className="pl-10 h-12 w-full max-w-full"
                               autoComplete="email"
                             />
                           </div>
@@ -438,11 +438,11 @@ const Auth = () => {
                         </div>
                       </div>
 
-                      <form onSubmit={handleSignUp} className="space-y-4">
-                        <div className="space-y-2">
+                      <form onSubmit={handleSignUp} className="space-y-4 w-full overflow-hidden">
+                        <div className="space-y-2 w-full">
                           <Label htmlFor="signup-name">{t("auth.name")}</Label>
-                          <div className="relative">
-                            <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <div className="relative w-full overflow-hidden box-border">
+                            <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
                             <Input
                               id="signup-name"
                               type="text"
@@ -450,15 +450,15 @@ const Auth = () => {
                               value={displayName}
                               onChange={(e) => setDisplayName(e.target.value)}
                               required
-                              className="pl-10 h-12"
+                              className="pl-10 h-12 w-full max-w-full"
                               autoComplete="name"
                             />
                           </div>
                         </div>
-                        <div className="space-y-2">
+                        <div className="space-y-2 w-full">
                           <Label htmlFor="signup-email">{t("auth.email")}</Label>
-                          <div className="relative">
-                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <div className="relative w-full overflow-hidden box-border">
+                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
                             <Input
                               id="signup-email"
                               type="email"
@@ -467,7 +467,7 @@ const Auth = () => {
                               value={email}
                               onChange={(e) => setEmail(e.target.value)}
                               required
-                              className="pl-10 h-12"
+                              className="pl-10 h-12 w-full max-w-full"
                               autoComplete="email"
                             />
                           </div>

@@ -70,11 +70,32 @@ export const WelcomeOnboarding = ({
         return;
       }
 
-      const { data: profile } = await supabase
+      const { data: profile, error } = await supabase
         .from('profiles')
         .select('onboarding_completed')
         .eq('user_id', user.id)
         .single();
+
+      if (error && error.code === 'PGRST116') {
+        const displayName = user.user_metadata?.display_name || 
+                           user.email?.split("@")[0] || 
+                           "Usuario";
+        
+        await supabase
+          .from("profiles")
+          .insert({
+            user_id: user.id,
+            display_name: displayName,
+            avatar_url: null,
+            onboarding_completed: false
+          });
+        
+        setTimeout(() => {
+          setOpen(true);
+          analytics.trackEvent('onboarding_started');
+        }, 500);
+        return;
+      }
 
       if (profile && !profile.onboarding_completed) {
         setTimeout(() => {

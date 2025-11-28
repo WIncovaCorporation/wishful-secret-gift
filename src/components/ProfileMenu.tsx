@@ -44,6 +44,31 @@ export const ProfileMenu = ({ user }: ProfileMenuProps) => {
       .single();
 
     if (error) {
+      if (error.code === 'PGRST116') {
+        const displayName = user.user_metadata?.display_name || 
+                           user.email?.split("@")[0] || 
+                           "Usuario";
+        
+        const { data: newProfile, error: insertError } = await supabase
+          .from("profiles")
+          .insert({
+            user_id: user.id,
+            display_name: displayName,
+            avatar_url: null,
+            onboarding_completed: false
+          })
+          .select("display_name, avatar_url")
+          .single();
+
+        if (insertError) {
+          console.error("Error creating profile:", insertError);
+          return;
+        }
+
+        setProfile(newProfile);
+        return;
+      }
+      
       console.error("Error loading profile:", error);
       return;
     }
